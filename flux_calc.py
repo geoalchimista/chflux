@@ -220,7 +220,7 @@ def timestamp_to_doy(df, timestamp_format=None, time_sec_start=None):
         time_sec_start = 1904
 
     # reference datetime for the `time_sec` variable
-    time_sec_ref_dt = datetime.datetime(time_sec_start, 1, 1, 0, 0)
+    time_sec_ref_dt = datetime.datetime(time_sec_start, 1, 1)
 
     doy = np.zeros(df.shape[0]) * np.nan  # initialize
 
@@ -264,7 +264,30 @@ def timestamp_to_doy(df, timestamp_format=None, time_sec_start=None):
     return doy
 
 
-def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, config):
+def check_starting_year(df, timestamp_format=None, time_sec_start=None):
+    # set default timestamp format and `time_sec` starting year, if not given
+    if timestamp_format is None:
+        timestamp_format = '%Y-%m-%d %X'
+    if time_sec_start is None:
+        time_sec_start = 1904
+
+    # get the starting year number
+    if 'yr' in df.columns.values:
+        year_start = df.loc[0, 'yr']
+    elif 'timestamp' in df.columns.values:
+        year_start = datetime.datetime.strptime(
+            df.loc[0, 'timestamp'], timestamp_format).year
+    elif 'time_sec' in df.columns.values:
+        time_sec_ref_dt = datetime.datetime(time_sec_start, 1, 1)
+        year_start = (time_sec_ref_dt +
+                      datetime.timedelta(seconds=df.loc[0, 'time_sec'])).year
+    else:
+        year_start = None
+
+    return year_start
+
+
+def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
     """
     Calculate fluxes and generate plots.
 
@@ -282,6 +305,8 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, config):
         Day of year number of the current function call. Note that `doy`
         here is the fractional DOY, always smaller than the integer DOY
         (Julian day number).
+    year : int
+        Current year in four digits.
     config : dict
         Configuration dictionary parsed from the YAML config file.
 
@@ -310,9 +335,8 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, config):
         if not os.path.exists(daily_plots_dir):
             os.makedirs(daily_plots_dir)
 
-    year_start = 2013  # temporary, just to pass the bug in the test
     # a date string for current run; used in echo and in output file names
-    run_date_str = (datetime.datetime(year_start, 1, 1) +
+    run_date_str = (datetime.datetime(year, 1, 1) +
                     datetime.timedelta(doy + 0.5)).strftime('%Y%m%d')
 
     # get today's chamber schedule: `ch_start` and `ch_no`
@@ -1150,7 +1174,10 @@ def main():
 
     # parse time variable
     print('Parsing time variable in the biomet data...')
-    doy_biomet = timestamp_to_doy(df_biomet)
+    doy_biomet = timestamp_to_doy(
+        df_biomet,
+        timestamp_format=config['biomet_data_settings']['timestamp_format'],
+        time_sec_start=config['biomet_data_settings']['time_sec_start'])
     # check if the conversion to day of year is successful or not
     if doy_biomet is None:
         print('Program is aborted: no time variable found in the biomet data.')
@@ -1172,7 +1199,10 @@ def main():
 
         # parse time variable
         print('Parsing time variable in the concentration data...')
-        doy_conc = timestamp_to_doy(df_conc)
+        doy_conc = timestamp_to_doy(
+            df_conc,
+            timestamp_format=config['conc_data_settings']['timestamp_format'],
+            time_sec_start=config['conc_data_settings']['time_sec_start'])
         # check if the conversion to day of year is successful or not
         if doy_conc is None:
             print('Program is aborted: ' +
@@ -1188,16 +1218,33 @@ def main():
         print('Notice: Concentration data are extracted from biomet data, ' +
               'because they are not stored in their own files.')
 
+    # check starting years of biomet data and conc data
+    # this is to make sure the converted day of year variables are referenced
+    # to the same staring year
+    year_biomet = check_starting_year(
+        df_biomet,
+        timestamp_format=config['biomet_data_settings']['timestamp_format'],
+        time_sec_start=config['biomet_data_settings']['time_sec_start'])
+    year_conc = check_starting_year(
+        df_conc,
+        timestamp_format=config['conc_data_settings']['timestamp_format'],
+        time_sec_start=config['conc_data_settings']['time_sec_start'])
+    if year_biomet != year_conc and config['data_dir']['separate_conc_data']:
+        print('Program is aborted: Year numbers do not match between ' +
+              'biomet data and concentration data.')
+        exit(1)
+
     # Calculate fluxes, and output plots and the processed data
     # =========================================================================
     print('Calculating fluxes...')
 
     doy_start = np.nanmin(np.floor(doy_biomet))
     doy_end = np.nanmax(np.ceil(doy_biomet))
+    year = year_biomet
 
     # calculate fluxes day by day
     for doy in np.arange(doy_start, doy_end):
-        flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, config)
+        flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config)
 
     # Echo program ending
     # =========================================================================
