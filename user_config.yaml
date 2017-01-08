@@ -4,7 +4,7 @@
 # Note: please modify the user config, not the default config.
 
 # Revision history
-# - Created by Wu Sun @ UCLA <wu.sun@ucla.edu> (13 July 2016).
+# - Created by Wu Sun @ UCLA <wu.sun "at" ucla.edu> (13 July 2016).
 # - Adapted to YAML format. (W.S., 6 Jan 2017).
 
 
@@ -67,7 +67,7 @@ rules_for_standardized_names: |  # A huge comment block stating naming rules
     List of standardized variable names
 
     Time
-    - 'time_sec': Time in seconds since 1 Jan 1904 00:00 (usually for macOS)
+    - 'time_sec': Time in seconds since 1 Jan 1904 00:00 (LabVIEW or old MacOS)
     - 'timestamp': Time in the format of 'yyyy-mm-dd hh:mm:ss'.
     - 'time_doy': Time in days since Jan 1 00:00 of that year, also called 
       (fractional) day of year. But is different from the integer day of year 
@@ -118,11 +118,12 @@ rules_for_standardized_names: |  # A huge comment block stating naming rules
 biomet_data_settings:  # Settings for reading the biomet data
     delimiter: ","
     # Supported table delimiters:
-    #     space(s): ""
-    #     comma: ","
-    #     tab: "\t"
-
-    skip_header: 4
+    #   - singe space: " "
+    #   - indefinite number of spaces: "\\s+" (works also for single space)
+    #   - comma: ","
+    #   - tab: "\\t"
+    
+    header: 4
     # Number of rows to skip at the beginning of the file
 
     names: ['timestamp','T_log','ch_no', 'T_ch_1', 'T_ch_2', 'T_ch_3',
@@ -150,11 +151,28 @@ biomet_data_settings:  # Settings for reading the biomet data
     # are (double) floating numbers and the last column is of integer type.
 
     missing_values: "\"NAN\""
+    # deprecated, see `na_values`.
+
+    na_values: "\"NAN\""
     # Modify this if you need specify the missing values.
 
     columns_to_save: null
     # If `null`, save all columns of the 'standardized variables' parsed from 
     # the concentration data table
+
+    timestamp_format: null
+    # If null, use the default timestamp format '%Y-%m-%d:%X' corresponding to
+    # 'yyyy-mm-dd hh:mm:ss'. Modify this if you have a different timestamp 
+    # format. See Python 3 `datetime` format reference: 
+    # <https://docs.python.org/3/library/datetime.html>
+
+    time_sec_start: null
+    # If null, the starting year of the time_sec format is 1904 (LabVIEW).
+    # This option only takes the year number in four digits (integer).
+    # For example, an instrument working on Unix system may give time in 
+    # seconds since 1 Jan 1970 00:00, then this option should be set to 1970.
+    # Check your instrument manual for its specific time format, if it records
+    # time in seconds since a date.
 
     time_in_UTC: true
     # If the time variable is in UTC time, set this to true
@@ -167,13 +185,14 @@ biomet_data_settings:  # Settings for reading the biomet data
 
 
 conc_data_settings:  # Settings for reading the concentration data
-    delimiter: ""
+    delimiter: "\\s+"
     # Supported table delimiters:
-    #     space(s): ""
-    #     comma: ","
-    #     tab: "\t"
+    #   - singe space: " "
+    #   - indefinite number of spaces: "\\s+" (works also for single space)
+    #   - comma: ","
+    #   - tab: "\\t"
 
-    skip_header: 1
+    header: 1
     # Number of rows to skip at the beginning of the file
 
     names: ['time_sec', 'cos', 'co2', 'h2o', 'co2_2']
@@ -193,11 +212,28 @@ conc_data_settings:  # Settings for reading the concentration data
     # are (double) floating numbers and the last column is of integer type.
 
     missing_values: null
+    # deprecated, see `na_values`.
+
+    na_values: null
     # Modify this if you need specify the missing values.
 
     columns_to_save: null
     # If `null`, save all columns of the 'standardized variables' parsed from 
     # the concentration data table
+
+    timestamp_format: null
+    # If null, use the default timestamp format '%Y-%m-%d:%X' corresponding to
+    # 'yyyy-mm-dd hh:mm:ss'. Modify this if you have a different timestamp 
+    # format. See Python 3 `datetime` format reference: 
+    # <https://docs.python.org/3/library/datetime.html>
+
+    time_sec_start: null
+    # If null, the starting year of the time_sec format is 1904 (LabVIEW).
+    # This option only takes the year number in four digits (integer).
+    # For example, an instrument working on Unix system may give time in 
+    # seconds since 1 Jan 1970 00:00, then this option should be set to 1970.
+    # Check your instrument manual for its specific time format, if it records
+    # time in seconds since a date.
 
     time_in_UTC: true
     # If the time variable is in UTC time, set this to true
@@ -220,6 +256,8 @@ constants:
     # Air concentration (mol m^-3) at STP condition, calculated from
     # p_std / (R_gas * T_0) using the ideal gas law.
 
+site_parameters:
+# Site-specific parameters
     site_pressure: 96.8e+3
     # For the test data, use site pressure of 968 hPa. If `null`, use the
     # standard pressure.

@@ -2,11 +2,11 @@
 
 Wu Sun (wu.sun@ucla.edu)
 
-0.1 alpha (August 23, 2016)
+0.1.1 alpha (Jan 6, 2017)
 
 License: [GPL v3](https://www.gnu.org/licenses/gpl-3.0-standalone.html)
 
-A Python software for calculating gas fluxes between land ecosystems and the atmosphere from flow-through chamber measurements.
+A Python software for calculating trace gas fluxes between land ecosystems and the atmosphere from flow-through chamber measurements.
 
 [TOC]
 
@@ -16,27 +16,19 @@ A Python software for calculating gas fluxes between land ecosystems and the atm
 
 Python libraries
 
-- numpy (http://www.numpy.org)
-- scipy (http://scipy.org)
+- NumPy (http://www.numpy.org)
+- SciPy (http://scipy.org)
 - matplotlib (http://matplotlib.org)
 - pandas (http://pandas.pydata.org)
+- PyYAML (http://pyyaml.org/)
 
-
-## Configuration
-
-
-
-
-
-
-
----
 
 
 ## Quick start
 
-
-
+```bash
+./flux_calc.py -config "user_config.yaml"
+```
 
 
 

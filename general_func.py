@@ -1,9 +1,51 @@
+#!usr/bin/env python3
 # -*- coding: utf-8 -*-
-# use python 3
+"""
+Common functions used in flux calculation
 
+Revision history
+----------------
+- Created by Wu Sun @ UCLA <wu.sun "at" ucla.edu> (18 July 2016).
+- Restructured. (W.S., 6 Jan 2016)
+"""
 import numpy as np
 import pandas as pd
-import scipy.optimize as optmz
+from scipy import optimize
+import datetime
+
+
+def resistant_mean(x, IQR_range=1.5):
+    """
+    Input: 1D `numpy.ndarray` like
+    Output: array mean with outliers removed
+    """
+    x = np.array(x)
+    if np.sum(np.isfinite(x)) <= 1:
+        return(np.nanmean(x))
+    else:
+        x_q1, x_q3 = np.nanpercentile(x, [25, 75])
+        x_iqr = x_q3 - x_q1
+        x_uplim = x_q3 + IQR_range * x_iqr
+        x_lolim = x_q1 - IQR_range * x_iqr
+        x_rmean = np.nanmean(x[(x >= x_lolim) & (x <= x_uplim)])
+        return(x_rmean)
+
+
+def resistant_std(x, IQR_range=1.5):
+    """
+    Input: 1D `numpy.ndarray` like
+    Output: array standard deviation (degree of freedom == 1) with outliers removed
+    """
+    x = np.array(x)
+    if np.sum(np.isfinite(x)) <= 1:
+        return(np.nanstd(x, ddof=1))
+    else:
+        x_q1, x_q3 = np.nanpercentile(x, [25, 75])
+        x_iqr = x_q3 - x_q1
+        x_uplim = x_q3 + IQR_range * x_iqr
+        x_lolim = x_q1 - IQR_range * x_iqr
+        x_rstd = np.nanstd(x[(x >= x_lolim) & (x <= x_uplim)], ddof=1)
+        return(x_rstd)
 
 
 def chamber_lookup_table_func(doy, return_all=False):
@@ -371,4 +413,4 @@ def dew_temp(vap_pres):
     """ 
     def __dew_temp_func(T, e_sat):
         return(p_sat_h2o(T) - e_sat)
-    return optmz.newton(__dew_temp_func, x0=25, args=(vap_pres,))
+    return optimize.newton(__dew_temp_func, x0=25, args=(vap_pres,))
