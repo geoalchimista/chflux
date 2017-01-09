@@ -1,4 +1,4 @@
-# PyChamberFlux Documentation
+PyChamberFlux Documentation
 
 Wu Sun (wu.sun@ucla.edu)
 
@@ -8,7 +8,11 @@ License: [GPL v3](https://www.gnu.org/licenses/gpl-3.0-standalone.html)
 
 A Python software for calculating trace gas fluxes between land ecosystems and the atmosphere from flow-through chamber measurements.
 
-[TOC]
+# PyChamberFlux at a glance
+
+
+
+# Installation guide
 
 ## Requirements
 
@@ -27,10 +31,14 @@ Python libraries
 ## Quick start
 
 ```bash
-./flux_calc.py -config "user_config.yaml"
+python ./flux_calc.py --config "user_config.yaml"
 ```
 
+# Tutorial
 
+
+
+# Reference guide
 
 ## Variable types
 
@@ -214,7 +222,7 @@ Settings for the gas species being measured.
 
 ### Concentration function 
 
-## References
+## Bibliography
 
 
 

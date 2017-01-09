@@ -40,6 +40,14 @@ run_options:  # Running options
     save_daily_plots: true
     # If true, save daily plots of chamber fluxes and biomet variables.
 
+    plot_style: 'ggplot'
+    # plot style for matplotlib; default is 'ggplot'
+    # allowed parameters are:
+    # 'bmh', 'classic', 'ggplot', 'fivethirtyeight', 'dark_background', 
+    # 'presentation', seaborn series, etc.
+    # see matplotlib guide on plotting style:
+    # <http://matplotlib.org/users/style_sheets.html#style-sheets>
+
 
 data_dir:  # Input and output directories, and other related settings
     biomet_data: "./test/input/biomet/*.dat"
@@ -273,7 +281,11 @@ species_settings:
     species_list: ['cos', 'co2', 'h2o']
     # Measured gas species in the concentration data. Note: the order of gas
     # species in the output file will follow the order defined in this sequence
-    
+
+    species_names: ['COS', 'CO$_2$', 'H$_2$O']
+    # names of gas species shown in the plot axis labels.
+    # LaTeX format is supported by matplotlib.
+
     # `unit`: the unit of mixing ratio in the concentration data file
     # `output_unit`: the unit of mixing ratio in the output file
     # `multiplier`: the number to multiply to the input values for conversion 

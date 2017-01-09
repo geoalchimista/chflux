@@ -8,6 +8,9 @@ Revision history
 - Created by Wu Sun @ UCLA <wu.sun "at" ucla.edu>. (18 July 2016)
 - Restructured. (W.S., 6 Jan 2016)
 - Reformatted to comply with PEP8 standard. (W.S., 7 Jan 2016)
+- Nomenclature fix: standard error of flux estimate.
+  'sd_flux_*' --> 'se_flux_*' (W.S., 8 Jan 2016)
+-
 """
 import os
 import glob
@@ -31,8 +34,6 @@ from general_func import *
 # import scipy.constants.constants as sci_consts
 # os.chdir('/Users/wusun/Dropbox/Projects/models/chflux/')  # for temporary use
 # from general_config import *  # deprecated
-# warnings.simplefilter('ignore', category=UserWarning)
-# suppress the annoying matplotlib tight_layout user warning
 
 
 # Command-line argument parser
@@ -54,6 +55,8 @@ plt.rcParams.update({'mathtext.default': 'regular'})  # sans-serif math
 
 # suppress the annoying numpy runtime warning of "mean of empty slice"
 warnings.simplefilter('ignore', category=RuntimeWarning)
+# suppress the annoying matplotlib tight_layout user warning
+warnings.simplefilter('ignore', category=UserWarning)
 
 
 def load_config(filepath):
@@ -210,7 +213,7 @@ def timestamp_to_doy(df, timestamp_format=None, time_sec_start=None):
 
     Returns
     -------
-    doy: array_like
+    doy : array_like
         Day of year number (float); minimum value is 0 (Jan 1 midnight), not 1.
     """
     # set default timestamp format and `time_sec` starting year, if not given
@@ -265,6 +268,24 @@ def timestamp_to_doy(df, timestamp_format=None, time_sec_start=None):
 
 
 def check_starting_year(df, timestamp_format=None, time_sec_start=None):
+    """
+    Extract the staring year from the dataframe, to which the day of year
+    conversion is referenced.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The dataframe from which timestamp is extracted.
+    timestamp_format, optional : str
+        Datetime format string. Default is '%Y-%m-%d %X'.
+    time_sec_start, optional : int
+        The reference year of the time in seconds. Default is 1904.
+
+    Returns
+    -------
+    year_start : int
+        Staring year of the dataframe timestamp.
+    """
     # set default timestamp format and `time_sec` starting year, if not given
     if timestamp_format is None:
         timestamp_format = '%Y-%m-%d %X'
@@ -314,6 +335,8 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
     -------
     None
     """
+    # settings
+    # =========================================================================
     # unpack config
     run_options = config['run_options']
     data_dir = config['data_dir']
@@ -322,6 +345,31 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
     consts = config['constants']
     site_parameters = config['site_parameters']
     species_settings = config['species_settings']
+
+    if run_options['plot_style'] is not None:
+        plt.style.use(run_options['plot_style'])
+
+    # extract species settings
+    n_species = len(species_settings['species_list'])
+    species_list = species_settings['species_list']
+    conc_factor = [species_settings[s]['multiplier'] for s in species_list]
+    species_unit_names = []
+    for i, s in enumerate(species_settings['species_list']):
+        if np.isclose(species_settings[s]['output_unit'], 1e-12):
+            unit_name = 'pmol mol$^{-1}$'
+        elif np.isclose(species_settings[s]['output_unit'], 1e-9):
+            unit_name = 'nmol mol$^{-1}$'
+        elif np.isclose(species_settings[s]['output_unit'], 1e-6):
+            unit_name = '$\mu$mol mol$^{-1}$'
+        elif np.isclose(species_settings[s]['output_unit'], 1e-3):
+            unit_name = 'mmol mol$^{-1}$'
+        elif np.isclose(species_settings[s]['output_unit'], 1e-2):
+            unit_name = '%'
+        elif np.isclose(species_settings[s]['output_unit'], 1.):
+            unit_name = 'mol mol$^{-1}$'
+        else:
+            unit_name = 'undefined unit'
+        species_unit_names.append(unit_name)
 
     # create or locate directories for output
     # for output data
@@ -339,7 +387,15 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
     run_date_str = (datetime.datetime(year, 1, 1) +
                     datetime.timedelta(doy + 0.5)).strftime('%Y%m%d')
 
+    # for fitting plots
+    if run_options['save_fitting_plots']:
+        fitting_plots_path = data_dir['plot_dir'] + \
+            '/fitting/%s/' % run_date_str
+        if not os.path.exists(fitting_plots_path):
+            os.makedirs(fitting_plots_path)
+
     # get today's chamber schedule: `ch_start` and `ch_no`
+    # =========================================================================
     timer = 0.
     ch_no = np.array([], dtype='int')
     ch_start = np.array([])
@@ -363,7 +419,8 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
                                  chlut_now['ch_start'].values + doy + timer)
             ch_no = np.append(ch_no, chlut_now['ch_no'].values)
             # remove duplicate segment
-            ch_start[switch_index:][ch_start[switch_index:] < next_schedule_switch] = np.nan
+            ch_start[switch_index:][
+                ch_start[switch_index:] < next_schedule_switch] = np.nan
             ch_no = ch_no[np.isfinite(ch_start)]
             ch_start = ch_start[np.isfinite(ch_start)]
             timer += smpl_cycle_len
@@ -372,12 +429,21 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
     # note: `ch_no` defined above are the nominal chamber numbers
     # it needs to be updated with the actual chamber numbers, if such variable
     # is recorded in the biomet data table
+
     ch_start = ch_start[ch_start < doy + 1.]
 
     # total number of possible samples of the current day
     n_smpl_per_day = ch_no.size
 
+    # variable initialization
+    # =========================================================================
     # times for chamber control actions (e.g., opening and closing)
+    # with respect to 'ch_start', in fraction of a day
+    # - 'ch_o_b': chamber open before closure
+    # - 'ch_cls': chamber closing
+    # - 'ch_o_a': chamber re-open after closure
+    # - 'ch_atm_a': atmospheric line after closure, if exists
+    # - 'ch_end': end of chamber sampling
     ch_o_b = np.zeros(n_smpl_per_day) * np.nan
     ch_cls = np.zeros(n_smpl_per_day) * np.nan
     ch_o_a = np.zeros(n_smpl_per_day) * np.nan
@@ -393,33 +459,36 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
     V_ch = np.zeros(n_smpl_per_day) * np.nan
 
     # conc and flux variables
-    n_species = len(species_settings['species_list'])
-    species_list = species_settings['species_list']
-    conc_factor = [species_settings[s]['multiplier'] for s in species_list]
-
+    # - '_ch': the 15-min sampling period proper (not used)
+    # - '_atmb': atmospheric line before chamber closure
+    # - '_chb': chamber, before closure
+    # - '_chc': chamber closure period
+    # - '_cha': chamber, after closure
+    # - '_atma': atmospheric line after chamber closure
     conc_atmb = np.zeros((n_smpl_per_day, n_species)) * np.nan
-    sd_conc_atmb = np.zeros((n_smpl_per_day, n_species)) * np.nan
-
     conc_chb = np.zeros((n_smpl_per_day, n_species)) * np.nan
-    sd_conc_chb = np.zeros((n_smpl_per_day, n_species)) * np.nan
-
     conc_cha = np.zeros((n_smpl_per_day, n_species)) * np.nan
-    sd_conc_cha = np.zeros((n_smpl_per_day, n_species)) * np.nan
-
     conc_atma = np.zeros((n_smpl_per_day, n_species)) * np.nan
+
+    sd_conc_atmb = np.zeros((n_smpl_per_day, n_species)) * np.nan
+    sd_conc_chb = np.zeros((n_smpl_per_day, n_species)) * np.nan
+    sd_conc_cha = np.zeros((n_smpl_per_day, n_species)) * np.nan
     sd_conc_atma = np.zeros((n_smpl_per_day, n_species)) * np.nan
 
     conc_chc_iqr = np.zeros((n_smpl_per_day, n_species)) * np.nan
 
     # fluxes calculated from: linear fit, robust linear fit, and nonlinear fit
+    # - '_lin': flux estimate and standard error from linear fit
+    # - '_rlin': flux estimate and standard error from robust linear fit
+    # - '_nonlin': flux estimate and standard error from nonlinear fit
     flux_lin = np.zeros((n_smpl_per_day, n_species)) * np.nan
-    sd_flux_lin = np.zeros((n_smpl_per_day, n_species)) * np.nan
+    se_flux_lin = np.zeros((n_smpl_per_day, n_species)) * np.nan
 
     flux_rlin = np.zeros((n_smpl_per_day, n_species)) * np.nan
-    sd_flux_rlin = np.zeros((n_smpl_per_day, n_species)) * np.nan
+    se_flux_rlin = np.zeros((n_smpl_per_day, n_species)) * np.nan
 
     flux_nonlin = np.zeros((n_smpl_per_day, n_species)) * np.nan
-    sd_flux_nonlin = np.zeros((n_smpl_per_day, n_species)) * np.nan
+    se_flux_nonlin = np.zeros((n_smpl_per_day, n_species)) * np.nan
 
     # save fitting diagnostics to a separate file
     # linear fitting diagnostics
@@ -458,15 +527,15 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
     # -------------------------
     # - `p0_nonlin`: parameter 0, the pre-exponential factor
     # - `p1_nonlin`: parameter 1, the small time lag assigned for better fit
-    # - `sd_p0_nonlin`: standard error of parameter 0
-    # - `sd_p1_nonlin`: standard error of parameter 1
+    # - `se_p0_nonlin`: standard error of parameter 0
+    # - `se_p1_nonlin`: standard error of parameter 1
     # root mean square error of fitted concentrations
     # - `delta_nonlin`: fitted C_end - C_init, i.e.,
     #   fitted changes of concentration during the closure period
     p0_nonlin = np.zeros((n_smpl_per_day, n_species)) * np.nan
     p1_nonlin = np.zeros((n_smpl_per_day, n_species)) * np.nan
-    sd_p0_nonlin = np.zeros((n_smpl_per_day, n_species)) * np.nan
-    sd_p1_nonlin = np.zeros((n_smpl_per_day, n_species)) * np.nan
+    se_p0_nonlin = np.zeros((n_smpl_per_day, n_species)) * np.nan
+    se_p1_nonlin = np.zeros((n_smpl_per_day, n_species)) * np.nan
     rmse_nonlin = np.zeros((n_smpl_per_day, n_species)) * np.nan
     delta_nonlin = np.zeros((n_smpl_per_day, n_species)) * np.nan
 
@@ -567,14 +636,8 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
     time_lag_optmz = np.zeros(n_smpl_per_day) * np.nan
     status_time_lag_optmz = np.zeros(n_smpl_per_day, dtype='int') - 1
 
-    # create the directory for fitting plots, if not already exists
-    if run_options['save_fitting_plots']:
-        fitting_plots_path = data_dir['plot_dir'] + \
-            '/fitting/%s/' % run_date_str
-        if not os.path.exists(fitting_plots_path):
-            os.makedirs(fitting_plots_path)
-
     # loops for averaging biomet variables and calculating fluxes
+    # =========================================================================
     for loop_num in range(n_smpl_per_day):
         # get the current chamber's meta info
         chlut_current = chamber_lookup_table_func(ch_start[loop_num])
@@ -828,10 +891,18 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
             for spc_id in range(n_species):
                 # extract closure segments and convert the DOY to seconds
                 # after 'ch_start' time for fitting plots
+                # - `ch_full_time`: the whole sampling interval
+                # - `atmb_time`: atmospheric line, before closure
+                # - `chb_time`: chamber open, before closure
+                # - `chc_time`: chamber closure
+                # - `cha_time`: chamber open, after closure
+                # - `atma_time`: atmospheric line, after closure
                 ch_full_time = (doy_conc[ind_ch_full] - ch_start[loop_num]) * 86400.
                 chb_time = (doy_conc[ind_chb] - ch_start[loop_num]) * 86400.
-                cha_time = (doy_conc[ind_cha] - ch_start[loop_num]) * 86400.
+                atmb_time = (doy_conc[ind_atmb] - ch_start[loop_num]) * 86400.
                 chc_time = (doy_conc[ind_chc] - ch_start[loop_num]) * 86400.
+                cha_time = (doy_conc[ind_cha] - ch_start[loop_num]) * 86400.
+                atma_time = (doy_conc[ind_atma] - ch_start[loop_num]) * 86400.
 
                 # conc of current species defined with 'spc_id'
                 chc_conc = df_conc.loc[ind_chc, species_list[spc_id]].values * \
@@ -872,7 +943,9 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
                 # see the supp. info of Sun et al. (2016) JGR-Biogeosci.
                 y_fit = (chc_conc - conc_bl) * flow[loop_num] / A_ch[loop_num]
                 x_fit = np.exp(
-                    - (chc_time - chc_time[0] + (time_lag_in_day + dt_lmargin) * 8.64e4) / t_turnover[loop_num])
+                    - (chc_time - chc_time[0] +
+                        (time_lag_in_day + dt_lmargin) * 8.64e4) /
+                    t_turnover[loop_num])
 
                 slope, intercept, r_value, p_value, se_slope = \
                     stats.linregress(x_fit, y_fit)
@@ -883,7 +956,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
 
                 # save the linear fit results and diagnostics
                 flux_lin[loop_num, spc_id] = - slope
-                sd_flux_lin[loop_num, spc_id] = np.abs(se_slope)
+                se_flux_lin[loop_num, spc_id] = np.abs(se_slope)
                 k_lin[loop_num, spc_id] = slope
                 b_lin[loop_num, spc_id] = intercept
                 r_lin[loop_num, spc_id] = r_value
@@ -909,7 +982,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
 
                 # save the robust linear fit results and diagnostics
                 flux_rlin[loop_num, spc_id] = - medslope
-                sd_flux_rlin[loop_num, spc_id] = \
+                se_flux_rlin[loop_num, spc_id] = \
                     np.abs(up_slope - lo_slope) / 3.92
                 # Note: 0.95 C.I. is equivalent to +/- 1.96 sigma
                 k_rlin[loop_num, spc_id] = medslope
@@ -942,13 +1015,13 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
 
                 # save the robust linear fit results and diagnostics
                 flux_nonlin[loop_num, spc_id] = params_nonlin.x[0]
-                sd_flux_nonlin[loop_num, spc_id] = np.nan
+                se_flux_nonlin[loop_num, spc_id] = np.nan
                 # use NaN as placeholder for now
                 p0_nonlin[loop_num, spc_id] = params_nonlin.x[0]
                 p1_nonlin[loop_num, spc_id] = params_nonlin.x[1]
-                sd_p0_nonlin[loop_num, spc_id] = np.nan
+                se_p0_nonlin[loop_num, spc_id] = np.nan
                 # use NaN as placeholder for now
-                sd_p1_nonlin[loop_num, spc_id] = np.nan
+                se_p1_nonlin[loop_num, spc_id] = np.nan
                 # use NaN as placeholder for now
                 rmse_nonlin[loop_num, spc_id] = np.sqrt(
                     np.nanmean((conc_fitted_nonlin[spc_id, :] - chc_conc) ** 2))
@@ -965,9 +1038,99 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
 
             # used for plotting the baseline
             t_bl_pts[:] = median_chb_time, median_cha_time
+
+            # generate fitting plots
+            # -----------------------------------------------------------------
+            if flag_calc_flux and run_options['save_fitting_plots']:
+                fig, axes = plt.subplots(nrows=n_species, sharex=True,
+                                         figsize=(8, 3 * n_species))
+
+                # ... to be continued
+                
+                # axes[0].set_title('ch #' + '%d' % (ch_no[loop_num]) + '    DOY local: ' + '%.4f' % (cr_chmb_time[loop_num]-7./24.) + 
+                #     '    ' + (datetime.datetime(2016, 1, 1, 0, 0) + datetime.timedelta(days=ch_start - 7./24.)).strftime('%d %b %Y, %H:%M') + ' PDT' + 
+                #     '\nF$_{CO2}$ = ' + '%.2f' % fco2[loop_num] + '\tF$_{H2O}$ = ' + '%.2f' % fh2o[loop_num] + 
+                #     '\tPAR = ' + '%.2f' % PAR_ch[loop_num, ch_no[loop_num]-1])
+
+                for i, s in enumerate(species_list):
+                    # color different time segments
+                    axes[i].plot(
+                        ch_full_time,
+                        df_conc[s].values[ind_ch_full] * conc_factor[i], 'k.')
+                    axes[i].plot(
+                        atmb_time,
+                        df_conc[s].values[ind_atmb] * conc_factor[i], '.-',
+                        color='#0571b0')
+                    axes[i].plot(
+                        chb_time,
+                        df_conc[s].values[ind_chb] * conc_factor[i], '.-',
+                        color='#ca0020')
+                    axes[i].plot(
+                        chc_time,
+                        df_conc[s].values[ind_chc] * conc_factor[i], '.-',
+                        color='#33a02c')
+                    axes[i].plot(
+                        cha_time,
+                        df_conc[s].values[ind_cha] * conc_factor[i], '.-',
+                        color='#ca0020')
+                    axes[i].plot(
+                        atma_time,
+                        df_conc[s].values[ind_atma] * conc_factor[i], '.-',
+                        color='#0571b0')
+                    # draw baselines
+                    axes[i].plot(t_bl_pts, conc_bl_pts[i, :],
+                                 'x--', c='gray', linewidth=1.5,
+                                 markeredgewidth=1.25)
+                    # draw timelag lines
+                    axes[i].axvline(x=time_lag_in_day * 86400.,
+                                    linestyle='dashed', c='k')
+                    # draw fitted lines
+                    axes[i].plot(chc_time, conc_fitted_lin[i, :], '-',
+                                 c='k', lw=1.5, label='linear')
+                    axes[i].plot(chc_time, conc_fitted_rlin[i, :], '--',
+                                 c='firebrick', lw=2, label='robust linear')
+                    axes[i].plot(chc_time, conc_fitted_nonlin[i, :], '-.',
+                                 c='darkblue', lw=2, label='nonlinear')
+                    # axis settings
+                    axes[i].set_ylabel(species_settings['species_names'][i] +
+                                       ' (%s)' % species_unit_names[i])
+                    # title setting
+                    # for the top panel, add an additional linebreak before it
+                    axes[i].set_title(
+                        (i == 0) * '\n' +
+                        'flux: %.3f (linear), ' % flux_lin[loop_num, i] +
+                        '%.3f (robust linear), ' % flux_rlin[loop_num, i] +
+                        '%.3f (nonlinear)' % flux_nonlin[loop_num, i])
+
+                # set the common x axis
+                t_min = np.floor(np.nanmin(atmb_time) / 60. - 0.5) * 60.
+                t_max = np.ceil(np.nanmax(ch_full_time) / 60. + 0.5) * 60.
+                axes[-1].set_xlim([t_min, t_max])
+                axes[-1].set_xticks(np.arange(t_min, t_max + 60., 60.))
+                axes[-1].set_xlabel('Time (s)')
+
+                # figure legend
+                fig.legend(handles=axes[0].lines[-3:],
+                           labels=['linear', 'robust linear', 'nonlinear'],
+                           loc='upper right', ncol=3, fontsize=12,
+                           handlelength=3,
+                           frameon=False, framealpha=0.5)
+
+                fig.tight_layout()
+
+                run_datetime_str = datetime.datetime.strftime(
+                    datetime.timedelta(ch_start[loop_num]) +
+                    datetime.datetime(year, 1, 1), '%Y%m%d_%H%M')
+
+                plt.savefig(fitting_plots_path +
+                            'chfit_%s.png' % run_datetime_str)
+
+                # important! release the memory after figure is saved
+                fig.clf()
+                plt.close()
         else:
             flux_lin[loop_num, :] = np.nan
-            sd_flux_lin[loop_num, :] = np.nan
+            se_flux_lin[loop_num, :] = np.nan
 
     # End of loops. Save data and plots.
 
@@ -989,7 +1152,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
     for flux_method in ['_lin', '_rlin', '_nonlin']:
         header += ['f' + s + flux_method
                    for s in species_settings['species_list']]
-        header += ['sd_f' + s + flux_method
+        header += ['se_f' + s + flux_method
                    for s in species_settings['species_list']]
 
     # biomet variable names
@@ -1059,12 +1222,12 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
         df_flux[species_list[spc_id] + '_chc_iqr'] = conc_chc_iqr[:, spc_id]
 
         df_flux['f%s_lin' % species_list[spc_id]] = flux_lin[:, spc_id]
-        df_flux['sd_f%s_lin' % species_list[spc_id]] = sd_flux_lin[:, spc_id]
+        df_flux['se_f%s_lin' % species_list[spc_id]] = se_flux_lin[:, spc_id]
         df_flux['f%s_rlin' % species_list[spc_id]] = flux_rlin[:, spc_id]
-        df_flux['sd_f%s_rlin' % species_list[spc_id]] = sd_flux_rlin[:, spc_id]
+        df_flux['se_f%s_rlin' % species_list[spc_id]] = se_flux_rlin[:, spc_id]
         df_flux['f%s_nonlin' % species_list[spc_id]] = flux_nonlin[:, spc_id]
-        df_flux['sd_f%s_nonlin' % species_list[spc_id]] = \
-            sd_flux_nonlin[:, spc_id]
+        df_flux['se_f%s_nonlin' % species_list[spc_id]] = \
+            se_flux_nonlin[:, spc_id]
 
     df_flux.to_csv(output_fname, sep=',', na_rep='NaN', index=False)
     # no need to have 'row index', therefore, set `index=False`
@@ -1091,7 +1254,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
 
     for s in species_settings['species_list']:
         header_diag += ['p0_nonlin_' + s, 'p1_nonlin_' + s,
-                        'sd_p0_nonlin_' + s, 'sd_p1_nonlin_' + s,
+                        'se_p0_nonlin_' + s, 'se_p1_nonlin_' + s,
                         'rmse_nonlin_' + s, 'delta_nonlin_' + s]
 
     # create output dataframe for fitting diagnostics
@@ -1127,10 +1290,10 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
 
         df_diag['p0_nonlin_' + species_list[spc_id]] = p0_nonlin[:, spc_id]
         df_diag['p1_nonlin_' + species_list[spc_id]] = p1_nonlin[:, spc_id]
-        df_diag['sd_p0_nonlin_' + species_list[spc_id]] = \
-            sd_p0_nonlin[:, spc_id]
-        df_diag['sd_p1_nonlin_' + species_list[spc_id]] = \
-            sd_p1_nonlin[:, spc_id]
+        df_diag['se_p0_nonlin_' + species_list[spc_id]] = \
+            se_p0_nonlin[:, spc_id]
+        df_diag['se_p1_nonlin_' + species_list[spc_id]] = \
+            se_p1_nonlin[:, spc_id]
         df_diag['rmse_nonlin_' + species_list[spc_id]] = \
             rmse_nonlin[:, spc_id]
         df_diag['delta_nonlin_' + species_list[spc_id]] = \
