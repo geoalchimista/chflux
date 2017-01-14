@@ -45,8 +45,10 @@ parser.add_argument('-c', '--config', dest='config',
 
 args = parser.parse_args()
 
+default_config_filepath = 'config.yaml'
+
 if args.config is None:
-    args.config = 'config.yaml'
+    args.config = default_config_filepath
 
 
 # Global settings (not from the config file)
@@ -1319,7 +1321,14 @@ def main():
 
     # Load config file and data files; extract time as day of year
     # =========================================================================
-    config = load_config(args.config)
+    if args.config == default_config_filepath:
+        config = load_config(default_config_filepath)
+    else:
+        user_config = load_config(args.config)
+        config = load_config(default_config_filepath)
+        for key in config:
+            if key in user_config:
+                config[key].update(user_config[key])
     # sanity check for config file
     if len(config['species_settings']['species_list']) < 1:
         print('Program is aborted: no gas species is specified in the config.')

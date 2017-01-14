@@ -1,138 +1,33 @@
 # PyChamberFlux user settings
 # comply with YAML(TM) 1.1 standard <http://yaml.org/spec/1.1/>
 # use PyYAML <http://pyyaml.org/> to parse into Python.
-# Note: please modify the user config, not the default config.
-
-# Revision history
-# - Created by Wu Sun @ UCLA <wu.sun "at" ucla.edu> (13 July 2016).
-# - Adapted to YAML format. (W.S., 6 Jan 2017).
+# Note: please modify the user config only, not the default config.
 
 
-run_options:  # Running options
-    baseline_correction: true
-    # If true, a baseline correction is applied.
-
-    median_baseline: true
-    # If true, use medians as the baseline.
-    # If false, use means as the baseline.
-
-    timelag_method: "nominal"
-    # Timelag detection methods: "nominal", "manual" or "optimized".
-    # For the "manual" method, a fixed timelag must be assigned.
-    # For the "optimized" method, timelag will be optimized based on
-    # a nonlinear fitting of the concentration changes.
-
-    timelag_optimization_species: "co2"
-
-    volume_correction: false
-    # If true, optimize the effective volume (V_eff) to fit the curvature.
-
-    curve_fitting_method: "nonlinear"
-    # Curve fitting method: "nonlinear", "linear", "robust_linear", "all".
+run_options:
+    save_fitting_plots: false
     
-    process_today: false
-    # If true, process only today's data. This will be useful for online 
-    # daily processing. If false, process all available data.
-    
-    save_fitting_plots: true
-    # If true, save the curve fitting plots for every chamber sampling period.
-    
-    save_daily_plots: true
-    # If true, save daily plots of chamber fluxes and biomet variables.
-
-    plot_style: 'ggplot'
-    # plot style for matplotlib; default is 'ggplot'
-    # allowed parameters are:
-    # 'bmh', 'classic', 'ggplot', 'fivethirtyeight', 'dark_background', 
-    # 'presentation', seaborn series, etc.
-    # see matplotlib guide on plotting style:
-    # <http://matplotlib.org/users/style_sheets.html#style-sheets>
+    save_daily_plots: false
 
 
-data_dir:  # Input and output directories, and other related settings
+data_dir:
     biomet_data: "./test/input/biomet/*.dat"
-    # Absolute or relative directory to search for biomet data files.
 
     conc_data: "./test/input/conc/*.str"
-    # Absolute or relative directory to search for concentration data files.
     
     output_dir: "./test/output/"
-    # Output directory for the processed flux data.
 
     output_filename_str: "sr"
-    # A prefix string to append before date stamp for output datafile names.
 
     plot_dir: "./test/plots/"
-    # Directory for saved plots.
 
     separate_conc_data: true
-    # If true, concentration measurements are stored on their own, not in
-    # the biomet data files.
-    # If false, search concentration measurements in the biomet data.
 
 
-rules_for_standardized_names: |  # A huge comment block stating naming rules
-    List of standardized variable names
-
-    Time
-    - 'time_sec': Time in seconds since 1 Jan 1904 00:00 (LabVIEW or old MacOS)
-    - 'timestamp': Time in the format of 'yyyy-mm-dd hh:mm:ss'.
-    - 'time_doy': Time in days since Jan 1 00:00 of that year, also called 
-      (fractional) day of year. But is different from the integer day of year 
-      (Julian day).
-    - 'yr', 'mon', 'day', 'hr','min','sec': If no 'time_sec' or 'timestamp' is
-      in the data, search for these variables.
-
-    Chamber number: 'ch_no'.
-      If there is no variable indicating the chamber number, it will be set by
-      the `chamber_lookup_table_func` function in `general_func.py`. 
-
-    Surface pressure: 'pres'. If not present, use the constant value in 
-      `constants.site_pressure` or fall back to the standard pressure (1 atm).
-
-    Gas concentrations
-      Consistent with the gas species names defined in 
-      `species_settings.species_list`. Gas species not in this list will not
-      be processed. 
-
-    Temperatures ('*' represents the chamber number or sensor number)
-    - Atmospheric temperatures: `T_atm_*`. If there is only one atmospheric
-      sensor, the variable name will be 'T_atm'. 
-    - Chamber temperatures: `T_ch_*`.
-    - Chamber dew temperature: `T_dew_ch_*`. Calculated from other variables,
-      e.g., `T_ch` and water concentrations.
-    - Leaf temperatures: `T_leaf_*`.
-    - Soil temperatures: `T_soil_*`.
-    - Datalogger panel temperature: `T_log`.
-    - Infrared gas analyzer panel temperature: `T_inst`.
-
-    Soil volumetric moisture: `w_soil_*`. 
-
-    Flow rates: `flow_ch_*`.
-
-    Atmospheric relative humidity: `RH_atm_*`. If there is only one atmospheric
-      sensor, the variable name will be 'RH_atm'. 
-
-    Radiation
-    - Photosynthetically available radiation (PAR)
-      If the PAR sensors are associated with chambers, the variable names will
-      follow `PAR_ch_*`.
-      If the PAR sensors are not associated with chambers, the variable names
-      will follow `PAR_*`.
-    - Other radiation variables are not considered here. But users may set
-      `biomet_data_settings.columns_to_save` to output them.
-
-
-biomet_data_settings:  # Settings for reading the biomet data
-    delimiter: ","
-    # Supported table delimiters:
-    #   - singe space: " "
-    #   - indefinite number of spaces: "\\s+" (works also for single space)
-    #   - comma: ","
-    #   - tab: "\\t"
+biomet_data_settings:
+    delimiter: ','
     
     header: 4
-    # Number of rows to skip at the beginning of the file
 
     names: ['timestamp','T_log','ch_no', 'T_ch_1', 'T_ch_2', 'T_ch_3',
             'T_ch_4', 'T_ch_5', 'T_ch_6', 'T_atm', 'RH_atm',
@@ -141,193 +36,28 @@ biomet_data_settings:  # Settings for reading the biomet data
             'flow_ch_5', 'flow_ch_6', 'flow_7',
             'T_soil_ch_4', 'w_soil_ch_4', 'T_soil_ch_5', 'w_soil_ch_5',
             'T_soil_ch_6', 'w_soil_ch_6']
-    # Define the data table column names.
-    # Tip: copy the column names from the data file, and then change name of
-    # the variables of interest to the standardized names.
 
     usecols: [0, 2, 4, 5, 7, 9, 11, 13, 15, 18, 23, 28, 33, 38, 43, 48, 53, 
               58, 63, 68, 73, 78, 82, 84, 93, 95, 104, 106]
-    # Specify a sequence of indices for columns to read into the data
-    # structure. Column index starts from 0 in Python.
-    # If reading all columns, set this to `null` (same as `None` in Python).
-
-    dtype: null
-    # If `null`, falls back to the default setting of `pandas.read_csv()`.
-    # Its default settings handle data types pretty well without specification.
-    # You can also modify the line above to customize column data types.
-    # For example, dtype: "f8, f8, f8, i8" indicates that the first 3 columns 
-    # are (double) floating numbers and the last column is of integer type.
-
-    missing_values: "\"NAN\""
-    # deprecated, see `na_values`.
 
     na_values: "\"NAN\""
-    # Modify this if you need specify the missing values.
-
-    columns_to_save: null
-    # If `null`, save all columns of the 'standardized variables' parsed from 
-    # the concentration data table
-
-    timestamp_format: null
-    # If null, use the default timestamp format '%Y-%m-%d:%X' corresponding to
-    # 'yyyy-mm-dd hh:mm:ss'. Modify this if you have a different timestamp 
-    # format. See Python 3 `datetime` format reference: 
-    # <https://docs.python.org/3/library/datetime.html>
-
-    time_sec_start: null
-    # If null, the starting year of the time_sec format is 1904 (LabVIEW).
-    # This option only takes the year number in four digits (integer).
-    # For example, an instrument working on Unix system may give time in 
-    # seconds since 1 Jan 1970 00:00, then this option should be set to 1970.
-    # Check your instrument manual for its specific time format, if it records
-    # time in seconds since a date.
-
-    time_in_UTC: true
-    # If the time variable is in UTC time, set this to true
-
-    flow_rate_in_STP: true
-    # By default set to true. The flow rate is referenced to STP condition,
-    # as for many commonly available flow sensors. This means that the
-    # flow rates need to be corrected for ambient temperature and pressure.
-    # If set to false, no such correction on flow rates is applied.
 
 
-conc_data_settings:  # Settings for reading the concentration data
+conc_data_settings:
     delimiter: "\\s+"
-    # Supported table delimiters:
-    #   - singe space: " "
-    #   - indefinite number of spaces: "\\s+" (works also for single space)
-    #   - comma: ","
-    #   - tab: "\\t"
 
     header: 1
-    # Number of rows to skip at the beginning of the file
 
     names: ['time_sec', 'cos', 'co2', 'h2o', 'co2_2']
-    # Define the data table column names. Note: for concentration data table,
-    # gas species that are not defined in the species settings will be ignored.
 
-    usecols: null
-    # Specify a sequence of indices for columns to read into the data
-    # structure. Column index starts from 0 in Python.
-    # If reading all columns, set this to `null` (same as `None` in Python).
-
-    dtype: null
-    # If `null`, falls back to the default setting of `pandas.read_csv()`.
-    # Its default settings handle data types pretty well without specification.
-    # You can also modify the line above to customize column data types.
-    # For example, dtype: "f8, f8, f8, i8" indicates that the first 3 columns 
-    # are (double) floating numbers and the last column is of integer type.
-
-    missing_values: null
-    # deprecated, see `na_values`.
-
-    na_values: null
-    # Modify this if you need specify the missing values.
-
-    columns_to_save: null
-    # If `null`, save all columns of the 'standardized variables' parsed from 
-    # the concentration data table
-
-    timestamp_format: null
-    # If null, use the default timestamp format '%Y-%m-%d:%X' corresponding to
-    # 'yyyy-mm-dd hh:mm:ss'. Modify this if you have a different timestamp 
-    # format. See Python 3 `datetime` format reference: 
-    # <https://docs.python.org/3/library/datetime.html>
-
-    time_sec_start: null
-    # If null, the starting year of the time_sec format is 1904 (LabVIEW).
-    # This option only takes the year number in four digits (integer).
-    # For example, an instrument working on Unix system may give time in 
-    # seconds since 1 Jan 1970 00:00, then this option should be set to 1970.
-    # Check your instrument manual for its specific time format, if it records
-    # time in seconds since a date.
-
-    time_in_UTC: true
-    # If the time variable is in UTC time, set this to true
-
-
-constants:
-# Physical constants. Do not modify unless you are on a planet 
-# other than Earth or in a different universe.
-    p_std: 1.01325e+5
-    # 1 standard atmospheric pressure in Pascal
-    # Note: for scientific notation, must give explicit sign to the exponent
-    
-    R_gas: 8.3144598
-    # The gas constant in J mol^-1 K^-1
-    
-    T_0: 273.15
-    # Zero Celsius in Kelvin
-
-    air_conc_std: 44.6150485275593
-    # Air concentration (mol m^-3) at STP condition, calculated from
-    # p_std / (R_gas * T_0) using the ideal gas law.
 
 site_parameters:
-# Site-specific parameters
     site_pressure: 96.8e+3
-    # For the test data, use site pressure of 968 hPa. If `null`, use the
-    # standard pressure.
     
     time_zone: -7
-    # Timezone with respect to UTC. For example, -8 means UTC-8.
-    # Warning: does not support daylight saving transition. Use standard
-    # non daylight saving time, or process separately the data before 
-    # and after daylight saving.
 
 
 species_settings:
     species_list: ['cos', 'co2', 'h2o']
-    # Measured gas species in the concentration data. Note: the order of gas
-    # species in the output file will follow the order defined in this sequence
-
-    species_names: ['COS', 'CO$_2$', 'H$_2$O']
-    # names of gas species shown in the plot axis labels.
-    # LaTeX format is supported by matplotlib.
-
-    # `unit`: the unit of mixing ratio in the concentration data file
-    # `output_unit`: the unit of mixing ratio in the output file
-    # `multiplier`: the number to multiply to the input values for conversion 
-    # to the output unit, must equal to `unit / output_unit`.
-    # For example, if H2O in the input data file was recorded in percentage 
-    # (1.0e-2), and the output unit of H2O concentration needs to be parts per
-    # thousand (1.0e-3), then the multiplier would be 10.
-    # Some commonly used units:
-    #     1.0 = mole fraction [0 to 1]
-    #     1.0e-2 = percent (%)
-    #     1.0e-3 = ppthv (parts per thousand) or mmol mol^-1
-    #     1.0e-6 = ppmv or mumol mol^-1
-    #     1.0e-9 = ppbv or nmol mol^-1
-    #     1.0e-12 = pptv (parts per trillion) or pmol mol^-1
-
-    h2o:
-        unit: 1.0e-9
-        output_unit: 1.0e-3
-        multiplier: 1.0e-6
     
-    co2:
-        unit: 1.0e-9
-        output_unit: 1.0e-6
-        multiplier: 1.0e-3
-
-    cos:
-        unit: 1.0e-9
-        output_unit: 1.0e-12
-        multiplier: 1.0e+3
-
-    co:
-        unit: 1.0e-9
-        output_unit: 1.0e-9
-        multiplier: 1.0
-
-    ch4:
-        unit: 1.0e-9
-        output_unit: 1.0e-9
-        multiplier: 1.0
-
-    # You may add your own gas species following the same format
-    # The name that represents the added gas species is not so important 
-    # as long as it is used **consistently**. For example, if you define the 
-    # species name for CO2 to be `CO_2`, you must use the same name `CO_2` in 
-    # the `species_list` key and the following unit definition.
+    species_names: ['COS', 'CO$_2$', 'H$_2$O']

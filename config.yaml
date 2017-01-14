@@ -1,7 +1,17 @@
 # PyChamberFlux default settings
 # comply with YAML(TM) 1.1 standard <http://yaml.org/spec/1.1/>
 # use PyYAML <http://pyyaml.org/> to parse into Python.
-# Warning: Do NOT modify this file. Make a user's copy and then modify it.
+# WARNING: DO NOT MODIFY THIS FILE. MAKE A USER'S COPY AND MODIFY THAT.
+
+
+# Caveats for the YAML formatting:
+# - This config file allows only one nested level.
+# - Boolean values are in lowercase: `true` and `false`
+# - The `null` value is parsed into Python as `None`
+# - Use double quotation marks for any regex expression
+# - For scientific notation of floating numbers, always specify the sign of
+#   the exponent, i.e., 1.0e+3 is correct while 1.0e3 is wrong.
+
 
 # Revision history
 # - Created by Wu Sun @ UCLA <wu.sun "at" ucla.edu> (13 July 2016).
@@ -10,7 +20,7 @@
 
 run_options:  # Running options
     baseline_correction: true
-    # If true, a baseline correction is applied.
+    # If true, a zero-flux baseline correction is applied.
 
     median_baseline: true
     # If true, use medians as the baseline.
@@ -27,20 +37,20 @@ run_options:  # Running options
     volume_correction: false
     # If true, optimize the effective volume (V_eff) to fit the curvature.
 
-    curve_fitting_method: "nonlinear"
+    curve_fitting_method: "all"
     # Curve fitting method: "nonlinear", "linear", "robust_linear", "all".
     
     process_today: false
     # If true, process only today's data. This will be useful for online 
     # daily processing. If false, process all available data.
     
-    save_fitting_plots: true
+    save_fitting_plots: false
     # If true, save the curve fitting plots for every chamber sampling period.
     
-    save_daily_plots: true
+    save_daily_plots: false
     # If true, save daily plots of chamber fluxes and biomet variables.
 
-    plot_style: 'ggplot'
+    plot_style: "ggplot"
     # plot style for matplotlib; default is 'ggplot'
     # allowed parameters are:
     # 'bmh', 'classic', 'ggplot', 'fivethirtyeight', 'dark_background', 
@@ -50,19 +60,19 @@ run_options:  # Running options
 
 
 data_dir:  # Input and output directories, and other related settings
-    biomet_data: "./test/input/biomet/*.dat"
+    biomet_data: "./biomet/*.csv"
     # Absolute or relative directory to search for biomet data files.
 
-    conc_data: "./test/input/conc/*.str"
+    conc_data: "./conc/*.csv"
     # Absolute or relative directory to search for concentration data files.
     
-    output_dir: "./test/output/"
+    output_dir: "./output/"
     # Output directory for the processed flux data.
 
-    output_filename_str: "test"
+    output_filename_str: ""
     # A prefix string to append before date stamp for output datafile names.
 
-    plot_dir: "./test/plots/"
+    plot_dir: "./plots/"
     # Directory for saved plots.
 
     separate_conc_data: true
@@ -131,25 +141,20 @@ biomet_data_settings:  # Settings for reading the biomet data
     #   - comma: ","
     #   - tab: "\\t"
     
-    header: 4
-    # Number of rows to skip at the beginning of the file
+    header: "infer"
+    # Number of rows to skip at the beginning of the file.
+    # Default behavior is to infer it with `pandas.read_csv()`.
 
-    names: ['timestamp','T_log','ch_no', 'T_ch_1', 'T_ch_2', 'T_ch_3',
-            'T_ch_4', 'T_ch_5', 'T_ch_6', 'T_atm', 'RH_atm',
-            'PAR_ch_1', 'PAR_ch_2', 'PAR_ch_3', 'PAR_ch_4',
-            'flow_ch_1', 'flow_ch_2', 'flow_ch_3', 'flow_ch_4',
-            'flow_ch_5', 'flow_ch_6', 'flow_7',
-            'T_soil_ch_4', 'w_soil_ch_4', 'T_soil_ch_5', 'w_soil_ch_5',
-            'T_soil_ch_6', 'w_soil_ch_6']
-    # Define the data table column names.
+    names: null
+    # Define the data table column names. 
+    # Default is `null`, i.e., to infer with `pandas.read_csv()`.
     # Tip: copy the column names from the data file, and then change name of
     # the variables of interest to the standardized names.
 
-    usecols: [0, 2, 4, 5, 7, 9, 11, 13, 15, 18, 23, 28, 33, 38, 43, 48, 53, 
-              58, 63, 68, 73, 78, 82, 84, 93, 95, 104, 106]
+    usecols: null
     # Specify a sequence of indices for columns to read into the data
     # structure. Column index starts from 0 in Python.
-    # If reading all columns, set this to `null` (same as `None` in Python).
+    # Default behavior (`null`) is to read all columns.
 
     dtype: null
     # If `null`, falls back to the default setting of `pandas.read_csv()`.
@@ -158,19 +163,20 @@ biomet_data_settings:  # Settings for reading the biomet data
     # For example, dtype: "f8, f8, f8, i8" indicates that the first 3 columns 
     # are (double) floating numbers and the last column is of integer type.
 
-    missing_values: "\"NAN\""
+    missing_values: null
     # deprecated, see `na_values`.
 
-    na_values: "\"NAN\""
+    na_values: null
     # Modify this if you need specify the missing values.
+    # Default is `null` that uses the default options of `pandas.read_csv()`.
 
     columns_to_save: null
     # If `null`, save all columns of the 'standardized variables' parsed from 
     # the concentration data table
 
     timestamp_format: null
-    # If null, use the default timestamp format '%Y-%m-%d:%X' corresponding to
-    # 'yyyy-mm-dd hh:mm:ss'. Modify this if you have a different timestamp 
+    # If `null`, use the default timestamp format '%Y-%m-%d:%X' corresponding
+    # to 'yyyy-mm-dd hh:mm:ss'. Modify this if you have a different timestamp 
     # format. See Python 3 `datetime` format reference: 
     # <https://docs.python.org/3/library/datetime.html>
 
@@ -183,34 +189,37 @@ biomet_data_settings:  # Settings for reading the biomet data
     # time in seconds since a date.
 
     time_in_UTC: true
-    # If the time variable is in UTC time, set this to true
+    # Default is `true` to treat the time variable in UTC time.
 
     flow_rate_in_STP: true
-    # By default set to true. The flow rate is referenced to STP condition,
+    # By default set to `true`. The flow rate is referenced to STP condition,
     # as for many commonly available flow sensors. This means that the
     # flow rates need to be corrected for ambient temperature and pressure.
     # If set to false, no such correction on flow rates is applied.
 
 
 conc_data_settings:  # Settings for reading the concentration data
-    delimiter: "\\s+"
+    delimiter: ","
     # Supported table delimiters:
     #   - singe space: " "
     #   - indefinite number of spaces: "\\s+" (works also for single space)
     #   - comma: ","
     #   - tab: "\\t"
 
-    header: 1
-    # Number of rows to skip at the beginning of the file
+    header: "infer"
+    # Number of rows to skip at the beginning of the file.
+    # Default behavior is to infer it with `pandas.read_csv()`.
 
-    names: ['time_sec', 'cos', 'co2', 'h2o', 'co2_2']
-    # Define the data table column names. Note: for concentration data table,
-    # gas species that are not defined in the species settings will be ignored.
+    names: null
+    # Define the data table column names. 
+    # Default is `null`, i.e., to infer with `pandas.read_csv()`.
+    # Note that for concentration data table, gas species that are not
+    # defined in the species settings will be ignored.
 
     usecols: null
     # Specify a sequence of indices for columns to read into the data
     # structure. Column index starts from 0 in Python.
-    # If reading all columns, set this to `null` (same as `None` in Python).
+    # Default behavior (`null`) is to read all columns.
 
     dtype: null
     # If `null`, falls back to the default setting of `pandas.read_csv()`.
@@ -230,8 +239,8 @@ conc_data_settings:  # Settings for reading the concentration data
     # the concentration data table
 
     timestamp_format: null
-    # If null, use the default timestamp format '%Y-%m-%d:%X' corresponding to
-    # 'yyyy-mm-dd hh:mm:ss'. Modify this if you have a different timestamp 
+    # If `null`, use the default timestamp format '%Y-%m-%d:%X' corresponding
+    # to 'yyyy-mm-dd hh:mm:ss'. Modify this if you have a different timestamp 
     # format. See Python 3 `datetime` format reference: 
     # <https://docs.python.org/3/library/datetime.html>
 
@@ -244,7 +253,7 @@ conc_data_settings:  # Settings for reading the concentration data
     # time in seconds since a date.
 
     time_in_UTC: true
-    # If the time variable is in UTC time, set this to true
+    # Default is `true` to treat the time variable in UTC time.
 
 
 constants:
@@ -264,11 +273,11 @@ constants:
     # Air concentration (mol m^-3) at STP condition, calculated from
     # p_std / (R_gas * T_0) using the ideal gas law.
 
+
 site_parameters:
 # Site-specific parameters
     site_pressure: null
-    # For the test data, use site pressure of 968 hPa. If `null`, use the
-    # standard pressure.
+    # In Pascal. Default behavior (`null`) is to use the standard pressure.
     
     time_zone: 0
     # Timezone with respect to UTC. For example, -8 means UTC-8.
@@ -278,11 +287,11 @@ site_parameters:
 
 
 species_settings:
-    species_list: ['cos', 'co2', 'h2o']
+    species_list: ['co2', 'h2o']
     # Measured gas species in the concentration data. Note: the order of gas
     # species in the output file will follow the order defined in this sequence
 
-    species_names: ['COS', 'CO$_2$', 'H$_2$O']
+    species_names: ['CO$_2$', 'H$_2$O']
     # names of gas species shown in the plot axis labels.
     # LaTeX format is supported by matplotlib.
 
