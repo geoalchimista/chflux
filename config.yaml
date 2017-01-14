@@ -66,6 +66,9 @@ data_dir:  # Input and output directories, and other related settings
     conc_data: "./conc/*.csv"
     # Absolute or relative directory to search for concentration data files.
     
+    flow_data: null
+    # Absolute or relative directory to search for flow rate data files.
+
     output_dir: "./output/"
     # Output directory for the processed flux data.
 
@@ -76,9 +79,14 @@ data_dir:  # Input and output directories, and other related settings
     # Directory for saved plots.
 
     separate_conc_data: true
-    # If true, concentration measurements are stored on their own, not in
+    # If `true`, concentration measurements are stored on their own, not in
     # the biomet data files.
-    # If false, search concentration measurements in the biomet data.
+    # If `false`, search concentration measurements in the biomet data.
+
+    separate_flow_data: false
+    # If `false` (default), search flow rate variables in the biomet data.
+    # If `true`, flow rate measurements are stored on their own, not in
+    # the biomet data files (possibly relevant for some MFC instruments).
 
 
 rules_for_standardized_names: |  # A huge comment block stating naming rules
@@ -172,7 +180,7 @@ biomet_data_settings:  # Settings for reading the biomet data
 
     columns_to_save: null
     # If `null`, save all columns of the 'standardized variables' parsed from 
-    # the concentration data table
+    # the biomet data table
 
     timestamp_format: null
     # If `null`, use the default timestamp format '%Y-%m-%d:%X' corresponding
@@ -237,6 +245,64 @@ conc_data_settings:  # Settings for reading the concentration data
     columns_to_save: null
     # If `null`, save all columns of the 'standardized variables' parsed from 
     # the concentration data table
+
+    timestamp_format: null
+    # If `null`, use the default timestamp format '%Y-%m-%d:%X' corresponding
+    # to 'yyyy-mm-dd hh:mm:ss'. Modify this if you have a different timestamp 
+    # format. See Python 3 `datetime` format reference: 
+    # <https://docs.python.org/3/library/datetime.html>
+
+    time_sec_start: null
+    # If null, the starting year of the time_sec format is 1904 (LabVIEW).
+    # This option only takes the year number in four digits (integer).
+    # For example, an instrument working on Unix system may give time in 
+    # seconds since 1 Jan 1970 00:00, then this option should be set to 1970.
+    # Check your instrument manual for its specific time format, if it records
+    # time in seconds since a date.
+
+    time_in_UTC: true
+    # Default is `true` to treat the time variable in UTC time.
+
+
+flow_data_settings:  # Settings for reading the flow rate data
+    delimiter: ","
+    # Supported table delimiters:
+    #   - singe space: " "
+    #   - indefinite number of spaces: "\\s+" (works also for single space)
+    #   - comma: ","
+    #   - tab: "\\t"
+
+    header: "infer"
+    # Number of rows to skip at the beginning of the file.
+    # Default behavior is to infer it with `pandas.read_csv()`.
+
+    names: null
+    # Define the data table column names. 
+    # Default is `null`, i.e., to infer with `pandas.read_csv()`.
+    # Tip: copy the column names from the data file, and then change name of
+    # the variables of interest to the standardized names.
+
+    usecols: null
+    # Specify a sequence of indices for columns to read into the data
+    # structure. Column index starts from 0 in Python.
+    # Default behavior (`null`) is to read all columns.
+
+    dtype: null
+    # If `null`, falls back to the default setting of `pandas.read_csv()`.
+    # Its default settings handle data types pretty well without specification.
+    # You can also modify the line above to customize column data types.
+    # For example, dtype: "f8, f8, f8, i8" indicates that the first 3 columns 
+    # are (double) floating numbers and the last column is of integer type.
+
+    missing_values: null
+    # deprecated, see `na_values`.
+
+    na_values: null
+    # Modify this if you need specify the missing values.
+
+    columns_to_save: null
+    # If `null`, save all columns of the 'standardized variables' parsed from 
+    # the flow data table
 
     timestamp_format: null
     # If `null`, use the default timestamp format '%Y-%m-%d:%X' corresponding
