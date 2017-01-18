@@ -203,10 +203,10 @@ def chamber_lookup_table_func(doy, return_all=False):
 
     elif doy >= 127. + 1./24.:  # from 05/08/2013 01:00 (UTC) to the end
         chlut = pd.DataFrame([1,2,4,6,1,2,5,6], columns=['ch_no'])
-        chlut['ch_label'] = ['LC1', 'LC2', 'SC1', 'LC3', 'LC1', 'LC2', 'SC2', 'LC3']
+        chlut['ch_label'] = ['LC1', 'LC2', 'SC1', 'SC3', 'LC1', 'LC2', 'SC2', 'SC3']
         chlut['flowmeter_no'] = chlut['ch_no']
         chlut['TC_no'] = chlut['ch_no']
-        chlut['PAR_no'] = [1, 2, -1, 3, 1, 2, -1, 3]
+        chlut['PAR_no'] = [1, 2, -1, -1, 1, 2, -1, -1]
         chlut['A_ch'] = A_ch[chlut['ch_no']-1]
         chlut['A_ch_std'] = A_ch_std[chlut['ch_no']-1]
         chlut['V_ch'] = V_ch[chlut['ch_no']-1]
