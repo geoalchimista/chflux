@@ -10,7 +10,7 @@
 # - The `null` value is parsed into Python as `None`
 # - Use double quotation marks for any regex expression
 # - For scientific notation of floating numbers, always specify the sign of
-#   the exponent, i.e., 1.0e+3 is correct while 1.0e3 is wrong.
+#   the exponent, i.e., `1.0e+3` is correct while `1.0e3` is wrong.
 
 
 # Revision history

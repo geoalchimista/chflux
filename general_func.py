@@ -5,13 +5,20 @@ Common functions used in flux calculation
 
 Revision history
 ----------------
-- Created by Wu Sun @ UCLA <wu.sun "at" ucla.edu> (18 July 2016).
+- Created by Wu Sun @ UCLA <wu.sun@ucla.edu> (18 July 2016).
 - Restructured. (W.S., 6 Jan 2016)
+- `chamber_lookup_table_func` now generates a function from the chamber
+  schedule configuration `chamber_schedule.yaml`.
 """
 import numpy as np
 import pandas as pd
 from scipy import optimize
 import datetime
+import warnings
+
+from collections import namedtuple
+
+import yaml
 
 
 def resistant_mean(x, IQR_range=1.5):
@@ -48,7 +55,69 @@ def resistant_std(x, IQR_range=1.5):
         return(x_rstd)
 
 
-def chamber_lookup_table_func(doy, return_all=False):
+def chamber_lookup_table_func(doy, chamber_config=None):
+    """
+    Return a chamber meta information look-up table.
+
+    """
+    # define returned data template
+    ChamberLookupTableResult = namedtuple(
+        'ChamberLookupTableResult',
+        ['schedule_start', 'schedule_end', 'n_ch', 'smpl_cycle_len',
+         'n_cycle_per_day', 'unit_of_time', 'df'])
+
+    if chamber_config is None:
+        with open('chamber.yaml', 'r') as fo:
+            chamber_config = yaml.load(fo)
+
+    for key in chamber_config:
+        if chamber_config[key]['schedule_start'] <= doy < chamber_config[key]['schedule_end']:
+            current_schedule = chamber_config[key]
+            break
+    else:
+        warnings.warn('No valid chamber schedule found on the day %s.' %
+                      str(doy), RuntimeWarning)
+        return None
+
+    # initialize an empty dictionary and then convert it to a namedtuple
+    chamber_lookup_table = {}
+    for key in ['schedule_start', 'schedule_end', 'n_ch', 'smpl_cycle_len',
+                'n_cycle_per_day', 'unit_of_time', ]:
+        chamber_lookup_table[key] = current_schedule[key]
+
+    df = pd.DataFrame()
+
+    for key in ['ch_no', 'A_ch', 'A_ch_std', 'V_ch', 'ch_label', 'flowmeter_no',
+                'TC_no', 'PAR_no', 'ch_start', 'ch_o_b', 'ch_cls', 'ch_o_a',
+                'ch_end', 'ch_atm_a']:
+        df[key] = current_schedule[key]
+
+    if chamber_lookup_table['unit_of_time'] in ['second', 'sec', 's']:
+        time_unit_conversion_factor = 60. * 60. * 24.
+    elif chamber_lookup_table['unit_of_time'] in ['minute', 'min', 'm']:
+        time_unit_conversion_factor = 60. * 24.
+    elif chamber_lookup_table['unit_of_time'] in ['hour', 'hr', 'h']:
+        time_unit_conversion_factor = 24.
+    else:
+        time_unit_conversion_factor = 1
+
+    # convert the unit of all time variables specifying the schedule to day
+    # this does not apply to `schedule_start` and `schedule end` since
+    # they both are in day of year
+    chamber_lookup_table['smpl_cycle_len'] /= time_unit_conversion_factor
+    df[['ch_start', 'ch_o_b', 'ch_cls', 'ch_o_a', 'ch_end', 'ch_atm_a']] /= \
+        time_unit_conversion_factor
+
+    chamber_lookup_table['df'] = df
+
+    # convert to a namedtuple
+    # `**` is the 'splat operator' for unpacking dictionaries
+    chamber_lookup_table = ChamberLookupTableResult(**chamber_lookup_table)
+
+    return chamber_lookup_table
+
+
+def chamber_lookup_table_func_old(doy, return_all=False):
     """
     Return a chamber meta information look-up table (pandas.DataFrame). 
 

@@ -402,27 +402,41 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
     ch_no = np.array([], dtype='int')
     ch_start = np.array([])
     while timer < 1.:
-        chlut_now, n_ch, smpl_cycle_len, n_cycle_per_day, next_schedule_switch = \
-            chamber_lookup_table_func(doy + timer, return_all=True)
+        chlut = chamber_lookup_table_func(doy + timer)
+        df_chlut = chlut.df
+        # n_ch = chlut.n_ch
+        smpl_cycle_len = chlut.smpl_cycle_len
+        # n_cycle_per_day = chlut.n_cycle_per_day
+        schedule_end = chlut.schedule_end
+
+        # chlut_now, n_ch, smpl_cycle_len, n_cycle_per_day, next_schedule_switch = \
+        #     chamber_lookup_table_func_old(doy + timer, return_all=True)
         ch_start = np.append(ch_start,
-                             chlut_now['ch_start'].values + doy + timer)
-        ch_no = np.append(ch_no, chlut_now['ch_no'].values)
+                             df_chlut['ch_start'].values + doy + timer)
+        ch_no = np.append(ch_no, df_chlut['ch_no'].values)
         timer += smpl_cycle_len
-        if doy + timer > next_schedule_switch:
+        if doy + timer > schedule_end:
             # if the schedule is switched
-            ch_no = ch_no[ch_start < next_schedule_switch]
-            ch_start = ch_start[ch_start < next_schedule_switch]
+            ch_no = ch_no[ch_start < schedule_end]
+            ch_start = ch_start[ch_start < schedule_end]
             switch_index = ch_no.size
             # apply the switched schedule
-            chlut_now, n_ch, smpl_cycle_len, n_cycle_per_day, _, = \
-                chamber_lookup_table_func(doy + timer, return_all=True)
+            # chlut_now, n_ch, smpl_cycle_len, n_cycle_per_day, _, = \
+            #     chamber_lookup_table_func_old(doy + timer, return_all=True)
+            chlut = chamber_lookup_table_func(doy + timer)
+            df_chlut = chlut.df
+            # n_ch = chlut.n_ch
+            smpl_cycle_len = chlut.smpl_cycle_len
+            # n_cycle_per_day = chlut.n_cycle_per_day
+            schedule_end = chlut.schedule_end
+
             timer = np.floor(timer / smpl_cycle_len - 1) * smpl_cycle_len
             ch_start = np.append(ch_start,
-                                 chlut_now['ch_start'].values + doy + timer)
-            ch_no = np.append(ch_no, chlut_now['ch_no'].values)
+                                 df_chlut['ch_start'].values + doy + timer)
+            ch_no = np.append(ch_no, df_chlut['ch_no'].values)
             # remove duplicate segment
             ch_start[switch_index:][
-                ch_start[switch_index:] < next_schedule_switch] = np.nan
+                ch_start[switch_index:] < schedule_end] = np.nan
             ch_no = ch_no[np.isfinite(ch_start)]
             ch_start = ch_start[np.isfinite(ch_start)]
             timer += smpl_cycle_len
@@ -642,18 +656,18 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
     # =========================================================================
     for loop_num in range(n_smpl_per_day):
         # get the current chamber's meta info
-        chlut_current = chamber_lookup_table_func(ch_start[loop_num])
-        chlut_current = chlut_current[chlut_current['ch_no'] == ch_no[loop_num]]
-        A_ch[loop_num] = chlut_current['A_ch'].values[0]
-        V_ch[loop_num] = chlut_current['V_ch'].values[0]
-        ch_label.append(chlut_current['ch_label'].values[0])
+        df_chlut_current = chamber_lookup_table_func(ch_start[loop_num]).df
+        df_chlut_current = df_chlut_current[df_chlut_current['ch_no'] == ch_no[loop_num]]
+        A_ch[loop_num] = df_chlut_current['A_ch'].values[0]
+        V_ch[loop_num] = df_chlut_current['V_ch'].values[0]
+        ch_label.append(df_chlut_current['ch_label'].values[0])
         # Note: 'ch_label' is a list! not an array
 
-        ch_o_b[loop_num] = ch_start[loop_num] + chlut_current['ch_o_b'].values[0]
-        ch_cls[loop_num] = ch_start[loop_num] + chlut_current['ch_cls'].values[0]
-        ch_o_a[loop_num] = ch_start[loop_num] + chlut_current['ch_o_a'].values[0]
-        ch_atm_a[loop_num] = ch_start[loop_num] + chlut_current['ch_atm_a'].values[0]
-        ch_end[loop_num] = ch_start[loop_num] + chlut_current['ch_end'].values[0]
+        ch_o_b[loop_num] = ch_start[loop_num] + df_chlut_current['ch_o_b'].values[0]
+        ch_cls[loop_num] = ch_start[loop_num] + df_chlut_current['ch_cls'].values[0]
+        ch_o_a[loop_num] = ch_start[loop_num] + df_chlut_current['ch_o_a'].values[0]
+        ch_atm_a[loop_num] = ch_start[loop_num] + df_chlut_current['ch_atm_a'].values[0]
+        ch_end[loop_num] = ch_start[loop_num] + df_chlut_current['ch_end'].values[0]
 
         ch_time[loop_num] = 0.5 * (ch_cls[loop_num] + ch_o_a[loop_num])
 
