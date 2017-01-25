@@ -13,9 +13,7 @@
 #   the exponent, i.e., `1.0e+3` is correct while `1.0e3` is wrong.
 
 
-# Revision history
-# - Created by Wu Sun @ UCLA <wu.sun "at" ucla.edu> (13 July 2016).
-# - Adapted to YAML format. (W.S., 6 Jan 2017).
+# (c) Wu Sun <wu.sun@ucla.edu> 2016-2017
 
 
 run_options:  # Running options
@@ -39,14 +37,14 @@ run_options:  # Running options
 
     curve_fitting_method: "all"
     # Curve fitting method: "nonlinear", "linear", "robust_linear", "all".
-    
+
     process_today: false
     # If true, process only today's data. This will be useful for online 
     # daily processing. If false, process all available data.
-    
+
     save_fitting_plots: false
     # If true, save the curve fitting plots for every chamber sampling period.
-    
+
     save_daily_plots: false
     # If true, save daily plots of chamber fluxes and biomet variables.
 
@@ -322,29 +320,11 @@ flow_data_settings:  # Settings for reading the flow rate data
     # Default is `true` to treat the time variable in UTC time.
 
 
-constants:
-# Physical constants. Do not modify unless you are on a planet 
-# other than Earth or in a different universe.
-    p_std: 1.01325e+5
-    # 1 standard atmospheric pressure in Pascal
-    # Note: for scientific notation, must give explicit sign to the exponent
-    
-    R_gas: 8.3144598
-    # The gas constant in J mol^-1 K^-1
-    
-    T_0: 273.15
-    # Zero Celsius in Kelvin
-
-    air_conc_std: 44.6150485275593
-    # Air concentration (mol m^-3) at STP condition, calculated from
-    # p_std / (R_gas * T_0) using the ideal gas law.
-
-
 site_parameters:
 # Site-specific parameters
     site_pressure: null
     # In Pascal. Default behavior (`null`) is to use the standard pressure.
-    
+
     time_zone: 0
     # Timezone with respect to UTC. For example, -8 means UTC-8.
     # Warning: does not support daylight saving transition. Use standard

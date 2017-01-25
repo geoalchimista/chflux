@@ -1,16 +1,8 @@
-#!usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Main program for flux calculation
 
-Revision history
-----------------
-- Created by Wu Sun @ UCLA <wu.sun "at" ucla.edu>. (18 July 2016)
-- Restructured. (W.S., 6 Jan 2016)
-- Reformatted to comply with PEP8 standard. (W.S., 7 Jan 2016)
-- Nomenclature fix: standard error of flux estimate.
-  'sd_flux_*' --> 'se_flux_*' (W.S., 8 Jan 2016)
--
+(c) Wu Sun <wu.sun@ucla.edu> 2016-2017
+
 """
 import os
 import glob
@@ -24,7 +16,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy import stats, optimize
 
-from general_func import *
+from common_func import *
+
 
 # deprecated imports
 # -----------------------------------------------------------------------------
@@ -344,7 +337,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
     data_dir = config['data_dir']
     biomet_data_settings = config['biomet_data_settings']
     conc_data_settings = config['conc_data_settings']
-    consts = config['constants']
+    # consts = config['constants']
     site_parameters = config['site_parameters']
     species_settings = config['species_settings']
 
@@ -685,7 +678,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
                     df_biomet.loc[ind_ch_biomet, 'pres'].values)
             else:
                 if site_parameters['site_pressure'] is None:
-                    pres[loop_num] = site_parameters['p_std']
+                    pres[loop_num] = phys_const['p_std']  # site_parameters['p_std']
                     # use standard atm pressure if no site pressure is defined
                 else:
                     pres[loop_num] = site_parameters['site_pressure']
@@ -769,27 +762,28 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
                 # convert standard liter per minute to liter per minute, if applicable
                 if biomet_data_settings['flow_rate_in_STP']:
                     flow_lpm[loop_num] = flow_lpm[loop_num] * \
-                        (T_ch[loop_num, ch_no[loop_num] - 1] + consts['T_0']) / \
-                        consts['T_0'] * consts['p_std'] / pres[loop_num]
-        else:
+                        (T_ch[loop_num, ch_no[loop_num] - 1] + phys_const['T_0']) / \
+                        phys_const['T_0'] * phys_const['p_std'] / pres[loop_num]
+        # else:
             # call the user-defined flow rate function if there is no flow rate data in the biomet data table
-            # `chamber_flow_rates` function is imported from `general_func.py`
-            flow_lpm[loop_num], is_flow_STP = chamber_flow_rates(ch_time[loop_num], ch_no[loop_num])
-            if is_flow_STP:
-                flow_lpm[loop_num] = flow_lpm[loop_num] * \
-                    (T_ch[loop_num, ch_no[loop_num] - 1] + consts['T_0']) / \
-                    consts['T_0'] * consts['p_std'] / pres[loop_num]
+            # `chamber_flow_rates` function is imported from `common_func.py`
+            # deprecate this
+            # flow_lpm[loop_num], is_flow_STP = chamber_flow_rates(ch_time[loop_num], ch_no[loop_num])
+            # if is_flow_STP:
+            #     flow_lpm[loop_num] = flow_lpm[loop_num] * \
+            #         (T_ch[loop_num, ch_no[loop_num] - 1] + phys_const['T_0']) / \
+            #         phys_const['T_0'] * phys_const['p_std'] / pres[loop_num]
 
         # convert volumetric flow to mass flow (mol s^-1)
         flow[loop_num] = flow_lpm[loop_num] * 1e-3 / 60. * \
-            pres[loop_num] / consts['R_gas'] / \
-            (T_ch[loop_num, ch_no[loop_num] - 1] + consts['T_0'])
+            pres[loop_num] / phys_const['R_gas'] / \
+            (T_ch[loop_num, ch_no[loop_num] - 1] + phys_const['T_0'])
         # # print(flow[loop_num])  # for test only
 
         # convert chamber volume to mol
         V_ch_mol[loop_num] = V_ch[loop_num] * pres[loop_num] / \
-            consts['R_gas'] / \
-            (T_ch[loop_num, ch_no[loop_num] - 1] + consts['T_0'])
+            phys_const['R_gas'] / \
+            (T_ch[loop_num, ch_no[loop_num] - 1] + phys_const['T_0'])
         # # print(V_ch_mol[loop_num])  # for test only
 
         t_turnover[loop_num] = V_ch_mol[loop_num] / flow[loop_num]
