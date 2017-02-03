@@ -1,5 +1,7 @@
 PyChamberFlux Documentation
 
+[==Warning: This document is deprecated. An updated one will be drafted soon.==]
+
 Wu Sun (wu.sun@ucla.edu)
 
 0.1.1 alpha (Jan 6, 2017)
