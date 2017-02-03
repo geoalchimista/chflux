@@ -11,6 +11,7 @@
 # - Use double quotation marks for any regex expression
 # - For scientific notation of floating numbers, always specify the sign of
 #   the exponent, i.e., `1.0e+3` is correct while `1.0e3` is wrong.
+# - The NaN value for floating number is `.nan`
 
 
 # (c) Wu Sun <wu.sun@ucla.edu> 2016-2017
@@ -70,7 +71,7 @@ data_dir:  # Input and output directories, and other related settings
     output_dir: "./output/"
     # Output directory for the processed flux data.
 
-    output_filename_str: ""
+    output_filename_prefix: ""
     # A prefix string to append before date stamp for output datafile names.
 
     plot_dir: "./plots/"

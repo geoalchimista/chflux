@@ -3,16 +3,18 @@
 # current
 
 - Refined saturation vapor pressure and dew temperature functions.
-- List of physical constants moved from `config.yaml` to `common_func.py`.
-- Added some summary statistics functions in `common_func.py`:
+- Refined summary statistics functions in `common_func.py`:
 	* `resist_mean()`: outlier-resistant mean
 	* `resist_std()`: outlier-resistant standard deviation
 	* `IQR_func()`: interquartile range
+- List of physical constants moved from `config.yaml` to `common_func.py`.
 
 @TODO:
 - Test and refine the chamber schedule function.
 - Add flow data parsing
 - Add leaf area auxiliary data parsing
+- Add `is_leaf_chamber` identifier for the chamber config file `chamber.yaml`
+- Add timelag control in `chamber.yaml`
 
 # 0.1.1 (2017-01-18)
 

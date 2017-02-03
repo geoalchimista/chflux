@@ -17,7 +17,7 @@ data_dir:
     
     output_dir: "./test/output/"
 
-    output_filename_str: "sr"
+    output_filename_prefix: "sr"
 
     plot_dir: "./test/plots/"
 

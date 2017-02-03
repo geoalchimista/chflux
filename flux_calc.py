@@ -1146,8 +1146,8 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
 
     # output data file
     # =========================================================================
-    if data_dir['output_filename_str'] != '':
-        output_fname = output_dir + data_dir['output_filename_str'] + \
+    if data_dir['output_filename_prefix'] != '':
+        output_fname = output_dir + data_dir['output_filename_prefix'] + \
             '_flux_%s.csv' % run_date_str
     else:
         output_fname = output_dir + 'flux_' + run_date_str + '.csv'
@@ -1246,8 +1246,8 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
 
     # output curve fitting diagnostics
     # =========================================================================
-    if data_dir['output_filename_str'] != '':
-        diag_fname = output_dir + data_dir['output_filename_str'] + \
+    if data_dir['output_filename_prefix'] != '':
+        diag_fname = output_dir + data_dir['output_filename_prefix'] + \
             '_diag_%s.csv' % run_date_str
     else:
         diag_fname = output_dir + 'diag_' + run_date_str + '.csv'
