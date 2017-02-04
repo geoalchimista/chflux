@@ -2,7 +2,7 @@
 
 Wu Sun (wu.sun@ucla.edu)
 
-0.1.1 alpha (Jan 6, 2017)
+0.1.2 alpha (Feb 4, 2017)
 
 License: [GPL v3](https://www.gnu.org/licenses/gpl-3.0-standalone.html)
 
