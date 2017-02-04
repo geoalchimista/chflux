@@ -43,10 +43,10 @@ def chamber_lookup_table_func(doy, chamber_config=None):
         with open('chamber.yaml', 'r') as fo:
             chamber_config = yaml.load(fo)
 
-    for key in chamber_config:
-        if (chamber_config[key]['schedule_start'] <= doy <
-                chamber_config[key]['schedule_end']):
-            current_schedule = chamber_config[key]
+    for sch_id in chamber_config:
+        if (chamber_config[sch_id]['schedule_start'] <= doy <
+                chamber_config[sch_id]['schedule_end']):
+            current_schedule = chamber_config[sch_id]
             break
     else:
         warnings.warn('No valid chamber schedule found on the day %s.' %

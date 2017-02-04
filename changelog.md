@@ -2,19 +2,22 @@
 
 # current
 
+@TODO:
+- Add timelag control in `chamber.yaml`
+- Test and refine the chamber schedule function for timelag optimization.
+- Add leaf area auxiliary data parsing
+- Add `is_leaf_chamber` identifier for the chamber config file `chamber.yaml`
+
+# 0.1.2 (2017-02-04)
+
+- Separate flow data files are supported with `load_flow_data()` function.
 - Refined saturation vapor pressure and dew temperature functions.
 - Refined summary statistics functions in `common_func.py`:
 	* `resist_mean()`: outlier-resistant mean
 	* `resist_std()`: outlier-resistant standard deviation
 	* `IQR_func()`: interquartile range
 - List of physical constants moved from `config.yaml` to `common_func.py`.
-
-@TODO:
-- Test and refine the chamber schedule function.
-- Add flow data parsing
-- Add leaf area auxiliary data parsing
-- Add `is_leaf_chamber` identifier for the chamber config file `chamber.yaml`
-- Add timelag control in `chamber.yaml`
+- Added a bash script for the test case.
 
 # 0.1.1 (2017-01-18)
 
@@ -34,4 +37,4 @@
 
 # 0.0.1 (2016-07-18)
 
-- Created by Wu Sun @ UCLA (wu.sun@ucla.edu).
+- Created by Wu Sun (wu.sun@ucla.edu).

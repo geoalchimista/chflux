@@ -10,23 +10,15 @@ import datetime
 import argparse
 import warnings
 import yaml
+from distutils.version import LooseVersion
 
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy import stats, optimize
 
 from common_func import *
-
-
-# deprecated imports
-# -----------------------------------------------------------------------------
-# import sys
-# import copy
-# import linecache
-# import scipy.constants.constants as sci_consts
-# os.chdir('/Users/wusun/Dropbox/Projects/models/chflux/')  # for temporary use
-# from general_config import *  # deprecated
 
 
 # Command-line argument parser
@@ -46,9 +38,12 @@ if args.config is None:
 
 # Global settings (not from the config file)
 # =============================================================================
-plt.rcParams.update({'mathtext.default': 'regular'})  # sans-serif math
+if LooseVersion(mpl.__version__) < LooseVersion('2.0.0'):
+    # enforce sans-serif math for matplotlib version before 2.0.0
+    plt.rcParams.update({'mathtext.default': 'regular'})
 
 # suppress the annoying numpy runtime warning of "mean of empty slice"
+# @FIXME: warning suppression is lame; needs to be improved
 warnings.simplefilter('ignore', category=RuntimeWarning)
 # suppress the annoying matplotlib tight_layout user warning
 warnings.simplefilter('ignore', category=UserWarning)
@@ -63,6 +58,10 @@ def load_config(filepath):
             print(exc_yaml)
 
     return config
+
+
+# @TODO: create a generalized data reader function to deal with
+# biomet, conc, and flow data (the less repetition the better)
 
 
 def load_biomet_data(config, query=None):
@@ -81,6 +80,7 @@ def load_biomet_data(config, query=None):
     -------
     df_biomet : pandas.DataFrame
         The loaded biometeorological data.
+
     """
     # unpack config
     data_dir = config['data_dir']
@@ -129,6 +129,70 @@ def load_biomet_data(config, query=None):
     return df_biomet
 
 
+def load_flow_data(config, query=None):
+    """
+    Read flow data.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration dictionary parsed from the YAML config file.
+    query : str
+        The query string used to search in all available data files.
+        If `None` (default), read all data files.
+
+    Returns
+    -------
+    df_flow : pandas.DataFrame
+        The loaded flow data.
+
+    """
+    # unpack config
+    data_dir = config['data_dir']
+    flow_data_settings = config['flow_data_settings']
+
+    # search for data files
+    flow_flist = glob.glob(data_dir['flow_data'])
+
+    # check flow data existence
+    if not len(flow_flist):
+        print('Cannot find the flow data file!')
+        return None
+    else:
+        print('%d flow data files are found. ' % len(flow_flist) +
+              'Loading...')
+
+    if query is not None:
+        flow_flist = [f for f in flow_flist if query in f]
+
+    # load all flow data
+    df_flow = None
+    for entry in flow_flist:
+        print(entry)
+        df_flow_loaded = pd.read_csv(
+            entry, delimiter=flow_data_settings['delimiter'],
+            header=flow_data_settings['header'],
+            names=flow_data_settings['names'],
+            usecols=flow_data_settings['usecols'],
+            dtype=flow_data_settings['dtype'],
+            na_values=flow_data_settings['na_values'],
+            engine='c', encoding='utf-8')
+        # Note: sometimes it may need explicit definitions of data types to
+        # avoid a numpy NaN-to-integer error
+
+        if df_flow is None:
+            df_flow = df_flow_loaded
+        else:
+            df_flow = pd.concat([df_flow, df_flow_loaded], ignore_index=True)
+
+        del(df_flow_loaded)
+
+    # echo flow data status
+    print('%d lines read from flow data.' % df_flow.shape[0])
+
+    return df_flow
+
+
 def load_conc_data(config, query=None):
     """
     Read concentration data.
@@ -145,6 +209,7 @@ def load_conc_data(config, query=None):
     -------
     df_conc : pandas.DataFrame
         The loaded concentration data.
+
     """
     # unpack config
     data_dir = config['data_dir']
@@ -303,7 +368,8 @@ def check_starting_year(df, timestamp_format=None, time_sec_start=None):
     return year_start
 
 
-def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
+def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
+              doy, year, config):
     """
     Calculate fluxes and generate plots.
 
@@ -337,6 +403,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
     data_dir = config['data_dir']
     biomet_data_settings = config['biomet_data_settings']
     conc_data_settings = config['conc_data_settings']
+    flow_data_settings = config['flow_data_settings']
     # consts = config['constants']
     site_parameters = config['site_parameters']
     species_settings = config['species_settings']
@@ -402,8 +469,6 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
         # n_cycle_per_day = chlut.n_cycle_per_day
         schedule_end = chlut.schedule_end
 
-        # chlut_now, n_ch, smpl_cycle_len, n_cycle_per_day, next_schedule_switch = \
-        #     chamber_lookup_table_func_old(doy + timer, return_all=True)
         ch_start = np.append(ch_start,
                              df_chlut['ch_start'].values + doy + timer)
         ch_no = np.append(ch_no, df_chlut['ch_no'].values)
@@ -581,8 +646,10 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
                     if 'T_soil_' in s or s == 'T_soil']
     w_soil_names = [s for s in biomet_data_settings['names']
                     if 'w_soil_' in s or s == 'w_soil']
-    flow_ch_names = [s for s in biomet_data_settings['names']
-                     if 'flow_ch_' in s or s == 'flow_ch']
+    # flow_ch_names = [s for s in biomet_data_settings['names']
+    #                 if 'flow_ch_' in s or s == 'flow_ch']
+    flow_ch_names = [s for s in df_flow.columns.values
+                     if 'flow_ch' in s]
 
     # initialize biomet variables
     # ---------------------------
@@ -650,17 +717,23 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
     for loop_num in range(n_smpl_per_day):
         # get the current chamber's meta info
         df_chlut_current = chamber_lookup_table_func(ch_start[loop_num]).df
-        df_chlut_current = df_chlut_current[df_chlut_current['ch_no'] == ch_no[loop_num]]
+        df_chlut_current = df_chlut_current[
+            df_chlut_current['ch_no'] == ch_no[loop_num]]
         A_ch[loop_num] = df_chlut_current['A_ch'].values[0]
         V_ch[loop_num] = df_chlut_current['V_ch'].values[0]
         ch_label.append(df_chlut_current['ch_label'].values[0])
         # Note: 'ch_label' is a list! not an array
 
-        ch_o_b[loop_num] = ch_start[loop_num] + df_chlut_current['ch_o_b'].values[0]
-        ch_cls[loop_num] = ch_start[loop_num] + df_chlut_current['ch_cls'].values[0]
-        ch_o_a[loop_num] = ch_start[loop_num] + df_chlut_current['ch_o_a'].values[0]
-        ch_atm_a[loop_num] = ch_start[loop_num] + df_chlut_current['ch_atm_a'].values[0]
-        ch_end[loop_num] = ch_start[loop_num] + df_chlut_current['ch_end'].values[0]
+        ch_o_b[loop_num] = ch_start[loop_num] + \
+            df_chlut_current['ch_o_b'].values[0]
+        ch_cls[loop_num] = ch_start[loop_num] + \
+            df_chlut_current['ch_cls'].values[0]
+        ch_o_a[loop_num] = ch_start[loop_num] + \
+            df_chlut_current['ch_o_a'].values[0]
+        ch_atm_a[loop_num] = ch_start[loop_num] + \
+            df_chlut_current['ch_atm_a'].values[0]
+        ch_end[loop_num] = ch_start[loop_num] + \
+            df_chlut_current['ch_end'].values[0]
 
         ch_time[loop_num] = 0.5 * (ch_cls[loop_num] + ch_o_a[loop_num])
 
@@ -678,7 +751,8 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
                     df_biomet.loc[ind_ch_biomet, 'pres'].values)
             else:
                 if site_parameters['site_pressure'] is None:
-                    pres[loop_num] = phys_const['p_std']  # site_parameters['p_std']
+                    # site_parameters['p_std']
+                    pres[loop_num] = phys_const['p_std']
                     # use standard atm pressure if no site pressure is defined
                 else:
                     pres[loop_num] = site_parameters['site_pressure']
@@ -750,29 +824,31 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
                         df_biomet.loc[ind_ch_biomet, flow_ch_names[i]].values)
             '''
 
+        # extract indices for averaging flow rates, no time lag
+        ind_ch_flow = np.where((doy_flow >= ch_start[loop_num]) &
+                               (doy_flow < ch_end[loop_num]))[0]
+        # include the full chamber period
+        n_ind_ch_flow = ind_ch_flow.size
+
         # flow rate is only needed for the chamber currently being measured
         if len(flow_ch_names) > 0:
-            # find the column location to extract the flow rate of the current chamber
+            # find the column location to extract the flow rate of the current
+            # chamber
             flow_loc = [k for k, s in enumerate(flow_ch_names)
                         if 'ch_' + str(ch_no[loop_num]) in s]
             if len(flow_loc) > 0:
                 # flow_lpm[loop_num] = flow_ch[loop_num, flow_loc[0]]
-                flow_lpm[loop_num] = np.nanmean(
-                    df_biomet.loc[ind_ch_biomet, flow_ch_names[flow_loc[0]]].values)
-                # convert standard liter per minute to liter per minute, if applicable
-                if biomet_data_settings['flow_rate_in_STP']:
-                    flow_lpm[loop_num] = flow_lpm[loop_num] * \
-                        (T_ch[loop_num, ch_no[loop_num] - 1] + phys_const['T_0']) / \
-                        phys_const['T_0'] * phys_const['p_std'] / pres[loop_num]
-        # else:
-            # call the user-defined flow rate function if there is no flow rate data in the biomet data table
-            # `chamber_flow_rates` function is imported from `common_func.py`
-            # deprecate this
-            # flow_lpm[loop_num], is_flow_STP = chamber_flow_rates(ch_time[loop_num], ch_no[loop_num])
-            # if is_flow_STP:
-            #     flow_lpm[loop_num] = flow_lpm[loop_num] * \
-            #         (T_ch[loop_num, ch_no[loop_num] - 1] + phys_const['T_0']) / \
-            #         phys_const['T_0'] * phys_const['p_std'] / pres[loop_num]
+                flow_lpm[loop_num] = \
+                    np.nanmean(df_flow.loc[ind_ch_flow,
+                                           flow_ch_names[flow_loc[0]]].values)
+                # convert standard liter per minute to liter per minute, if
+                # applicable
+                if flow_data_settings['flow_rate_in_STP']:
+                    flow_lpm[loop_num] *= \
+                        (T_ch[loop_num, ch_no[loop_num] - 1] +
+                            phys_const['T_0']) / \
+                        phys_const['T_0'] * \
+                        phys_const['p_std'] / pres[loop_num]
 
         # convert volumetric flow to mass flow (mol s^-1)
         flow[loop_num] = flow_lpm[loop_num] * 1e-3 / 60. * \
@@ -907,7 +983,8 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
                 # - `chc_time`: chamber closure
                 # - `cha_time`: chamber open, after closure
                 # - `atma_time`: atmospheric line, after closure
-                ch_full_time = (doy_conc[ind_ch_full] - ch_start[loop_num]) * 86400.
+                ch_full_time = (doy_conc[ind_ch_full] -
+                                ch_start[loop_num]) * 86400.
                 chb_time = (doy_conc[ind_chb] - ch_start[loop_num]) * 86400.
                 atmb_time = (doy_conc[ind_atmb] - ch_start[loop_num]) * 86400.
                 chc_time = (doy_conc[ind_chc] - ch_start[loop_num]) * 86400.
@@ -915,8 +992,8 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
                 atma_time = (doy_conc[ind_atma] - ch_start[loop_num]) * 86400.
 
                 # conc of current species defined with 'spc_id'
-                chc_conc = df_conc.loc[ind_chc, species_list[spc_id]].values * \
-                    conc_factor[spc_id]
+                chc_conc = df_conc.loc[
+                    ind_chc, species_list[spc_id]].values * conc_factor[spc_id]
 
                 # calculate slopes and intercepts of the zero-flux baselines
                 # baseline end points changed from mean to medians (05/05/2016)
@@ -1010,7 +1087,9 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
 
                 # nonlinear fit
                 # -------------------------------------------------------------
-                t_fit = (chc_time - chc_time[0] + (time_lag_in_day + dt_lmargin) * 8.64e4) / t_turnover[loop_num]
+                t_fit = (chc_time - chc_time[0] +
+                         (time_lag_in_day + dt_lmargin) * 8.64e4) / \
+                    t_turnover[loop_num]
                 params_nonlin_guess = [- flux_lin[loop_num, spc_id], 0.]
                 params_nonlin = optimize.least_squares(
                     resid_conc_func, params_nonlin_guess,
@@ -1033,8 +1112,9 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
                 # use NaN as placeholder for now
                 se_p1_nonlin[loop_num, spc_id] = np.nan
                 # use NaN as placeholder for now
-                rmse_nonlin[loop_num, spc_id] = np.sqrt(
-                    np.nanmean((conc_fitted_nonlin[spc_id, :] - chc_conc) ** 2))
+                rmse_nonlin[loop_num, spc_id] = \
+                    np.sqrt(np.nanmean((conc_fitted_nonlin[spc_id, :] -
+                                        chc_conc) ** 2))
                 delta_nonlin[loop_num, spc_id] = \
                     (conc_fitted_nonlin[spc_id, -1] - conc_bl[-1]) - \
                     (conc_fitted_nonlin[spc_id, 0] - conc_bl[0])
@@ -1054,13 +1134,6 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config):
             if flag_calc_flux and run_options['save_fitting_plots']:
                 fig, axes = plt.subplots(nrows=n_species, sharex=True,
                                          figsize=(8, 3 * n_species))
-
-                # ... to be continued
-                
-                # axes[0].set_title('ch #' + '%d' % (ch_no[loop_num]) + '    DOY local: ' + '%.4f' % (cr_chmb_time[loop_num]-7./24.) + 
-                #     '    ' + (datetime.datetime(2016, 1, 1, 0, 0) + datetime.timedelta(days=ch_start - 7./24.)).strftime('%d %b %Y, %H:%M') + ' PDT' + 
-                #     '\nF$_{CO2}$ = ' + '%.2f' % fco2[loop_num] + '\tF$_{H2O}$ = ' + '%.2f' % fh2o[loop_num] + 
-                #     '\tPAR = ' + '%.2f' % PAR_ch[loop_num, ch_no[loop_num]-1])
 
                 for i, s in enumerate(species_list):
                     # color different time segments
@@ -1398,6 +1471,39 @@ def main():
         print('Notice: Concentration data are extracted from biomet data, ' +
               'because they are not stored in their own files.')
 
+    # read flow data
+    if config['data_dir']['separate_flow_data']:
+        # if flow data are in their own files, read from files
+        df_flow = load_flow_data(config)
+        # check data size; if no data entry in it, terminate the program
+        if df_flow is None:
+            print('Program is aborted: no flow data file is found.')
+            exit(1)
+        elif df_flow.shape[0] == 0:
+            print('Program is aborted: no entry in the flow data.')
+            exit(1)
+
+        # parse time variable
+        print('Parsing time variable in the flow data...')
+        doy_flow = timestamp_to_doy(
+            df_flow,
+            timestamp_format=config['flow_data_settings']['timestamp_format'],
+            time_sec_start=config['flow_data_settings']['time_sec_start'])
+        # check if the conversion to day of year is successful or not
+        if doy_flow is None:
+            print('Program is aborted: ' +
+                  'No time variable found in the flow data.')
+            exit(1)
+        else:
+            print('Time variable parsed successfully.')
+    else:
+        # if flow data are not in their own files, create aliases for
+        # biomet data and the parsed time variable
+        df_flow = df_biomet
+        doy_flow = doy_biomet
+        print('Notice: Flow data are extracted from biomet data, ' +
+              'because they are not stored in their own files.')
+
     # check starting years of biomet data and conc data
     # this is to make sure the converted day of year variables are referenced
     # to the same staring year
@@ -1424,7 +1530,8 @@ def main():
 
     # calculate fluxes day by day
     for doy in np.arange(doy_start, doy_end):
-        flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, doy, year, config)
+        flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
+                  doy, year, config)
 
     # Echo program ending
     # =========================================================================

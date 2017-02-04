@@ -170,9 +170,6 @@ biomet_data_settings:  # Settings for reading the biomet data
     # For example, dtype: "f8, f8, f8, i8" indicates that the first 3 columns 
     # are (double) floating numbers and the last column is of integer type.
 
-    missing_values: null
-    # deprecated, see `na_values`.
-
     na_values: null
     # Modify this if you need specify the missing values.
     # Default is `null` that uses the default options of `pandas.read_csv()`.
@@ -197,12 +194,6 @@ biomet_data_settings:  # Settings for reading the biomet data
 
     time_in_UTC: true
     # Default is `true` to treat the time variable in UTC time.
-
-    flow_rate_in_STP: true
-    # By default set to `true`. The flow rate is referenced to STP condition,
-    # as for many commonly available flow sensors. This means that the
-    # flow rates need to be corrected for ambient temperature and pressure.
-    # If set to false, no such correction on flow rates is applied.
 
 
 conc_data_settings:  # Settings for reading the concentration data
@@ -234,9 +225,6 @@ conc_data_settings:  # Settings for reading the concentration data
     # You can also modify the line above to customize column data types.
     # For example, dtype: "f8, f8, f8, i8" indicates that the first 3 columns 
     # are (double) floating numbers and the last column is of integer type.
-
-    missing_values: null
-    # deprecated, see `na_values`.
 
     na_values: null
     # Modify this if you need specify the missing values.
@@ -293,9 +281,6 @@ flow_data_settings:  # Settings for reading the flow rate data
     # For example, dtype: "f8, f8, f8, i8" indicates that the first 3 columns 
     # are (double) floating numbers and the last column is of integer type.
 
-    missing_values: null
-    # deprecated, see `na_values`.
-
     na_values: null
     # Modify this if you need specify the missing values.
 
@@ -319,6 +304,12 @@ flow_data_settings:  # Settings for reading the flow rate data
 
     time_in_UTC: true
     # Default is `true` to treat the time variable in UTC time.
+
+    flow_rate_in_STP: true
+    # By default set to `true`. The flow rate is referenced to STP condition,
+    # as for many commonly available flow sensors. This means that the
+    # flow rates need to be corrected for ambient temperature and pressure.
+    # If set to false, no such correction on flow rates is applied.
 
 
 site_parameters:
