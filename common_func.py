@@ -320,8 +320,8 @@ def IQR_func(x, axis=None):
 
     Returns
     -------
-    x_rstd : float or array_like
-        The resistant standard deviation of the sample with outliers removed.
+    IQR : float or array_like
+        The interquartile range of an array.
 
     """
     if np.sum(np.isfinite(x)) > 0:
