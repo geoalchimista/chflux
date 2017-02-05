@@ -12,9 +12,5 @@ In active development.
 
 ## Dependencies
 
-- Python 3.4 or above
-- NumPy
-- SciPy
-- pandas
-- matplotlib
-- PyYAML
+- Python 3.5 or 3.6
+- Python packages: `numpy`, `scipy`, `pandas`, `matplotlib`, PyYaML (`yaml`)

@@ -68,6 +68,9 @@ data_dir:  # Input and output directories, and other related settings
     flow_data: null
     # Absolute or relative directory to search for flow rate data files.
 
+    leaf_data: null
+    # Absolute or relative directory to search for leaf area data files.
+
     output_dir: "./output/"
     # Output directory for the processed flux data.
 
@@ -86,6 +89,12 @@ data_dir:  # Input and output directories, and other related settings
     # If `false` (default), search flow rate variables in the biomet data.
     # If `true`, flow rate measurements are stored on their own, not in
     # the biomet data files (possibly relevant for some MFC instruments).
+
+    separate_leaf_data: false
+    # If `false` (default), leaf area values are defined with `A_ch` in
+    # the chamber schedule configuration. 
+    # If `true`, leaf area measurements are stored on their own, not in
+    # the chamber schedule configuration file.
 
 
 rules_for_standardized_names: |  # A huge comment block stating naming rules
@@ -310,6 +319,65 @@ flow_data_settings:  # Settings for reading the flow rate data
     # as for many commonly available flow sensors. This means that the
     # flow rates need to be corrected for ambient temperature and pressure.
     # If set to false, no such correction on flow rates is applied.
+
+
+leaf_data_settings:  # Settings for reading the leaf area data
+    # must contain a timestamp variable 
+    # leaf area variables must be labeled with chamber labels that correspond
+    # to those defined in `ch_label` in the chamber schedule configuration.
+
+    delimiter: ","
+    # Supported table delimiters:
+    #   - singe space: " "
+    #   - indefinite number of spaces: "\\s+" (works also for single space)
+    #   - comma: ","
+    #   - tab: "\\t"
+
+    header: "infer"
+    # Number of rows to skip at the beginning of the file.
+    # Default behavior is to infer it with `pandas.read_csv()`.
+
+    names: null
+    # Define the data table column names. 
+    # Default is `null`, i.e., to infer with `pandas.read_csv()`.
+    # Tip: copy the column names from the data file, and then change name of
+    # the variables of interest to the standardized names.
+
+    usecols: null
+    # Specify a sequence of indices for columns to read into the data
+    # structure. Column index starts from 0 in Python.
+    # Default behavior (`null`) is to read all columns.
+
+    dtype: null
+    # If `null`, falls back to the default setting of `pandas.read_csv()`.
+    # Its default settings handle data types pretty well without specification.
+    # You can also modify the line above to customize column data types.
+    # For example, dtype: "f8, f8, f8, i8" indicates that the first 3 columns 
+    # are (double) floating numbers and the last column is of integer type.
+
+    na_values: null
+    # Modify this if you need specify the missing values.
+
+    columns_to_save: null
+    # If `null`, save all columns of the 'standardized variables' parsed from 
+    # the flow data table
+
+    timestamp_format: null
+    # If `null`, use the default timestamp format '%Y-%m-%d:%X' corresponding
+    # to 'yyyy-mm-dd hh:mm:ss'. Modify this if you have a different timestamp 
+    # format. See Python 3 `datetime` format reference: 
+    # <https://docs.python.org/3/library/datetime.html>
+
+    time_sec_start: null
+    # If null, the starting year of the time_sec format is 1904 (LabVIEW).
+    # This option only takes the year number in four digits (integer).
+    # For example, an instrument working on Unix system may give time in 
+    # seconds since 1 Jan 1970 00:00, then this option should be set to 1970.
+    # Check your instrument manual for its specific time format, if it records
+    # time in seconds since a date.
+
+    time_in_UTC: true
+    # Default is `true` to treat the time variable in UTC time.
 
 
 site_parameters:

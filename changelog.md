@@ -2,11 +2,13 @@
 
 # current
 
+- Added `is_leaf_chamber` identifier for the chamber config file `chamber.yaml`
+- Added leaf area auxiliary data support. Now the program can takes leaf area time series in flux calculation, rather than fixed values over the whole period. If the `separate_leaf_data` setting is enable, leaf chambers specified with `is_leaf_chamber == True` will take external leaf area data.
+
 @TODO:
 - Add timelag control in `chamber.yaml`
 - Test and refine the chamber schedule function for timelag optimization.
-- Add leaf area auxiliary data parsing
-- Add `is_leaf_chamber` identifier for the chamber config file `chamber.yaml`
+- Daily summary plots.
 
 # 0.1.2 (2017-02-04)
 

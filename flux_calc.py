@@ -258,6 +258,70 @@ def load_conc_data(config, query=None):
     return df_conc
 
 
+def load_leaf_data(config, query=None):
+    """
+    Read leaf area data.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration dictionary parsed from the YAML config file.
+    query : str
+        The query string used to search in all available data files.
+        If `None` (default), read all data files.
+
+    Returns
+    -------
+    df_leaf : pandas.DataFrame
+        The loaded leaf area data.
+
+    """
+    # unpack config
+    data_dir = config['data_dir']
+    leaf_data_settings = config['leaf_data_settings']
+
+    # search for data files
+    leaf_flist = glob.glob(data_dir['leaf_data'])
+
+    # check leaf area data existence
+    if not len(leaf_flist):
+        print('Cannot find the leaf area data file!')
+        return None
+    else:
+        print('%d leaf area data files are found. ' % len(leaf_flist) +
+              'Loading...')
+
+    if query is not None:
+        leaf_flist = [f for f in leaf_flist if query in f]
+
+    # load all leaf data
+    df_leaf = None
+    for entry in leaf_flist:
+        print(entry)
+        df_leaf_loaded = pd.read_csv(
+            entry, delimiter=leaf_data_settings['delimiter'],
+            header=leaf_data_settings['header'],
+            names=leaf_data_settings['names'],
+            usecols=leaf_data_settings['usecols'],
+            dtype=leaf_data_settings['dtype'],
+            na_values=leaf_data_settings['na_values'],
+            engine='c', encoding='utf-8')
+        # Note: sometimes it may need explicit definitions of data types to
+        # avoid a numpy NaN-to-integer error
+
+        if df_leaf is None:
+            df_leaf = df_leaf_loaded
+        else:
+            df_leaf = pd.concat([df_leaf, df_leaf_loaded], ignore_index=True)
+
+        del(df_leaf_loaded)
+
+    # echo leaf data status
+    print('%d lines read from leaf area data.' % df_leaf.shape[0])
+
+    return df_leaf
+
+
 def timestamp_to_doy(df, timestamp_format=None, time_sec_start=None):
     """
     Convert timestamp in a dataframe to day of year.
@@ -369,7 +433,7 @@ def check_starting_year(df, timestamp_format=None, time_sec_start=None):
 
 
 def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
-              doy, year, config):
+              df_leaf, doy_leaf, doy, year, config):
     """
     Calculate fluxes and generate plots.
 
@@ -628,26 +692,42 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
     # - `T_soil_names`: T_soil variable names
     # - `w_soil_names`: w_soil variable names
     # - `flow_ch_names`: flow_ch variable names
-    T_atm_names = [s for s in biomet_data_settings['names']
-                   if 'T_atm_' in s or s == 'T_atm']
-    RH_atm_names = [s for s in biomet_data_settings['names']
-                    if 'RH_atm_' in s or s == 'RH_atm']
-    T_ch_names = [s for s in biomet_data_settings['names']
-                  if 'T_ch_' in s or s == 'T_ch']
-    # T_dew_ch_names = [s for s in biomet_data_settings['names']
-    #                   if 'T_dew_ch_' in s or s == 'T_dew_ch']
-    PAR_names = [s for s in biomet_data_settings['names']
-                 if ('PAR_' in s or s == 'PAR') and 'PAR_ch' not in s]
-    PAR_ch_names = [s for s in biomet_data_settings['names']
-                    if 'PAR_ch_' in s or s == 'PAR_ch']
-    T_leaf_names = [s for s in biomet_data_settings['names']
-                    if 'T_leaf_' in s or s == 'T_leaf']
-    T_soil_names = [s for s in biomet_data_settings['names']
-                    if 'T_soil_' in s or s == 'T_soil']
-    w_soil_names = [s for s in biomet_data_settings['names']
-                    if 'w_soil_' in s or s == 'w_soil']
-    # flow_ch_names = [s for s in biomet_data_settings['names']
-    #                 if 'flow_ch_' in s or s == 'flow_ch']
+    T_atm_names = [s for s in df_biomet.columns.values
+                   if 'T_atm' in s]
+    RH_atm_names = [s for s in df_biomet.columns.values
+                    if 'RH_atm' in s]
+    T_ch_names = [s for s in df_biomet.columns.values
+                  if 'T_ch' in s]
+    PAR_names = [s for s in df_biomet.columns.values
+                 if 'PAR' in s and 'PAR_ch' not in s]
+    PAR_ch_names = [s for s in df_biomet.columns.values
+                    if 'PAR_ch' in s]
+    T_leaf_names = [s for s in df_biomet.columns.values
+                    if 'T_leaf' in s]
+    T_soil_names = [s for s in df_biomet.columns.values
+                    if 'T_soil' in s]
+    w_soil_names = [s for s in df_biomet.columns.values
+                    if 'w_soil' in s]
+    # T_atm_names = [s for s in biomet_data_settings['names']
+    #                if 'T_atm_' in s or s == 'T_atm']
+    # RH_atm_names = [s for s in biomet_data_settings['names']
+    #                 if 'RH_atm_' in s or s == 'RH_atm']
+    # T_ch_names = [s for s in biomet_data_settings['names']
+    #               if 'T_ch_' in s or s == 'T_ch']
+    # # T_dew_ch_names = [s for s in biomet_data_settings['names']
+    # #                   if 'T_dew_ch_' in s or s == 'T_dew_ch']
+    # PAR_names = [s for s in biomet_data_settings['names']
+    #              if ('PAR_' in s or s == 'PAR') and 'PAR_ch' not in s]
+    # PAR_ch_names = [s for s in biomet_data_settings['names']
+    #                 if 'PAR_ch_' in s or s == 'PAR_ch']
+    # T_leaf_names = [s for s in biomet_data_settings['names']
+    #                 if 'T_leaf_' in s or s == 'T_leaf']
+    # T_soil_names = [s for s in biomet_data_settings['names']
+    #                 if 'T_soil_' in s or s == 'T_soil']
+    # w_soil_names = [s for s in biomet_data_settings['names']
+    #                 if 'w_soil_' in s or s == 'w_soil']
+    # # flow_ch_names = [s for s in biomet_data_settings['names']
+    # #                 if 'flow_ch_' in s or s == 'flow_ch']
     flow_ch_names = [s for s in df_flow.columns.values
                      if 'flow_ch' in s]
 
@@ -736,6 +816,12 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
             df_chlut_current['ch_end'].values[0]
 
         ch_time[loop_num] = 0.5 * (ch_cls[loop_num] + ch_o_a[loop_num])
+
+        # correct leaf area if supplied by external data
+        if (data_dir['separate_leaf_data'] and df_leaf is not None and
+                df_chlut_current['is_leaf_chamber'].values[0]):
+            A_ch[loop_num] = np.interp(
+                doy_leaf, df_leaf[ch_label[-1]].values, ch_time[loop_num])
 
         # extract indices for averaging biomet variables, no time lag
         ind_ch_biomet = np.where((doy_biomet >= ch_start[loop_num]) &
@@ -1504,6 +1590,38 @@ def main():
         print('Notice: Flow data are extracted from biomet data, ' +
               'because they are not stored in their own files.')
 
+    # read leaf data
+    if config['data_dir']['separate_leaf_data']:
+        print('Notice: Leaf area data are stored separately ' +
+              'from chamber configuration.')
+        # if leaf data are in their own files, read from files
+        df_leaf = load_leaf_data(config)
+        # check data size; if no data entry in it, terminate the program
+        if df_leaf is None:
+            print('Program is aborted: no leaf area data file is found.')
+            exit(1)
+        elif df_leaf.shape[0] == 0:
+            print('Program is aborted: no entry in the leaf area data.')
+            exit(1)
+
+        # parse time variable
+        print('Parsing time variable in the leaf area data...')
+        doy_leaf = timestamp_to_doy(
+            df_leaf,
+            timestamp_format=config['leaf_data_settings']['timestamp_format'],
+            time_sec_start=config['leaf_data_settings']['time_sec_start'])
+        # check if the conversion to day of year is successful or not
+        if doy_leaf is None:
+            print('Program is aborted: ' +
+                  'No time variable found in the leaf area data.')
+            exit(1)
+        else:
+            print('Time variable parsed successfully.')
+    else:
+        # if leaf data are not in their own files, set them to None
+        df_leaf = None
+        doy_leaf = None
+
     # check starting years of biomet data and conc data
     # this is to make sure the converted day of year variables are referenced
     # to the same staring year
@@ -1531,7 +1649,7 @@ def main():
     # calculate fluxes day by day
     for doy in np.arange(doy_start, doy_end):
         flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
-                  doy, year, config)
+                  df_leaf, doy_leaf, doy, year, config)
 
     # Echo program ending
     # =========================================================================
