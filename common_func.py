@@ -46,8 +46,19 @@ def chamber_lookup_table_func(doy, chamber_config_filepath=None):
         chamber_config = yaml.load(fo)
 
     for sch_id in chamber_config:
-        if (chamber_config[sch_id]['schedule_start'] <= doy <
-                chamber_config[sch_id]['schedule_end']):
+        if type(chamber_config[sch_id]['schedule_start']) is str:
+            sch_start = pd.Timestamp(chamber_config[sch_id]['schedule_start'])
+            sch_end = pd.Timestamp(chamber_config[sch_id]['schedule_end'])
+            sch_start_doy = sch_start.dayofyear - 1. + \
+                sch_start.hour / 24. + sch_start.minute / 1440. + \
+                sch_start.second / 86400.
+            sch_end_doy = sch_end.dayofyear - 1. + \
+                sch_end.hour / 24. + sch_end.minute / 1440. + \
+                sch_end.second / 86400.
+        else:
+            sch_start_doy = chamber_config[sch_id]['schedule_start']
+            sch_end_doy = chamber_config[sch_id]['schedule_end']
+        if (sch_start_doy <= doy < sch_end_doy):
             current_schedule = chamber_config[sch_id]
             break
     else:

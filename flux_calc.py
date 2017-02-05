@@ -30,7 +30,8 @@ parser.add_argument('-c', '--config', dest='config',
 
 args = parser.parse_args()
 
-default_config_filepath = 'config.yaml'
+current_dir = os.path.dirname(os.path.abspath(__file__))
+default_config_filepath = current_dir + '/config.yaml'
 
 if args.config is None:
     args.config = default_config_filepath
@@ -354,6 +355,9 @@ def timestamp_to_doy(df, timestamp_format=None, time_sec_start=None):
     if 'time_doy' in df.columns.values:
         # if 'time_doy' is already in the dataframe, define an alias for it
         doy = df['time_doy'].values
+    elif 'doy' in df.columns.values:
+        # 'doy' is treated the same as 'time_doy'
+        doy = df['doy'].values
     elif 'timestamp' in df.columns.values:
         year_start = datetime.datetime.strptime(
             df.loc[0, 'timestamp'], timestamp_format).year
@@ -826,7 +830,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
         if (data_dir['separate_leaf_data'] and df_leaf is not None and
                 df_chlut_current['is_leaf_chamber'].values[0]):
             A_ch[loop_num] = np.interp(
-                doy_leaf, df_leaf[ch_label[-1]].values, ch_time[loop_num])
+                ch_time[loop_num], doy_leaf, df_leaf[ch_label[-1]].values)
 
         # extract indices for averaging biomet variables, no time lag
         ind_ch_biomet = np.where((doy_biomet >= ch_start[loop_num]) &
@@ -1634,10 +1638,16 @@ def main():
         df_biomet,
         timestamp_format=config['biomet_data_settings']['timestamp_format'],
         time_sec_start=config['biomet_data_settings']['time_sec_start'])
+    if year_biomet is None:
+        year_biomet = config['biomet_data_settings']['year_ref']
+
     year_conc = check_starting_year(
         df_conc,
         timestamp_format=config['conc_data_settings']['timestamp_format'],
         time_sec_start=config['conc_data_settings']['time_sec_start'])
+    if year_conc is None:
+        year_conc = config['conc_data_settings']['year_ref']
+
     if year_biomet != year_conc and config['data_dir']['separate_conc_data']:
         print('Program is aborted: Year numbers do not match between ' +
               'biomet data and concentration data.')

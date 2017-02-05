@@ -204,6 +204,9 @@ biomet_data_settings:  # Settings for reading the biomet data
     # Check your instrument manual for its specific time format, if it records
     # time in seconds since a date.
 
+    year_ref: null
+    # must specify a reference year if the time variable is day of year number
+
     time_in_UTC: true
     # Default is `true` to treat the time variable in UTC time.
 
@@ -259,6 +262,9 @@ conc_data_settings:  # Settings for reading the concentration data
     # Check your instrument manual for its specific time format, if it records
     # time in seconds since a date.
 
+    year_ref: null
+    # must specify a reference year if the time variable is day of year number
+
     time_in_UTC: true
     # Default is `true` to treat the time variable in UTC time.
 
@@ -313,6 +319,9 @@ flow_data_settings:  # Settings for reading the flow rate data
     # seconds since 1 Jan 1970 00:00, then this option should be set to 1970.
     # Check your instrument manual for its specific time format, if it records
     # time in seconds since a date.
+
+    year_ref: null
+    # must specify a reference year if the time variable is day of year number
 
     time_in_UTC: true
     # Default is `true` to treat the time variable in UTC time.
@@ -378,6 +387,9 @@ leaf_data_settings:  # Settings for reading the leaf area data
     # seconds since 1 Jan 1970 00:00, then this option should be set to 1970.
     # Check your instrument manual for its specific time format, if it records
     # time in seconds since a date.
+
+    year_ref: null
+    # must specify a reference year if the time variable is day of year number
 
     time_in_UTC: true
     # Default is `true` to treat the time variable in UTC time.

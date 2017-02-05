@@ -2,6 +2,8 @@
 
 # current
 
+Bug fix: year number must be specified when using day of year number as the time variable.
+
 @TODO:
 - Add timelag control in `chamber.yaml`
 - Test and refine the chamber schedule function for timelag optimization.
