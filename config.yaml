@@ -18,6 +18,9 @@
 
 
 run_options:  # Running options
+    chamber_config_filepath: "chamber.yaml"
+    # Configuration file that describes chamber settings.
+
     baseline_correction: true
     # If true, a zero-flux baseline correction is applied.
 
@@ -64,7 +67,7 @@ data_dir:  # Input and output directories, and other related settings
 
     conc_data: "./conc/*.csv"
     # Absolute or relative directory to search for concentration data files.
-    
+
     flow_data: null
     # Absolute or relative directory to search for flow rate data files.
 

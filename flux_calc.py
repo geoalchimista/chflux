@@ -409,6 +409,7 @@ def check_starting_year(df, timestamp_format=None, time_sec_start=None):
     -------
     year_start : int
         Staring year of the dataframe timestamp.
+
     """
     # set default timestamp format and `time_sec` starting year, if not given
     if timestamp_format is None:
@@ -459,11 +460,13 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
     Returns
     -------
     None
+
     """
     # settings
     # =========================================================================
     # unpack config
     run_options = config['run_options']
+    chamber_config_filepath = run_options['chamber_config_filepath']
     data_dir = config['data_dir']
     biomet_data_settings = config['biomet_data_settings']
     conc_data_settings = config['conc_data_settings']
@@ -526,7 +529,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
     ch_no = np.array([], dtype='int')
     ch_start = np.array([])
     while timer < 1.:
-        chlut = chamber_lookup_table_func(doy + timer)
+        chlut = chamber_lookup_table_func(doy + timer, chamber_config_filepath)
         df_chlut = chlut.df
         # n_ch = chlut.n_ch
         smpl_cycle_len = chlut.smpl_cycle_len
@@ -545,7 +548,8 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
             # apply the switched schedule
             # chlut_now, n_ch, smpl_cycle_len, n_cycle_per_day, _, = \
             #     chamber_lookup_table_func_old(doy + timer, return_all=True)
-            chlut = chamber_lookup_table_func(doy + timer)
+            chlut = chamber_lookup_table_func(doy + timer,
+                                              chamber_config_filepath)
             df_chlut = chlut.df
             # n_ch = chlut.n_ch
             smpl_cycle_len = chlut.smpl_cycle_len
@@ -796,7 +800,8 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
     # =========================================================================
     for loop_num in range(n_smpl_per_day):
         # get the current chamber's meta info
-        df_chlut_current = chamber_lookup_table_func(ch_start[loop_num]).df
+        df_chlut_current = chamber_lookup_table_func(
+            ch_start[loop_num], chamber_config_filepath).df
         df_chlut_current = df_chlut_current[
             df_chlut_current['ch_no'] == ch_no[loop_num]]
         A_ch[loop_num] = df_chlut_current['A_ch'].values[0]

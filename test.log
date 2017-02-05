@@ -1,5 +1,5 @@
 Starting data processing...
-2017-02-04 18:55:31
+2017-02-05 12:18:51
 Config file is set as user_config.yaml
 numpy version = 1.11.3
 pandas version = 0.19.2
@@ -21,5 +21,5 @@ Raw data on the day 20130401 processed.
 Processed data and curve fitting diagnostics written to files.
 Raw data on the day 20130402 processed.
 Processed data and curve fitting diagnostics written to files.
-2017-02-04 18:56:27
-Done. Finished in 56.10 seconds.
+2017-02-05 12:19:46
+Done. Finished in 54.73 seconds.
