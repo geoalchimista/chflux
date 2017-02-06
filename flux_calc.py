@@ -432,13 +432,19 @@ def timestamp_to_doy(df, timestamp_format=None, time_sec_start=None):
         # 'doy' is treated the same as 'time_doy'
         doy = df['doy'].values
     elif 'timestamp' in df.columns.values:
-        year_start = datetime.datetime.strptime(
-            df.loc[0, 'timestamp'], timestamp_format).year
-        for i in range(df.shape[0]):
-            doy[i] = (
-                datetime.datetime.strptime(
-                    df.loc[i, 'timestamp'], timestamp_format) -
-                datetime.datetime(year_start, 1, 1)).total_seconds() / 86400.
+        year_start = df.loc[0, 'timestamp'].year
+        doy = (df['timestamp'] -
+               pd.Timestamp('%d-01-01 00:00' % year_start)) / \
+            pd.Timedelta(days=1)
+        doy = doy.values
+    # elif 'timestamp' in df.columns.values:
+    #     year_start = datetime.datetime.strptime(
+    #         df.loc[0, 'timestamp'], timestamp_format).year
+    #     for i in range(df.shape[0]):
+    #         doy[i] = (
+    #             datetime.datetime.strptime(
+    #                 df.loc[i, 'timestamp'], timestamp_format) -
+    #             datetime.datetime(year_start, 1, 1)).total_seconds() / 86400.
     elif 'time_sec' in df.columns.values:
         year_start = (time_sec_ref_dt +
                       datetime.timedelta(seconds=df.loc[0, 'time_sec'])).year
@@ -498,8 +504,9 @@ def check_starting_year(df, timestamp_format=None, time_sec_start=None):
     if 'yr' in df.columns.values:
         year_start = df.loc[0, 'yr']
     elif 'timestamp' in df.columns.values:
-        year_start = datetime.datetime.strptime(
-            df.loc[0, 'timestamp'], timestamp_format).year
+        year_start = df.loc[0, 'timestamp'].year
+        # year_start = datetime.datetime.strptime(
+        #     df.loc[0, 'timestamp'], timestamp_format).year
     elif 'time_sec' in df.columns.values:
         time_sec_ref_dt = datetime.datetime(time_sec_start, 1, 1)
         year_start = (time_sec_ref_dt +
@@ -1564,9 +1571,9 @@ def main():
     print('Starting data processing...')
     dt_start = datetime.datetime.now()
     print(datetime.datetime.strftime(dt_start, '%Y-%m-%d %X'))
-    print('Config file is set as', args.config)
-    print('numpy version = ' + np.__version__)
-    print('pandas version = ' + pd.__version__)
+    print('Config file is set as %s' % args.config)
+    print('numpy version = %s' % np.__version__)
+    print('pandas version = %s' % pd.__version__)
 
     # Load config file and data files; extract time as day of year
     # =========================================================================
@@ -1583,7 +1590,7 @@ def main():
         raise RuntimeError('No gas species is specified in the config.')
 
     # read biomet data
-    df_biomet = load_biomet_data(config)
+    df_biomet = load_tabulated_data('biomet', config)
     # check data size; if no data entry in it, terminate the program
     if df_biomet is None:
         raise RuntimeError('No biomet data file is found.')
@@ -1605,7 +1612,7 @@ def main():
     # read concentration data
     if config['data_dir']['separate_conc_data']:
         # if concentration data are in their own files, read from files
-        df_conc = load_conc_data(config)
+        df_conc = load_tabulated_data('conc', config)
         # check data size; if no data entry in it, terminate the program
         if df_conc is None:
             raise RuntimeError('No concentration data file is found.')
@@ -1620,9 +1627,8 @@ def main():
             time_sec_start=config['conc_data_settings']['time_sec_start'])
         # check if the conversion to day of year is successful or not
         if doy_conc is None:
-            print('Program is aborted: ' +
-                  'No time variable found in the concentration data.')
-            exit(1)
+            raise RuntimeError(
+                'No time variable found in the concentration data.')
         else:
             print('Time variable parsed successfully.')
     else:
@@ -1636,14 +1642,13 @@ def main():
     # read flow data
     if config['data_dir']['separate_flow_data']:
         # if flow data are in their own files, read from files
-        df_flow = load_flow_data(config)
+        # df_flow = load_flow_data(config)
+        df_flow = load_tabulated_data('flow', config)
         # check data size; if no data entry in it, terminate the program
         if df_flow is None:
-            print('Program is aborted: no flow data file is found.')
-            exit(1)
+            raise RuntimeError('No flow data file is found.')
         elif df_flow.shape[0] == 0:
-            print('Program is aborted: no entry in the flow data.')
-            exit(1)
+            raise RuntimeError('No entry in the flow data.')
 
         # parse time variable
         print('Parsing time variable in the flow data...')
@@ -1653,9 +1658,7 @@ def main():
             time_sec_start=config['flow_data_settings']['time_sec_start'])
         # check if the conversion to day of year is successful or not
         if doy_flow is None:
-            print('Program is aborted: ' +
-                  'No time variable found in the flow data.')
-            exit(1)
+            raise RuntimeError('No time variable found in the flow data.')
         else:
             print('Time variable parsed successfully.')
     else:
@@ -1671,14 +1674,13 @@ def main():
         print('Notice: Leaf area data are stored separately ' +
               'from chamber configuration.')
         # if leaf data are in their own files, read from files
-        df_leaf = load_leaf_data(config)
+        # df_leaf = load_leaf_data(config)
+        df_leaf = load_tabulated_data('leaf', config)
         # check data size; if no data entry in it, terminate the program
         if df_leaf is None:
-            print('Program is aborted: no leaf area data file is found.')
-            exit(1)
+            raise RuntimeError('No leaf area data file is found.')
         elif df_leaf.shape[0] == 0:
-            print('Program is aborted: no entry in the leaf area data.')
-            exit(1)
+            raise RuntimeError('No entry in the leaf area data.')
 
         # parse time variable
         print('Parsing time variable in the leaf area data...')
@@ -1688,9 +1690,7 @@ def main():
             time_sec_start=config['leaf_data_settings']['time_sec_start'])
         # check if the conversion to day of year is successful or not
         if doy_leaf is None:
-            print('Program is aborted: ' +
-                  'No time variable found in the leaf area data.')
-            exit(1)
+            raise RuntimeError('No time variable found in the leaf area data.')
         else:
             print('Time variable parsed successfully.')
     else:
@@ -1716,9 +1716,8 @@ def main():
         year_conc = config['conc_data_settings']['year_ref']
 
     if year_biomet != year_conc and config['data_dir']['separate_conc_data']:
-        print('Program is aborted: Year numbers do not match between ' +
-              'biomet data and concentration data.')
-        exit(1)
+        raise RuntimeError('Year numbers do not match between ' +
+                           'biomet data and concentration data.')
 
     # Calculate fluxes, and output plots and the processed data
     # =========================================================================
