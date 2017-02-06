@@ -186,6 +186,12 @@ biomet_data_settings:  # Settings for reading the biomet data
     # Modify this if you need specify the missing values.
     # Default is `null` that uses the default options of `pandas.read_csv()`.
 
+    parse_dates: false
+    # if False, do not attempt to parse dates with `pandas.read_csv()`
+    # if given a list of column indices or names, parse those columns as dates
+    # when parse multiple columns to form a datetime variable, must specify
+    # a column name for the parsed result
+
     columns_to_save: null
     # If `null`, save all columns of the 'standardized variables' parsed from 
     # the biomet data table
@@ -244,6 +250,12 @@ conc_data_settings:  # Settings for reading the concentration data
     na_values: null
     # Modify this if you need specify the missing values.
 
+    parse_dates: false
+    # if false, do not attempt to parse dates with `pandas.read_csv()`
+    # if given a list of column indices or names, parse those columns as dates
+    # when parse multiple columns to form a datetime variable, must specify
+    # a column name for the parsed result
+
     columns_to_save: null
     # If `null`, save all columns of the 'standardized variables' parsed from 
     # the concentration data table
@@ -301,6 +313,12 @@ flow_data_settings:  # Settings for reading the flow rate data
 
     na_values: null
     # Modify this if you need specify the missing values.
+
+    parse_dates: false
+    # if False, do not attempt to parse dates with `pandas.read_csv()`
+    # if given a list of column indices or names, parse those columns as dates
+    # when parse multiple columns to form a datetime variable, must specify
+    # a column name for the parsed result
 
     columns_to_save: null
     # If `null`, save all columns of the 'standardized variables' parsed from 
@@ -369,6 +387,12 @@ leaf_data_settings:  # Settings for reading the leaf area data
 
     na_values: null
     # Modify this if you need specify the missing values.
+
+    parse_dates: false
+    # if False, do not attempt to parse dates with `pandas.read_csv()`
+    # if given a list of column indices or names, parse those columns as dates
+    # when parse multiple columns to form a datetime variable, must specify
+    # a column name for the parsed result
 
     columns_to_save: null
     # If `null`, save all columns of the 'standardized variables' parsed from 

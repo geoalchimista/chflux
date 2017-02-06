@@ -65,6 +65,79 @@ def load_config(filepath):
 # biomet, conc, and flow data (the less repetition the better)
 
 
+def load_tabulated_data(data_name, config, query=None):
+    """
+    A general function to read tabulated data (biometeorological,
+    concentration, flow rate, and leaf area data).
+
+    Parameters
+    ----------
+    data_name : str
+        Data name, allowed values are
+        - 'biomet': biometeorological data
+        - 'conc': concentration data
+        - 'flow': flow rate data
+        - 'leaf': leaf area data
+    config : dict
+        Configuration dictionary parsed from the YAML config file.
+    query : str
+        The query string used to search in all available data files.
+        If `None` (default), read all data files.
+
+    Return
+    ------
+    df : pandas.DataFrame
+        The loaded tabulated data.
+
+    """
+    # check the legality of `data_name` parameter
+    if data_name not in ['biomet', 'conc', 'flow', 'leaf']:
+        raise RuntimeError('Wrong data name. Allowed values are ' +
+                           "'biomet', 'conc', 'flow', 'leaf'.")
+    # search file list
+    data_flist = glob.glob(config['data_dir'][data_name + '_data'])
+    # get the data settings
+    data_settings = config[data_name + '_data_settings']
+
+    # check data existence
+    if not len(data_flist):
+        print('Cannot find the %s data file!' % data_name)
+        return None
+    else:
+        print('%d %s data files are found. ' % (len(data_flist), data_name) +
+              'Loading...')
+
+    if query is not None:
+        data_flist = [f for f in data_flist if query in f]
+
+    # load all data
+    df = None
+    for entry in data_flist:
+        print(entry)
+        df_loaded = pd.read_csv(
+            entry, delimiter=data_settings['delimiter'],
+            header=data_settings['header'],
+            names=data_settings['names'],
+            usecols=data_settings['usecols'],
+            dtype=data_settings['dtype'],
+            na_values=data_settings['na_values'],
+            parse_dates=data_settings['parse_dates'],
+            infer_datetime_format=True,
+            engine='c', encoding='utf-8')
+        # Note: sometimes it may need explicit definitions of data types to
+        # avoid a numpy NaN-to-integer error
+        if df is None:
+            df = df_loaded
+        else:
+            df = pd.concat([df, df_loaded], ignore_index=True)
+        del(df_loaded)
+
+    # echo data status
+    print('%d lines read from %s data.' % (df.shape[0], data_name))
+
+    return df
+
+
 def load_biomet_data(config, query=None):
     """
     Read biometeorological data.
@@ -1507,18 +1580,15 @@ def main():
                 config[key].update(user_config[key])
     # sanity check for config file
     if len(config['species_settings']['species_list']) < 1:
-        print('Program is aborted: no gas species is specified in the config.')
-        exit(1)
+        raise RuntimeError('No gas species is specified in the config.')
 
     # read biomet data
     df_biomet = load_biomet_data(config)
     # check data size; if no data entry in it, terminate the program
     if df_biomet is None:
-        print('Program is aborted: no biomet data file is found.')
-        exit(1)
+        raise RuntimeError('No biomet data file is found.')
     elif df_biomet.shape[0] == 0:
-        print('Program is aborted: no entry in the biomet data.')
-        exit(1)
+        raise RuntimeError('No entry in the biomet data.')
 
     # parse time variable
     print('Parsing time variable in the biomet data...')
@@ -1528,8 +1598,7 @@ def main():
         time_sec_start=config['biomet_data_settings']['time_sec_start'])
     # check if the conversion to day of year is successful or not
     if doy_biomet is None:
-        print('Program is aborted: no time variable found in the biomet data.')
-        exit(1)
+        raise RuntimeError('No time variable found in the biomet data.')
     else:
         print('Time variable parsed successfully.')
 
@@ -1539,11 +1608,9 @@ def main():
         df_conc = load_conc_data(config)
         # check data size; if no data entry in it, terminate the program
         if df_conc is None:
-            print('Program is aborted: no concentration data file is found.')
-            exit(1)
+            raise RuntimeError('No concentration data file is found.')
         elif df_conc.shape[0] == 0:
-            print('Program is aborted: no entry in the concentration data.')
-            exit(1)
+            raise RuntimeError('No entry in the concentration data.')
 
         # parse time variable
         print('Parsing time variable in the concentration data...')

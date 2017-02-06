@@ -42,6 +42,8 @@ biomet_data_settings:
 
     na_values: "\"NAN\""
 
+    parse_dates: [0, ]
+
 
 conc_data_settings:
     delimiter: "\\s+"
@@ -49,6 +51,8 @@ conc_data_settings:
     header: 1
 
     names: ['time_sec', 'cos', 'co2', 'h2o', 'co2_2']
+
+    parse_dates: false
 
 
 site_parameters:
