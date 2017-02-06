@@ -1,8 +1,9 @@
 Starting data processing...
-2017-02-05 22:26:55
+2017-02-05 22:40:56
 Config file is set as user_config.yaml
 numpy version = 1.11.3
 pandas version = 0.19.2
+matplotlib version = 2.0.0
 2 biomet data files are found. Loading...
 ./test/input/biomet/DataTab_2013_04_01_0001.dat
 ./test/input/biomet/DataTab_2013_04_02_0001.dat
@@ -21,5 +22,5 @@ Raw data on the day 20130401 processed.
 Processed data and curve fitting diagnostics written to files.
 Raw data on the day 20130402 processed.
 Processed data and curve fitting diagnostics written to files.
-2017-02-05 22:27:51
-Done. Finished in 55.91 seconds.
+2017-02-05 22:41:54
+Done. Finished in 57.10 seconds.
