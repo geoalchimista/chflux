@@ -1,19 +1,20 @@
 # Change Log
 
-# current
-
-- Added a general function to parse tabulated data. Other data reading functions will be deprecated.
-- Added date parsing options for `pandas.read_csv()`.
-- Bug fix: year number must be specified when using day of year number as the time variable.
 
 @TODO:
-- Improve the data reading functions.
+- Move time stamp conversion to the function `load_tabulated_data()`
 - Use `pandas.Timestamp` as the standard timestamp passed between functions.
+- Deprecate `timestamp_format` entry in the config file.
 
 - Add timelag control in `chamber.yaml`
 - Test and refine the chamber schedule function for timelag optimization.
 - Daily summary plots.
 
+# 0.1.4 (2017-02-06)
+
+- Added a general function to parse tabulated data. Other data reading functions will be deprecated.
+- Added date parsing options for `pandas.read_csv()`.
+- Bug fix: year number must be specified when using day of year number as the time variable.
 
 # 0.1.3 (2017-02-05)
 

@@ -192,6 +192,14 @@ biomet_data_settings:  # Settings for reading the biomet data
     # when parse multiple columns to form a datetime variable, must specify
     # a column name for the parsed result
 
+    date_parser: null
+    # a date parser for converting date strings stored in multiple columns
+    # - 'ymd', YYYY MM DD, date only
+    # - 'ymdhm', YYYY MM DD HH MM, down to minute  
+    # - 'ymdhms', YYYY MM DD HH MM SS, down to second
+    # - 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
+    # note: no need to use this if the date string is in a single column
+
     columns_to_save: null
     # If `null`, save all columns of the 'standardized variables' parsed from 
     # the biomet data table
@@ -256,6 +264,14 @@ conc_data_settings:  # Settings for reading the concentration data
     # when parse multiple columns to form a datetime variable, must specify
     # a column name for the parsed result
 
+    date_parser: null
+    # a date parser for converting date strings stored in multiple columns
+    # - 'ymd', YYYY MM DD, date only
+    # - 'ymdhm', YYYY MM DD HH MM, down to minute  
+    # - 'ymdhms', YYYY MM DD HH MM SS, down to second
+    # - 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
+    # note: no need to use this if the date string is in a single column
+
     columns_to_save: null
     # If `null`, save all columns of the 'standardized variables' parsed from 
     # the concentration data table
@@ -319,6 +335,14 @@ flow_data_settings:  # Settings for reading the flow rate data
     # if given a list of column indices or names, parse those columns as dates
     # when parse multiple columns to form a datetime variable, must specify
     # a column name for the parsed result
+
+    date_parser: null
+    # a date parser for converting date strings stored in multiple columns
+    # - 'ymd', YYYY MM DD, date only
+    # - 'ymdhm', YYYY MM DD HH MM, down to minute  
+    # - 'ymdhms', YYYY MM DD HH MM SS, down to second
+    # - 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
+    # note: no need to use this if the date string is in a single column
 
     columns_to_save: null
     # If `null`, save all columns of the 'standardized variables' parsed from 
@@ -393,6 +417,14 @@ leaf_data_settings:  # Settings for reading the leaf area data
     # if given a list of column indices or names, parse those columns as dates
     # when parse multiple columns to form a datetime variable, must specify
     # a column name for the parsed result
+
+    date_parser: null
+    # a date parser for converting date strings stored in multiple columns
+    # - 'ymd', YYYY MM DD, date only
+    # - 'ymdhm', YYYY MM DD HH MM, down to minute  
+    # - 'ymdhms', YYYY MM DD HH MM SS, down to second
+    # - 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
+    # note: no need to use this if the date string is in a single column
 
     columns_to_save: null
     # If `null`, save all columns of the 'standardized variables' parsed from 

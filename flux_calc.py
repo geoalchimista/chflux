@@ -47,7 +47,23 @@ if LooseVersion(mpl.__version__) < LooseVersion('2.0.0'):
 # @FIXME: warning suppression is lame; needs to be improved
 warnings.simplefilter('ignore', category=RuntimeWarning)
 # suppress the annoying matplotlib tight_layout user warning
-warnings.simplefilter('ignore', category=UserWarning)
+# warnings.simplefilter('ignore', category=UserWarning)
+
+
+# a collection of date parsers to use, when dates are stored in multiple
+# columns, like YYYY MM DD etc.
+# does not support month-first (American) or day-first (European) format,
+# put them by the year-month-day order using index orders.
+date_parsers_dict = {
+    # date only
+    'ymd': lambda s: pd.to_datetime(s, format='%Y %m %d'),
+    # down to minute
+    'ymdhm': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M'),
+    # down second
+    'ymdhms': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M %S'),
+    # down to nanosecond
+    'ymdhmsf': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M %S %f')
+}
 
 
 def load_config(filepath):
@@ -106,6 +122,12 @@ def load_tabulated_data(data_name, config, query=None):
     if query is not None:
         data_flist = [f for f in data_flist if query in f]
 
+    # check date parser: if legit, extract it, and if not, set it to `None`
+    if data_settings['date_parser'] in date_parsers_dict:
+        date_parser = date_parsers_dict[data_settings['date_parser']]
+    else:
+        date_parser = None
+
     # load all data
     df = None
     for entry in data_flist:
@@ -118,6 +140,7 @@ def load_tabulated_data(data_name, config, query=None):
             dtype=data_settings['dtype'],
             na_values=data_settings['na_values'],
             parse_dates=data_settings['parse_dates'],
+            date_parser=date_parser,
             infer_datetime_format=True,
             engine='c', encoding='utf-8')
         # Note: sometimes it may need explicit definitions of data types to
@@ -130,6 +153,26 @@ def load_tabulated_data(data_name, config, query=None):
 
     # echo data status
     print('%d lines read from %s data.' % (df.shape[0], data_name))
+
+    # parse time variables if not already exist
+    if 'timestamp' in df.columns.values:
+        if type(df.loc[0, 'timestamp']) is not pd.Timestamp:
+            df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
+            # no need to catch out-of bound error if set 'coerce'
+    elif 'time_doy' in df.columns.values:
+        # starting year must be specified for day of year
+        year_start = config['%s_data_settings' % data_name]['year_ref']
+        df['timestamp'] = pd.Timestamp('%d-01-01 00:00' % year_start) + \
+            df['time_doy'] * pd.Timedelta(days=1.)
+    elif 'time_sec' in df.columns.values:
+        time_sec_start = config[
+            '%s_data_settings' % data_name]['time_sec_start']
+        if time_sec_start is None:
+            time_sec_start = 1904
+        df['timestamp'] = pd.Timestamp('%d-01-01 00:00' % time_sec_start) + \
+            df['time_sec'] * pd.Timedelta(seconds=1)
+    else:
+        warnings.warn('No time variable is found!', UserWarning)
 
     return df
 
@@ -650,9 +693,18 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
             A_ch[loop_num] = np.interp(
                 ch_time[loop_num], doy_leaf, df_leaf[ch_label[-1]].values)
 
+        # # extract indices for averaging biomet variables, no time lag
+        # ind_ch_biomet = np.where((doy_biomet >= ch_start[loop_num]) &
+        #                          (doy_biomet < ch_end[loop_num]))[0]
+
         # extract indices for averaging biomet variables, no time lag
-        ind_ch_biomet = np.where((doy_biomet >= ch_start[loop_num]) &
-                                 (doy_biomet < ch_end[loop_num]))[0]
+        ts_ch_start = pd.Timestamp('%d-01-01 00:00' % year) + \
+            ch_start[loop_num] * pd.Timedelta(days=1)
+        ts_ch_end = pd.Timestamp('%d-01-01 00:00' % year) + \
+            ch_end[loop_num] * pd.Timedelta(days=1)
+        ind_ch_biomet = np.where((df_biomet['timestamp'] >= ts_ch_start) &
+                                 (df_biomet['timestamp'] < ts_ch_end))[0]
+
         # include the full chamber period
         n_ind_ch_biomet = ind_ch_biomet.size
 
@@ -1336,17 +1388,33 @@ def main():
     elif df_biomet.shape[0] == 0:
         raise RuntimeError('No entry in the biomet data.')
 
-    # parse time variable
-    print('Parsing time variable in the biomet data...')
-    doy_biomet = timestamp_to_doy(
-        df_biomet,
-        timestamp_format=config['biomet_data_settings']['timestamp_format'],
-        time_sec_start=config['biomet_data_settings']['time_sec_start'])
-    # check if the conversion to day of year is successful or not
-    if doy_biomet is None:
-        raise RuntimeError('No time variable found in the biomet data.')
-    else:
+    # # parse time variable
+    # print('Parsing time variable in the biomet data...')
+    # doy_biomet = timestamp_to_doy(
+    #     df_biomet,
+    #     timestamp_format=config['biomet_data_settings']['timestamp_format'],
+    #     time_sec_start=config['biomet_data_settings']['time_sec_start'])
+    # # check if the conversion to day of year is successful or not
+    # if doy_biomet is None:
+    #     raise RuntimeError('No time variable found in the biomet data.')
+    # else:
+    #     print('Time variable parsed successfully.')
+
+    # check the time variable
+    # @TODO: deprecate the use of day of year
+    if 'time_doy' in df_biomet.columns.values:
+        doy_biomet = df_biomet['time_doy'].values
         print('Time variable parsed successfully.')
+    elif 'timestamp' in df_biomet.columns.values:
+        year_start = df_biomet.loc[0, 'timestamp'].year
+        doy_biomet = (df_biomet['timestamp'] -
+                      pd.Timestamp('%d-01-01 00:00' % year_start)) / \
+            pd.Timedelta(days=1)
+        doy_biomet = doy_biomet.values
+        del year_start
+        print('Time variable parsed successfully.')
+    else:
+        raise RuntimeError('No time variable found in the biomet data.')
 
     # read concentration data
     if config['data_dir']['separate_conc_data']:
@@ -1405,7 +1473,7 @@ def main():
         # biomet data and the parsed time variable
         df_flow = df_biomet
         doy_flow = doy_biomet
-        print('Notice: Flow data are extracted from biomet data, ' +
+        print('Notice: Flow rates data are extracted from biomet data, ' +
               'because they are not stored in their own files.')
 
     # read leaf data
