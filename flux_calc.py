@@ -159,6 +159,12 @@ def load_tabulated_data(data_name, config, query=None):
         if type(df.loc[0, 'timestamp']) is not pd.Timestamp:
             df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
             # no need to catch out-of bound error if set 'coerce'
+        # add a time variable in days of year (float) if not already there
+        if 'time_doy' not in df.columns.values:
+            year_start = df.loc[0, 'timestamp'].year
+            df['time_doy'] = (df['timestamp'] -
+                              pd.Timestamp('%d-01-01 00:00' % year_start)) / \
+                pd.Timedelta(days=1)
     elif 'time_doy' in df.columns.values:
         # starting year must be specified for day of year
         year_start = config['%s_data_settings' % data_name]['year_ref']
@@ -171,135 +177,21 @@ def load_tabulated_data(data_name, config, query=None):
             time_sec_start = 1904
         df['timestamp'] = pd.Timestamp('%d-01-01 00:00' % time_sec_start) + \
             df['time_sec'] * pd.Timedelta(seconds=1)
+        # add a time variable in days of year (float) if not already there
+        if 'time_doy' not in df.columns.values:
+            year_start = df.loc[0, 'timestamp'].year
+            year_start_in_sec = (pd.Timestamp('%d-01-01' % year_start) - \
+                pd.Timestamp('%d-01-01' % time_sec_start)) / \
+                pd.Timedelta(seconds=1)
+            df['time_doy'] = (df['time_sec'] - year_start_in_sec) / 86400.
     else:
         warnings.warn('No time variable is found!', UserWarning)
 
     return df
 
 
-def timestamp_to_doy(df, timestamp_format=None, time_sec_start=None):
-    """
-    Convert timestamp in a dataframe to day of year.
-
-    Parameters
-    ----------
-    df : pandas.DataFrame
-        The dataframe from which timestamp is extracted.
-    timestamp_format, optional : str
-        Datetime format string. Default is '%Y-%m-%d %X'.
-    time_sec_start, optional : int
-        The reference year of the time in seconds. Default is 1904.
-
-    Returns
-    -------
-    doy : array_like
-        Day of year number (float); minimum value is 0 (Jan 1 midnight), not 1.
-    """
-    # set default timestamp format and `time_sec` starting year, if not given
-    if timestamp_format is None:
-        timestamp_format = '%Y-%m-%d %X'
-    if time_sec_start is None:
-        time_sec_start = 1904
-
-    # reference datetime for the `time_sec` variable
-    time_sec_ref_dt = datetime.datetime(time_sec_start, 1, 1)
-
-    doy = np.zeros(df.shape[0]) * np.nan  # initialize
-
-    if 'time_doy' in df.columns.values:
-        # if 'time_doy' is already in the dataframe, define an alias for it
-        doy = df['time_doy'].values
-    elif 'doy' in df.columns.values:
-        # 'doy' is treated the same as 'time_doy'
-        doy = df['doy'].values
-    elif 'timestamp' in df.columns.values:
-        year_start = df.loc[0, 'timestamp'].year
-        doy = (df['timestamp'] -
-               pd.Timestamp('%d-01-01 00:00' % year_start)) / \
-            pd.Timedelta(days=1)
-        doy = doy.values
-    # elif 'timestamp' in df.columns.values:
-    #     year_start = datetime.datetime.strptime(
-    #         df.loc[0, 'timestamp'], timestamp_format).year
-    #     for i in range(df.shape[0]):
-    #         doy[i] = (
-    #             datetime.datetime.strptime(
-    #                 df.loc[i, 'timestamp'], timestamp_format) -
-    #             datetime.datetime(year_start, 1, 1)).total_seconds() / 86400.
-    elif 'time_sec' in df.columns.values:
-        year_start = (time_sec_ref_dt +
-                      datetime.timedelta(seconds=df.loc[0, 'time_sec'])).year
-        for i in range(df.shape[0]):
-            doy[i] = (
-                time_sec_ref_dt +
-                datetime.timedelta(seconds=df.loc[i, 'time_sec']) -
-                datetime.datetime(year_start, 1, 1)).total_seconds() / 86400.
-    elif ('yr' in df.columns.values and 'mon' in df.columns.values and
-          'day' in df.columns.values):
-        year_start = df.loc[0, 'yr']
-        for i in range(df.shape[0]):
-            doy[i] = (
-                datetime.datetime(df.loc[i, 'yr'], df.loc[i, 'mon'],
-                                  df.loc[i, 'day']) -
-                datetime.datetime(year_start, 1, 1)).total_seconds() / 86400.
-            if 'hr' in df.columns.values:
-                doy[i] += df.loc[i, 'hr'] / 24.
-            if 'min' in df.columns.values:
-                doy[i] += df.loc[i, 'min'] / 1440.
-            if 'sec' in df.columns.values:
-                doy[i] += df.loc[i, 'sec'] / 86400.
-    else:
-        print('No time variable is found!')
-        return None
-
-    return doy
-
-
-def check_starting_year(df, timestamp_format=None, time_sec_start=None):
-    """
-    Extract the staring year from the dataframe, to which the day of year
-    conversion is referenced.
-
-    Parameters
-    ----------
-    df : pandas.DataFrame
-        The dataframe from which timestamp is extracted.
-    timestamp_format, optional : str
-        Datetime format string. Default is '%Y-%m-%d %X'.
-    time_sec_start, optional : int
-        The reference year of the time in seconds. Default is 1904.
-
-    Returns
-    -------
-    year_start : int
-        Staring year of the dataframe timestamp.
-
-    """
-    # set default timestamp format and `time_sec` starting year, if not given
-    if timestamp_format is None:
-        timestamp_format = '%Y-%m-%d %X'
-    if time_sec_start is None:
-        time_sec_start = 1904
-
-    # get the starting year number
-    if 'yr' in df.columns.values:
-        year_start = df.loc[0, 'yr']
-    elif 'timestamp' in df.columns.values:
-        year_start = df.loc[0, 'timestamp'].year
-        # year_start = datetime.datetime.strptime(
-        #     df.loc[0, 'timestamp'], timestamp_format).year
-    elif 'time_sec' in df.columns.values:
-        time_sec_ref_dt = datetime.datetime(time_sec_start, 1, 1)
-        year_start = (time_sec_ref_dt +
-                      datetime.timedelta(seconds=df.loc[0, 'time_sec'])).year
-    else:
-        year_start = None
-
-    return year_start
-
-
 def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
-              df_leaf, doy_leaf, doy, year, config):
+              df_leaf, doy_leaf, doy, year, config, chamber_config):
     """
     Calculate fluxes and generate plots.
 
@@ -331,7 +223,6 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
     # =========================================================================
     # unpack config
     run_options = config['run_options']
-    chamber_config_filepath = run_options['chamber_config_filepath']
     data_dir = config['data_dir']
     biomet_data_settings = config['biomet_data_settings']
     conc_data_settings = config['conc_data_settings']
@@ -394,7 +285,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
     ch_no = np.array([], dtype='int')
     ch_start = np.array([])
     while timer < 1.:
-        chlut = chamber_lookup_table_func(doy + timer, chamber_config_filepath)
+        chlut = chamber_lookup_table_func(doy + timer, chamber_config)
         df_chlut = chlut.df
         # n_ch = chlut.n_ch
         smpl_cycle_len = chlut.smpl_cycle_len
@@ -413,8 +304,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
             # apply the switched schedule
             # chlut_now, n_ch, smpl_cycle_len, n_cycle_per_day, _, = \
             #     chamber_lookup_table_func_old(doy + timer, return_all=True)
-            chlut = chamber_lookup_table_func(doy + timer,
-                                              chamber_config_filepath)
+            chlut = chamber_lookup_table_func(doy + timer, chamber_config)
             df_chlut = chlut.df
             # n_ch = chlut.n_ch
             smpl_cycle_len = chlut.smpl_cycle_len
@@ -552,9 +442,6 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
     # - `T_atm_names`: T_atm variable names
     # - `RH_atm_names`: RH_atm variable names
     # - `T_ch_names`: T_ch variable names
-    # - `T_dew_ch_names` (*deprecated*): T_dew_ch variable names
-    #   dew temperatures probably wouldn't be measured directly in the chamber,
-    #   they are more likely to be calculated from other variables
     # - `PAR_names`: PAR variable names (not associated with chambers)
     # - `PAR_ch_names`: PAR variable names [associated with chambers]
     # - `T_leaf_names`: T_leaf variable names
@@ -583,8 +470,6 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
     #                 if 'RH_atm_' in s or s == 'RH_atm']
     # T_ch_names = [s for s in biomet_data_settings['names']
     #               if 'T_ch_' in s or s == 'T_ch']
-    # # T_dew_ch_names = [s for s in biomet_data_settings['names']
-    # #                   if 'T_dew_ch_' in s or s == 'T_dew_ch']
     # PAR_names = [s for s in biomet_data_settings['names']
     #              if ('PAR_' in s or s == 'PAR') and 'PAR_ch' not in s]
     # PAR_ch_names = [s for s in biomet_data_settings['names']
@@ -666,7 +551,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
     for loop_num in range(n_smpl_per_day):
         # get the current chamber's meta info
         df_chlut_current = chamber_lookup_table_func(
-            ch_start[loop_num], chamber_config_filepath).df
+            ch_start[loop_num], chamber_config).df
         df_chlut_current = df_chlut_current[
             df_chlut_current['ch_no'] == ch_no[loop_num]]
         A_ch[loop_num] = df_chlut_current['A_ch'].values[0]
@@ -1277,6 +1162,14 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
         df_flux['se_f%s_nonlin' % species_list[spc_id]] = \
             se_flux_nonlin[:, spc_id]
 
+    # rounding off to reduce output file size
+    # '%.6f' is the accuracy of single-precision floating numbers
+    # do not round off day of year variables or chamber descriptors
+    df_flux = df_flux.round(
+        {key: 6 for key in df_flux.columns.values
+         if key not in ['doy_utc', 'doy_local', 'ch_no',
+                        'ch_label', 'A_ch', 'V_ch']})
+
     df_flux.to_csv(output_fname, sep=',', na_rep='NaN', index=False)
     # no need to have 'row index', therefore, set `index=False`
 
@@ -1347,6 +1240,14 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
         df_diag['delta_nonlin_' + species_list[spc_id]] = \
             delta_nonlin[:, spc_id]
 
+    # rounding off to reduce output file size
+    # '%.6f' is the accuracy of single-precision floating numbers
+    # do not round off day of year variables or chamber descriptors
+    # also, do not round off p-value
+    df_diag = df_diag.round(
+        {key: 6 for key in df_diag.columns.values
+         if key not in ['doy_utc', 'doy_local', 'ch_no'] and 'p_' not in key})
+
     df_diag.to_csv(diag_fname, sep=',', na_rep='NaN', index=False)
     # no need to have 'row index', therefore, set `index=False`
 
@@ -1376,6 +1277,10 @@ def main():
         for key in config:
             if key in user_config:
                 config[key].update(user_config[key])
+
+    chamber_config = load_config(
+        config['run_options']['chamber_config_filepath'])
+
     # sanity check for config file
     if len(config['species_settings']['species_list']) < 1:
         raise RuntimeError('No gas species is specified in the config.')
@@ -1388,30 +1293,10 @@ def main():
     elif df_biomet.shape[0] == 0:
         raise RuntimeError('No entry in the biomet data.')
 
-    # # parse time variable
-    # print('Parsing time variable in the biomet data...')
-    # doy_biomet = timestamp_to_doy(
-    #     df_biomet,
-    #     timestamp_format=config['biomet_data_settings']['timestamp_format'],
-    #     time_sec_start=config['biomet_data_settings']['time_sec_start'])
-    # # check if the conversion to day of year is successful or not
-    # if doy_biomet is None:
-    #     raise RuntimeError('No time variable found in the biomet data.')
-    # else:
-    #     print('Time variable parsed successfully.')
-
     # check the time variable
     # @TODO: deprecate the use of day of year
     if 'time_doy' in df_biomet.columns.values:
         doy_biomet = df_biomet['time_doy'].values
-        print('Time variable parsed successfully.')
-    elif 'timestamp' in df_biomet.columns.values:
-        year_start = df_biomet.loc[0, 'timestamp'].year
-        doy_biomet = (df_biomet['timestamp'] -
-                      pd.Timestamp('%d-01-01 00:00' % year_start)) / \
-            pd.Timedelta(days=1)
-        doy_biomet = doy_biomet.values
-        del year_start
         print('Time variable parsed successfully.')
     else:
         raise RuntimeError('No time variable found in the biomet data.')
@@ -1426,18 +1311,12 @@ def main():
         elif df_conc.shape[0] == 0:
             raise RuntimeError('No entry in the concentration data.')
 
-        # parse time variable
-        print('Parsing time variable in the concentration data...')
-        doy_conc = timestamp_to_doy(
-            df_conc,
-            timestamp_format=config['conc_data_settings']['timestamp_format'],
-            time_sec_start=config['conc_data_settings']['time_sec_start'])
-        # check if the conversion to day of year is successful or not
-        if doy_conc is None:
+        if 'time_doy' in df_conc.columns.values:
+            doy_conc = df_conc['time_doy'].values
+            print('Time variable parsed successfully.')
+        else:
             raise RuntimeError(
                 'No time variable found in the concentration data.')
-        else:
-            print('Time variable parsed successfully.')
     else:
         # if concentration data are not in their own files, create aliases
         # for biomet data and the parsed time variable
@@ -1457,17 +1336,12 @@ def main():
         elif df_flow.shape[0] == 0:
             raise RuntimeError('No entry in the flow data.')
 
-        # parse time variable
-        print('Parsing time variable in the flow data...')
-        doy_flow = timestamp_to_doy(
-            df_flow,
-            timestamp_format=config['flow_data_settings']['timestamp_format'],
-            time_sec_start=config['flow_data_settings']['time_sec_start'])
-        # check if the conversion to day of year is successful or not
-        if doy_flow is None:
-            raise RuntimeError('No time variable found in the flow data.')
-        else:
+        if 'time_doy' in df_flow.columns.values:
+            doy_flow = df_flow['time_doy'].values
             print('Time variable parsed successfully.')
+        else:
+            raise RuntimeError(
+                'No time variable found in the concentration data.')
     else:
         # if flow data are not in their own files, create aliases for
         # biomet data and the parsed time variable
@@ -1489,36 +1363,22 @@ def main():
         elif df_leaf.shape[0] == 0:
             raise RuntimeError('No entry in the leaf area data.')
 
-        # parse time variable
-        print('Parsing time variable in the leaf area data...')
-        doy_leaf = timestamp_to_doy(
-            df_leaf,
-            timestamp_format=config['leaf_data_settings']['timestamp_format'],
-            time_sec_start=config['leaf_data_settings']['time_sec_start'])
-        # check if the conversion to day of year is successful or not
-        if doy_leaf is None:
-            raise RuntimeError('No time variable found in the leaf area data.')
-        else:
+        if 'time_doy' in df_leaf.columns.values:
+            doy_leaf = df_leaf['time_doy'].values
             print('Time variable parsed successfully.')
+        else:
+            raise RuntimeError(
+                'No time variable found in the concentration data.')
     else:
         # if leaf data are not in their own files, set them to None
         df_leaf = None
         doy_leaf = None
 
-    # check starting years of biomet data and conc data
-    # this is to make sure the converted day of year variables are referenced
-    # to the same staring year
-    year_biomet = check_starting_year(
-        df_biomet,
-        timestamp_format=config['biomet_data_settings']['timestamp_format'],
-        time_sec_start=config['biomet_data_settings']['time_sec_start'])
+    year_biomet = df_biomet.loc[0, 'timestamp'].year
     if year_biomet is None:
         year_biomet = config['biomet_data_settings']['year_ref']
 
-    year_conc = check_starting_year(
-        df_conc,
-        timestamp_format=config['conc_data_settings']['timestamp_format'],
-        time_sec_start=config['conc_data_settings']['time_sec_start'])
+    year_conc = df_conc.loc[0, 'timestamp'].year
     if year_conc is None:
         year_conc = config['conc_data_settings']['year_ref']
 
@@ -1537,7 +1397,7 @@ def main():
     # calculate fluxes day by day
     for doy in np.arange(doy_start, doy_end):
         flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
-                  df_leaf, doy_leaf, doy, year, config)
+                  df_leaf, doy_leaf, doy, year, config, chamber_config)
 
     # Echo program ending
     # =========================================================================
@@ -1546,7 +1406,8 @@ def main():
     print('Done. Finished in %.2f seconds.' %
           (dt_end - dt_start).total_seconds())
 
-    return None
+    # return 0 if executed properly (a standard in C)
+    return 0
 
 
 if __name__ == '__main__':

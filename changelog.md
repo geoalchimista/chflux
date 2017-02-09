@@ -1,18 +1,23 @@
 # Change Log
 
-
 @TODO:
-- Move time stamp conversion to the function `load_tabulated_data()`
-- Use `pandas.Timestamp` as the standard timestamp passed between functions.
-- Deprecate `timestamp_format` entry in the config file.
 
+- Use `pandas.Timestamp` as the standard timestamp passed between functions.
 - Add timelag control in `chamber.yaml`
 - Test and refine the chamber schedule function for timelag optimization.
 - Daily summary plots.
 
+# 0.1.5 (2017-02-09)
+
+- Three times boost in performance compared to version 0.1.4 (not including plotting).
+- `timestamp_format` option in the config file has been deprecated.
+- Chamber configuration loading moved to the main program.
+- Moved time stamp conversion to the function `load_tabulated_data()`. The function that converts timestamps to day of year values (float) has been deprecated and removed. The function that checks the starting year of the loaded data has also been removed.
+- Output variables rounded off to 6 decimal digits (not including day of year variables or chamber descriptors).
+
 # 0.1.4 (2017-02-06)
 
-- Added a general function to parse tabulated data. Other data reading functions will be deprecated.
+- Added a general function to parse tabulated data. Other data reading functions have been deprecated.
 - Added date parsing options for `pandas.read_csv()`.
 - Bug fix: year number must be specified when using day of year number as the time variable.
 

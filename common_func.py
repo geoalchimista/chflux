@@ -11,7 +11,6 @@ import numpy as np
 from scipy import optimize
 import scipy.constants.constants as sci_const
 import pandas as pd
-import yaml
 
 
 # Physical constants
@@ -28,7 +27,7 @@ phys_const = {
 T_0 = phys_const['T_0']
 
 
-def chamber_lookup_table_func(doy, chamber_config_filepath=None):
+def chamber_lookup_table_func(doy, chamber_config):
     """
     Return a chamber meta information look-up table.
 
@@ -38,12 +37,6 @@ def chamber_lookup_table_func(doy, chamber_config_filepath=None):
         'ChamberLookupTableResult',
         ['schedule_start', 'schedule_end', 'n_ch', 'smpl_cycle_len',
          'n_cycle_per_day', 'unit_of_time', 'df'])
-
-    if chamber_config_filepath is None:
-        chamber_config_filepath = 'chamber.yaml'
-
-    with open(chamber_config_filepath, 'r') as fo:
-        chamber_config = yaml.load(fo)
 
     for sch_id in chamber_config:
         if type(chamber_config[sch_id]['schedule_start']) is str:
