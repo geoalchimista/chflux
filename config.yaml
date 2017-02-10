@@ -109,8 +109,6 @@ rules_for_standardized_names: |  # A huge comment block stating naming rules
     - 'time_doy': Time in days since Jan 1 00:00 of that year, also called 
       (fractional) day of year. But is different from the integer day of year 
       (Julian day).
-    - 'yr', 'mon', 'day', 'hr','min','sec': If no 'time_sec' or 'timestamp' is
-      in the data, search for these variables.
 
     Chamber number: 'ch_no'.
       If there is no variable indicating the chamber number, it will be set by

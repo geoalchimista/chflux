@@ -180,7 +180,8 @@ def load_tabulated_data(data_name, config, query=None):
         # add a time variable in days of year (float) if not already there
         if 'time_doy' not in df.columns.values:
             year_start = df.loc[0, 'timestamp'].year
-            year_start_in_sec = (pd.Timestamp('%d-01-01' % year_start) - \
+            year_start_in_sec = (
+                pd.Timestamp('%d-01-01' % year_start) -
                 pd.Timestamp('%d-01-01' % time_sec_start)) / \
                 pd.Timedelta(seconds=1)
             df['time_doy'] = (df['time_sec'] - year_start_in_sec) / 86400.
@@ -190,8 +191,8 @@ def load_tabulated_data(data_name, config, query=None):
     return df
 
 
-def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
-              df_leaf, doy_leaf, doy, year, config, chamber_config):
+def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
+              doy, year, config, chamber_config):
     """
     Calculate fluxes and generate plots.
 
@@ -199,12 +200,8 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
     ----------
     df_biomet : pandas.DataFrame
         The biometeorological data.
-    doy_biomet : 1D numpy.ndarray
-        Day of year variable for the biometeorological data.
     df_conc : pandas.DataFrame
         The concentration data.
-    doy_conc : 1D numpy.ndarray
-        Day of year variable for the concentration data.
     doy : float
         Day of year number of the current function call. Note that `doy`
         here is the fractional DOY, always smaller than the integer DOY
@@ -224,9 +221,9 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
     # unpack config
     run_options = config['run_options']
     data_dir = config['data_dir']
-    biomet_data_settings = config['biomet_data_settings']
-    conc_data_settings = config['conc_data_settings']
-    flow_data_settings = config['flow_data_settings']
+    # biomet_data_settings = config['biomet_data_settings']
+    # conc_data_settings = config['conc_data_settings']
+    # flow_data_settings = config['flow_data_settings']
     # consts = config['constants']
     site_parameters = config['site_parameters']
     species_settings = config['species_settings']
@@ -278,6 +275,30 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
             '/fitting/%s/' % run_date_str
         if not os.path.exists(fitting_plots_path):
             os.makedirs(fitting_plots_path)
+
+    # unpack time variables
+    # @TODO: switch from day of year based subsetting to timestamp subsetting
+    if 'timestamp' not in df_biomet.columns.values:
+        raise RuntimeError('No time variable found in the biomet data.')
+
+    if 'time_doy' in df_conc.columns.values:
+        doy_conc = df_conc['time_doy'].values
+    else:
+        raise RuntimeError(
+            'No time variable found in the concentration data.')
+
+    if 'time_doy' in df_flow.columns.values:
+        doy_flow = df_flow['time_doy'].values
+    else:
+        raise RuntimeError(
+            'No time variable found in the flow rate data.')
+
+    if data_dir['separate_leaf_data']:
+        if 'time_doy' in df_leaf.columns.values:
+            doy_leaf = df_leaf['time_doy'].values
+        else:
+            raise RuntimeError(
+                'No time variable found in the leaf area data.')
 
     # get today's chamber schedule: `ch_start` and `ch_no`
     # =========================================================================
@@ -351,7 +372,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
     ch_time = np.zeros(n_smpl_per_day) * np.nan  # in day of year (fractional)
     # timestamps for chamber measurements defined as
     # the middle point of the closure period
-    ch_label = list()
+    ch_label = []
     A_ch = np.zeros(n_smpl_per_day) * np.nan
     V_ch = np.zeros(n_smpl_per_day) * np.nan
 
@@ -464,24 +485,6 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
                     if 'T_soil' in s]
     w_soil_names = [s for s in df_biomet.columns.values
                     if 'w_soil' in s]
-    # T_atm_names = [s for s in biomet_data_settings['names']
-    #                if 'T_atm_' in s or s == 'T_atm']
-    # RH_atm_names = [s for s in biomet_data_settings['names']
-    #                 if 'RH_atm_' in s or s == 'RH_atm']
-    # T_ch_names = [s for s in biomet_data_settings['names']
-    #               if 'T_ch_' in s or s == 'T_ch']
-    # PAR_names = [s for s in biomet_data_settings['names']
-    #              if ('PAR_' in s or s == 'PAR') and 'PAR_ch' not in s]
-    # PAR_ch_names = [s for s in biomet_data_settings['names']
-    #                 if 'PAR_ch_' in s or s == 'PAR_ch']
-    # T_leaf_names = [s for s in biomet_data_settings['names']
-    #                 if 'T_leaf_' in s or s == 'T_leaf']
-    # T_soil_names = [s for s in biomet_data_settings['names']
-    #                 if 'T_soil_' in s or s == 'T_soil']
-    # w_soil_names = [s for s in biomet_data_settings['names']
-    #                 if 'w_soil_' in s or s == 'w_soil']
-    # # flow_ch_names = [s for s in biomet_data_settings['names']
-    # #                 if 'flow_ch_' in s or s == 'flow_ch']
     flow_ch_names = [s for s in df_flow.columns.values
                      if 'flow_ch' in s]
 
@@ -530,7 +533,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
     if len(w_soil_names) > 0:
         w_soil = np.zeros((n_smpl_per_day, len(w_soil_names))) * np.nan
 
-    T_dew_ch = np.zeros((n_smpl_per_day)) * np.nan
+    T_dew_ch = np.zeros(n_smpl_per_day) * np.nan
     flow = np.zeros(n_smpl_per_day) * np.nan
     flow_lpm = np.zeros(n_smpl_per_day) * np.nan
     V_ch_mol = np.zeros(n_smpl_per_day) * np.nan
@@ -582,11 +585,11 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
         # ind_ch_biomet = np.where((doy_biomet >= ch_start[loop_num]) &
         #                          (doy_biomet < ch_end[loop_num]))[0]
 
-        # extract indices for averaging biomet variables, no time lag
+        # extract indices for averaging biomet variables, no time lag needed
         ts_ch_start = pd.Timestamp('%d-01-01 00:00' % year) + \
-            ch_start[loop_num] * pd.Timedelta(days=1)
+            pd.Timedelta(days=ch_start[loop_num])
         ts_ch_end = pd.Timestamp('%d-01-01 00:00' % year) + \
-            ch_end[loop_num] * pd.Timedelta(days=1)
+            pd.Timedelta(days=ch_end[loop_num])
         ind_ch_biomet = np.where((df_biomet['timestamp'] >= ts_ch_start) &
                                  (df_biomet['timestamp'] < ts_ch_end))[0]
 
@@ -601,7 +604,6 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
                     df_biomet.loc[ind_ch_biomet, 'pres'].values)
             else:
                 if site_parameters['site_pressure'] is None:
-                    # site_parameters['p_std']
                     pres[loop_num] = phys_const['p_std']
                     # use standard atm pressure if no site pressure is defined
                 else:
@@ -666,14 +668,6 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
                     w_soil[loop_num, i] = np.nanmean(
                         df_biomet.loc[ind_ch_biomet, w_soil_names[i]].values)
 
-            '''
-            # chamber flow rates in standard liter per minute, measured
-            if len(flow_ch_names) > 0:
-                for i in range(len(flow_ch_names)):
-                    flow_ch[loop_num, i] = np.nanmean(
-                        df_biomet.loc[ind_ch_biomet, flow_ch_names[i]].values)
-            '''
-
         # extract indices for averaging flow rates, no time lag
         ind_ch_flow = np.where((doy_flow >= ch_start[loop_num]) &
                                (doy_flow < ch_end[loop_num]))[0]
@@ -687,13 +681,12 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
             flow_loc = [k for k, s in enumerate(flow_ch_names)
                         if 'ch_' + str(ch_no[loop_num]) in s]
             if len(flow_loc) > 0:
-                # flow_lpm[loop_num] = flow_ch[loop_num, flow_loc[0]]
                 flow_lpm[loop_num] = \
                     np.nanmean(df_flow.loc[ind_ch_flow,
                                            flow_ch_names[flow_loc[0]]].values)
                 # convert standard liter per minute to liter per minute, if
                 # applicable
-                if flow_data_settings['flow_rate_in_STP']:
+                if config['flow_data_settings']['flow_rate_in_STP']:
                     flow_lpm[loop_num] *= \
                         (T_ch[loop_num, ch_no[loop_num] - 1] +
                             phys_const['T_0']) / \
@@ -704,13 +697,11 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
         flow[loop_num] = flow_lpm[loop_num] * 1e-3 / 60. * \
             pres[loop_num] / phys_const['R_gas'] / \
             (T_ch[loop_num, ch_no[loop_num] - 1] + phys_const['T_0'])
-        # # print(flow[loop_num])  # for test only
 
         # convert chamber volume to mol
         V_ch_mol[loop_num] = V_ch[loop_num] * pres[loop_num] / \
             phys_const['R_gas'] / \
             (T_ch[loop_num, ch_no[loop_num] - 1] + phys_const['T_0'])
-        # # print(V_ch_mol[loop_num])  # for test only
 
         t_turnover[loop_num] = V_ch_mol[loop_num] / flow[loop_num]
         # turnover time in seconds, useful in flux calculation
@@ -728,20 +719,26 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
 
         # 'ind_ch_full' index is only used for plotting
         ind_ch_full = np.where((doy_conc > ch_o_b[loop_num]) &
-                               (doy_conc < ch_end[loop_num] + time_lag_in_day))[0]
-
-        ind_atmb = np.where((doy_conc > ch_start[loop_num] + time_lag_in_day + dt_lmargin) &
-                            (doy_conc < ch_o_b[loop_num] + time_lag_in_day - dt_rmargin))[0]
-        ind_chb = np.where((doy_conc > ch_o_b[loop_num] + time_lag_in_day + dt_lmargin) &
-                           (doy_conc < ch_cls[loop_num] + time_lag_in_day - dt_rmargin))[0]
-        ind_chc = np.where((doy_conc > ch_cls[loop_num] + time_lag_in_day + dt_lmargin) &
-                           (doy_conc < ch_o_a[loop_num] + time_lag_in_day - dt_rmargin))[0]
-        # Note: after the line is switched, regardless of the time lag, the analyzer will sample the next line.
-        # This is the reason why a time lag is not added to the terminal time.
-        ind_cha = np.where((doy_conc > ch_o_a[loop_num] + time_lag_in_day + dt_lmargin) &
-                           (doy_conc < ch_atm_a[loop_num]))[0]
-        ind_atma = np.where((doy_conc > ch_atm_a[loop_num] + time_lag_in_day + dt_lmargin) &
-                            (doy_conc < ch_end[loop_num]))[0]
+                               (doy_conc < ch_end[loop_num] +
+                                time_lag_in_day))[0]
+        ind_atmb = np.where(
+            (doy_conc > ch_start[loop_num] + time_lag_in_day + dt_lmargin) &
+            (doy_conc < ch_o_b[loop_num] + time_lag_in_day - dt_rmargin))[0]
+        ind_chb = np.where(
+            (doy_conc > ch_o_b[loop_num] + time_lag_in_day + dt_lmargin) &
+            (doy_conc < ch_cls[loop_num] + time_lag_in_day - dt_rmargin))[0]
+        ind_chc = np.where(
+            (doy_conc > ch_cls[loop_num] + time_lag_in_day + dt_lmargin) &
+            (doy_conc < ch_o_a[loop_num] + time_lag_in_day - dt_rmargin))[0]
+        # Note: after the line is switched, regardless of the time lag,
+        # the analyzer will sample the next line.
+        # This is the reason that a time lag is not added to the terminal time.
+        ind_cha = np.where(
+            (doy_conc > ch_o_a[loop_num] + time_lag_in_day + dt_lmargin) &
+            (doy_conc < ch_atm_a[loop_num]))[0]
+        ind_atma = np.where(
+            (doy_conc > ch_atm_a[loop_num] + time_lag_in_day + dt_lmargin) &
+            (doy_conc < ch_end[loop_num]))[0]
 
         n_ind_atmb = ind_atmb.size
         n_ind_chb = ind_chb.size
@@ -879,10 +876,9 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
                 # -------------------------------------------------------------
                 # see the supp. info of Sun et al. (2016) JGR-Biogeosci.
                 y_fit = (chc_conc - conc_bl) * flow[loop_num] / A_ch[loop_num]
-                x_fit = np.exp(
-                    - (chc_time - chc_time[0] +
-                        (time_lag_in_day + dt_lmargin) * 8.64e4) /
-                    t_turnover[loop_num])
+                x_fit = np.exp(- (chc_time - chc_time[0] +
+                                  (time_lag_in_day + dt_lmargin) * 8.64e4) /
+                               t_turnover[loop_num])
 
                 slope, intercept, r_value, p_value, se_slope = \
                     stats.linregress(x_fit, y_fit)
@@ -905,7 +901,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
                     (conc_fitted_lin[spc_id, 0] - conc_bl[0])
 
                 # clear temporary fitting parameters
-                del(slope, intercept, r_value, p_value, se_slope)
+                del slope, intercept, r_value, p_value, se_slope
 
                 # robust linear fit
                 # -------------------------------------------------------------
@@ -933,7 +929,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
                     (conc_fitted_rlin[spc_id, 0] - conc_bl[0])
 
                 # clear temporary fitted parameters
-                del(medslope, medintercept, lo_slope, up_slope)
+                del medslope, medintercept, lo_slope, up_slope
 
                 # nonlinear fit
                 # -------------------------------------------------------------
@@ -952,16 +948,32 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
                     conc_func(params_nonlin.x, t_fit) * A_ch[loop_num] / \
                     flow[loop_num] + conc_bl
 
+                # standard errors of estimated parameters
+                # `J^T J` is a Gauss-Newton approximation of the negative of
+                # the Hessian of the cost function.
+                # The variance-covariance matrix of the parameter estimates is
+                # the inverse of the negative of Hessian matrix evaluated
+                # at the parameter estimates.
+                neg_hess = np.dot(params_nonlin.jac.T, params_nonlin.jac)
+                # debug print: check if the hessian is positive definite
+                # print(np.all(np.linalg.eigvals(neg_hess) > 0))
+                try:
+                    inv_neg_hess = np.linalg.inv(neg_hess)
+                except np.linalg.LinAlgError:
+                    try:
+                        inv_neg_hess = np.linalg.pinv(neg_hess)
+                    except np.linalg.LinAlgError:
+                        inv_neg_hess = neg_hess * np.nan
+                # variance-covariance matrix of parameter estimates
+                MSE = np.nansum(params_nonlin.fun ** 2) / (t_fit.size - 2)
+                pcov = inv_neg_hess * MSE
                 # save the robust linear fit results and diagnostics
                 flux_nonlin[loop_num, spc_id] = params_nonlin.x[0]
-                se_flux_nonlin[loop_num, spc_id] = np.nan
-                # use NaN as placeholder for now
+                se_flux_nonlin[loop_num, spc_id] = np.sqrt(pcov[0, 0])
                 p0_nonlin[loop_num, spc_id] = params_nonlin.x[0]
                 p1_nonlin[loop_num, spc_id] = params_nonlin.x[1]
-                se_p0_nonlin[loop_num, spc_id] = np.nan
-                # use NaN as placeholder for now
-                se_p1_nonlin[loop_num, spc_id] = np.nan
-                # use NaN as placeholder for now
+                se_p0_nonlin[loop_num, spc_id] = np.sqrt(pcov[0, 0])
+                se_p1_nonlin[loop_num, spc_id] = np.sqrt(pcov[1, 1])
                 rmse_nonlin[loop_num, spc_id] = \
                     np.sqrt(np.nanmean((conc_fitted_nonlin[spc_id, :] -
                                         chc_conc) ** 2))
@@ -970,7 +982,8 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
                     (conc_fitted_nonlin[spc_id, 0] - conc_bl[0])
 
                 # clear temporary fitted parameters
-                del(params_nonlin_guess, params_nonlin)
+                del params_nonlin_guess, params_nonlin, neg_hess, \
+                    inv_neg_hess, MSE, pcov
 
                 # save the baseline conc's
                 # baseline end points changed from mean to medians
@@ -1062,8 +1075,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
                 fig.clf()
                 plt.close()
         else:
-            flux_lin[loop_num, :] = np.nan
-            se_flux_lin[loop_num, :] = np.nan
+            pass
 
     # End of loops. Save data and plots.
 
@@ -1100,7 +1112,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
     df_flux = pd.DataFrame(index=range(n_smpl_per_day), columns=header)
 
     # assign columns
-    if biomet_data_settings['time_in_UTC']:
+    if config['biomet_data_settings']['time_in_UTC']:
         df_flux['doy_utc'] = ch_time
         df_flux['doy_local'] = ch_time + site_parameters['time_zone'] / 24.
     else:
@@ -1203,7 +1215,7 @@ def flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
     df_diag = pd.DataFrame(index=range(n_smpl_per_day), columns=header_diag)
 
     # assign columns
-    if biomet_data_settings['time_in_UTC']:
+    if config['biomet_data_settings']['time_in_UTC']:
         df_diag['doy_utc'] = ch_time
         df_diag['doy_local'] = ch_time + site_parameters['time_zone'] / 24.
     else:
@@ -1262,10 +1274,10 @@ def main():
     print('Starting data processing...')
     dt_start = datetime.datetime.now()
     print(datetime.datetime.strftime(dt_start, '%Y-%m-%d %X'))
-    print('Config file is set as %s' % args.config)
-    print('numpy version = %s' % np.__version__)
-    print('pandas version = %s' % pd.__version__)
-    print('matplotlib version = %s' % mpl.__version__)
+    print('numpy version = %s\n' % np.__version__ +
+          'pandas version = %s\n' % pd.__version__ +
+          'matplotlib version = %s\n' % mpl.__version__ +
+          'Config file is set as `%s`' % args.config)
 
     # Load config file and data files; extract time as day of year
     # =========================================================================
@@ -1280,6 +1292,8 @@ def main():
 
     chamber_config = load_config(
         config['run_options']['chamber_config_filepath'])
+    print('Chamber config file is set as `%s`\n' %
+          config['run_options']['chamber_config_filepath'])
 
     # sanity check for config file
     if len(config['species_settings']['species_list']) < 1:
@@ -1292,13 +1306,8 @@ def main():
         raise RuntimeError('No biomet data file is found.')
     elif df_biomet.shape[0] == 0:
         raise RuntimeError('No entry in the biomet data.')
-
-    # check the time variable
-    # @TODO: deprecate the use of day of year
-    if 'time_doy' in df_biomet.columns.values:
-        doy_biomet = df_biomet['time_doy'].values
-        print('Time variable parsed successfully.')
-    else:
+    # check timestamp existence
+    if 'timestamp' not in df_biomet.columns.values:
         raise RuntimeError('No time variable found in the biomet data.')
 
     # read concentration data
@@ -1310,18 +1319,14 @@ def main():
             raise RuntimeError('No concentration data file is found.')
         elif df_conc.shape[0] == 0:
             raise RuntimeError('No entry in the concentration data.')
-
-        if 'time_doy' in df_conc.columns.values:
-            doy_conc = df_conc['time_doy'].values
-            print('Time variable parsed successfully.')
-        else:
+        # check timestamp existence
+        if 'timestamp' not in df_conc.columns.values:
             raise RuntimeError(
                 'No time variable found in the concentration data.')
     else:
         # if concentration data are not in their own files, create aliases
         # for biomet data and the parsed time variable
         df_conc = df_biomet
-        doy_conc = doy_biomet
         print('Notice: Concentration data are extracted from biomet data, ' +
               'because they are not stored in their own files.')
 
@@ -1335,19 +1340,14 @@ def main():
             raise RuntimeError('No flow data file is found.')
         elif df_flow.shape[0] == 0:
             raise RuntimeError('No entry in the flow data.')
-
-        if 'time_doy' in df_flow.columns.values:
-            doy_flow = df_flow['time_doy'].values
-            print('Time variable parsed successfully.')
-        else:
-            raise RuntimeError(
-                'No time variable found in the concentration data.')
+        # check timestamp existence
+        if 'timestamp' not in df_flow.columns.values:
+            raise RuntimeError('No time variable found in the flow rate data.')
     else:
         # if flow data are not in their own files, create aliases for
         # biomet data and the parsed time variable
         df_flow = df_biomet
-        doy_flow = doy_biomet
-        print('Notice: Flow rates data are extracted from biomet data, ' +
+        print('Notice: Flow rate data are extracted from biomet data, ' +
               'because they are not stored in their own files.')
 
     # read leaf data
@@ -1362,17 +1362,12 @@ def main():
             raise RuntimeError('No leaf area data file is found.')
         elif df_leaf.shape[0] == 0:
             raise RuntimeError('No entry in the leaf area data.')
-
-        if 'time_doy' in df_leaf.columns.values:
-            doy_leaf = df_leaf['time_doy'].values
-            print('Time variable parsed successfully.')
-        else:
-            raise RuntimeError(
-                'No time variable found in the concentration data.')
+        # check timestamp existence
+        if 'timestamp' not in df_leaf.columns.values:
+            raise RuntimeError('No time variable found in the leaf area data.')
     else:
         # if leaf data are not in their own files, set them to None
         df_leaf = None
-        doy_leaf = None
 
     year_biomet = df_biomet.loc[0, 'timestamp'].year
     if year_biomet is None:
@@ -1390,14 +1385,14 @@ def main():
     # =========================================================================
     print('Calculating fluxes...')
 
-    doy_start = np.nanmin(np.floor(doy_biomet))
-    doy_end = np.nanmax(np.ceil(doy_biomet))
+    doy_start = np.floor(df_biomet['time_doy'].min())  # NaN skipped by default
+    doy_end = np.ceil(df_biomet['time_doy'].max())  # NaN skipped by default
     year = year_biomet
 
     # calculate fluxes day by day
     for doy in np.arange(doy_start, doy_end):
-        flux_calc(df_biomet, doy_biomet, df_conc, doy_conc, df_flow, doy_flow,
-                  df_leaf, doy_leaf, doy, year, config, chamber_config)
+        flux_calc(df_biomet, df_conc, df_flow, df_leaf,
+                  doy, year, config, chamber_config)
 
     # Echo program ending
     # =========================================================================

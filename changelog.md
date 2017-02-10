@@ -6,6 +6,11 @@
 - Add timelag control in `chamber.yaml`
 - Test and refine the chamber schedule function for timelag optimization.
 - Daily summary plots.
+- Correct error in RMSE calculation.
+
+# 0.1.6 (2017-02-10)
+
+- Added parameter error estimates for the nonlinear fitting method.
 
 # 0.1.5 (2017-02-09)
 

@@ -209,6 +209,29 @@ def conc_func(p, t):
     return y
 
 
+def jacobian_conc_func(p, t):
+    """
+    Calculate the Jacobian matrix of the function of concentration changes.
+
+    Parameters
+    ----------
+    p : list or array with two elements
+        Parameter array
+            p[0]: fitted flux
+            p[1]: timelag / turnover time
+    t : array_like
+        Normalized time variable (by the turnover time).
+
+    Returns
+    -------
+    jac : array_like
+        Jacobian matrix with dimension N * 2, where N is the size of `t`.
+
+    """
+    jac = np.vstack((1. - np.exp(-t + p[1]), -p[0] * np.exp(-t + p[1]))).T
+    return jac
+
+
 def resid_conc_func(p, t, y):
     """
     Calculate the residuals of fitted concentration changes in chamber closure
