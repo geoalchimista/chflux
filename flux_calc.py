@@ -19,6 +19,7 @@ import pandas as pd
 from scipy import stats, optimize
 
 from common_func import *
+from default_config import default_config
 
 
 # Command-line argument parser
@@ -31,10 +32,10 @@ parser.add_argument('-c', '--config', dest='config',
 args = parser.parse_args()
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-default_config_filepath = current_dir + '/config.yaml'
+# default_config_filepath = current_dir + '/config.yaml'
 
-if args.config is None:
-    args.config = default_config_filepath
+# if args.config is None:
+#     args.config = default_config_filepath
 
 
 # Global settings (not from the config file)
@@ -1281,11 +1282,13 @@ def main():
 
     # Load config file and data files; extract time as day of year
     # =========================================================================
-    if args.config == default_config_filepath:
-        config = load_config(default_config_filepath)
+    if args.config is None:
+        # config = load_config(default_config_filepath)
+        config = default_config
     else:
         user_config = load_config(args.config)
-        config = load_config(default_config_filepath)
+        # config = load_config(default_config_filepath)
+        config = default_config
         for key in config:
             if key in user_config:
                 config[key].update(user_config[key])
