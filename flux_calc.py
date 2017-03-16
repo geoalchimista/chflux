@@ -914,8 +914,15 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
                                   (time_lag_in_day + dt_lmargin) * 8.64e4) /
                                t_turnover[loop_num])
 
+                # boolean index array for finite concentration values
+                ind_conc_fit = np.isfinite(y_fit)
+
+                # if no finite concentration values, skip the current step
+                if np.sum(ind_conc_fit) == 0:
+                    continue
+
                 slope, intercept, r_value, p_value, se_slope = \
-                    stats.linregress(x_fit, y_fit)
+                    stats.linregress(x_fit[ind_conc_fit], y_fit[ind_conc_fit])
 
                 # save the fitted conc values
                 conc_fitted_lin[spc_id, :] = (slope * x_fit + intercept) * \
@@ -975,7 +982,8 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
                     resid_conc_func, params_nonlin_guess,
                     bounds=([-np.inf, -10. / t_turnover[loop_num]],
                             [np.inf, 10. / t_turnover[loop_num]]),
-                    loss='soft_l1', f_scale=0.5, args=(t_fit, y_fit))
+                    loss='soft_l1', f_scale=0.5,
+                    args=(t_fit[ind_conc_fit], y_fit[ind_conc_fit]))
 
                 # save the fitted conc values
                 conc_fitted_nonlin[spc_id, :] = \

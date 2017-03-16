@@ -10,6 +10,7 @@
 
 # 0.1.7 (2017-03-16)
 
+- Bug fix: NaN values of concentration that caused regression procedures to fail are now filtered out.
 - Changed the default configuration file from YAML (`config.yaml`) to Python (`default_config.py`).
 - Improved data reading performance for large number of CSV files.
 
