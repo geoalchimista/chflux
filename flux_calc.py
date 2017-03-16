@@ -13,10 +13,10 @@ import yaml
 from distutils.version import LooseVersion
 
 import numpy as np
-import matplotlib as mpl
-import matplotlib.pyplot as plt
 import pandas as pd
 from scipy import stats, optimize
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 
 from common_func import *
 from default_config import default_config
@@ -31,7 +31,7 @@ parser.add_argument('-c', '--config', dest='config',
 
 args = parser.parse_args()
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
+# current_dir = os.path.dirname(os.path.abspath(__file__))
 # default_config_filepath = current_dir + '/config.yaml'
 
 # if args.config is None:
@@ -129,28 +129,61 @@ def load_tabulated_data(data_name, config, query=None):
     else:
         date_parser = None
 
+    read_csv_options = {
+        'sep': data_settings['delimiter'],
+        'header': data_settings['header'],
+        'names': data_settings['names'],
+        'usecols': data_settings['usecols'],
+        'dtype': data_settings['dtype'],
+        'na_values': data_settings['na_values'],
+        'parse_dates': data_settings['parse_dates'],
+        'date_parser': date_parser,
+        'infer_datetime_format': True,
+        'engine': 'c',
+        'encoding': 'utf-8', }
+    df_loaded = \
+        [pd.read_csv(entry, **read_csv_options) for entry in data_flist]
+
+    try:
+        df = pd.concat(df_loaded, ignore_index=True)
+    except ValueError:
+        df = None  # if the list to concatenate is empty
+        return df  # return None if not a valid DataFrame
+
+    del df_loaded
+
+    # @DEPRECATED
     # load all data
-    df = None
-    for entry in data_flist:
-        print(entry)
-        df_loaded = pd.read_csv(
-            entry, delimiter=data_settings['delimiter'],
-            header=data_settings['header'],
-            names=data_settings['names'],
-            usecols=data_settings['usecols'],
-            dtype=data_settings['dtype'],
-            na_values=data_settings['na_values'],
-            parse_dates=data_settings['parse_dates'],
-            date_parser=date_parser,
-            infer_datetime_format=True,
-            engine='c', encoding='utf-8')
-        # Note: sometimes it may need explicit definitions of data types to
-        # avoid a numpy NaN-to-integer error
-        if df is None:
-            df = df_loaded
-        else:
-            df = pd.concat([df, df_loaded], ignore_index=True)
-        del(df_loaded)
+    # use pd.concat() + list comprehension to boost speed
+    # df = None
+    # for entry in data_flist:
+    #     print(entry)
+    #     df_loaded = pd.read_csv(
+    #         entry, delimiter=data_settings['delimiter'],
+    #         header=data_settings['header'],
+    #         names=data_settings['names'],
+    #         usecols=data_settings['usecols'],
+    #         dtype=data_settings['dtype'],
+    #         na_values=data_settings['na_values'],
+    #         parse_dates=data_settings['parse_dates'],
+    #         date_parser=date_parser,
+    #         infer_datetime_format=True,
+    #         engine='c', encoding='utf-8')
+    #     # Note: sometimes it may need explicit definitions of data types to
+    #     # avoid a numpy NaN-to-integer error
+    #     if df is None:
+    #         df = df_loaded
+    #     else:
+    #         df = pd.concat([df, df_loaded], ignore_index=True)
+    #     del(df_loaded)
+
+    # parse 'doy' as 'time_doy'
+    if 'doy' in df.columns and 'time_doy' not in df.columns:
+        df.rename(columns={'doy': 'time_doy'}, inplace=True)
+
+    # parse 'datetime' as 'timestamp'
+    if 'datetime' in df.columns and 'timestamp' not in df.columns:
+        df.rename(columns={'datetime': 'timestamp'}, inplace=True)
 
     # echo data status
     print('%d lines read from %s data.' % (df.shape[0], data_name))
@@ -1283,11 +1316,9 @@ def main():
     # Load config file and data files; extract time as day of year
     # =========================================================================
     if args.config is None:
-        # config = load_config(default_config_filepath)
         config = default_config
     else:
         user_config = load_config(args.config)
-        # config = load_config(default_config_filepath)
         config = default_config
         for key in config:
             if key in user_config:
@@ -1295,7 +1326,7 @@ def main():
 
     chamber_config = load_config(
         config['run_options']['chamber_config_filepath'])
-    print('Chamber config file is set as `%s`\n' %
+    print("Chamber config file is set as '%s'\n" %
           config['run_options']['chamber_config_filepath'])
 
     # sanity check for config file

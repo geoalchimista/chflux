@@ -8,6 +8,11 @@
 - Daily summary plots.
 - Correct error in RMSE calculation.
 
+# 0.1.7 (2017-03-16)
+
+- Changed the default configuration file from YAML (`config.yaml`) to Python (`default_config.py`).
+- Improved data reading performance for large number of CSV files.
+
 # 0.1.6 (2017-02-10)
 
 - Added parameter error estimates for the nonlinear fitting method.
