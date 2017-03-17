@@ -8,11 +8,16 @@
 - Daily summary plots.
 - Correct error in RMSE calculation.
 
+@FIXME:
+
+- Concentration-fitting plot will crash the program if `conc_atmb` or `conc_atma` array is empty.
+
 # 0.1.7 (2017-03-16)
 
 - Bug fix: NaN values of concentration that caused regression procedures to fail are now filtered out.
 - Changed the default configuration file from YAML (`config.yaml`) to Python (`default_config.py`).
 - Improved data reading performance for large number of CSV files.
+- New option: `process_recent_period`. If enabled (`True`), this will let the program to process only the data over the last few days instead of all available data. The number of days to trace back during processing is specified with the option `traceback_in_days`.
 
 # 0.1.6 (2017-02-10)
 
@@ -43,9 +48,9 @@
 - Separate flow data files are supported with `load_flow_data()` function.
 - Refined saturation vapor pressure and dew temperature functions.
 - Refined summary statistics functions in `common_func.py`:
-	* `resist_mean()`: outlier-resistant mean
-	* `resist_std()`: outlier-resistant standard deviation
-	* `IQR_func()`: interquartile range
+ * `resist_mean()`: outlier-resistant mean
+ * `resist_std()`: outlier-resistant standard deviation
+ * `IQR_func()`: interquartile range
 - List of physical constants moved from `config.yaml` to `common_func.py`.
 - Added a bash script for the test case.
 

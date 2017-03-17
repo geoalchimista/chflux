@@ -93,8 +93,8 @@ def load_tabulated_data(data_name, config, query=None):
         - 'leaf': leaf area data
     config : dict
         Configuration dictionary parsed from the YAML config file.
-    query : str
-        The query string used to search in all available data files.
+    query : list
+        List of the query strings used to search in all available data files.
         If `None` (default), read all data files.
 
     Return
@@ -121,7 +121,8 @@ def load_tabulated_data(data_name, config, query=None):
               'Loading...')
 
     if query is not None:
-        data_flist = [f for f in data_flist if query in f]
+        data_flist = [f for f in data_flist if any(q in f for q in query)]
+        data_flist = sorted(data_flist)  # ensure the list is sorted by name
 
     # check date parser: if legit, extract it, and if not, set it to `None`
     if data_settings['date_parser'] in date_parsers_dict:
@@ -143,6 +144,9 @@ def load_tabulated_data(data_name, config, query=None):
         'encoding': 'utf-8', }
     df_loaded = \
         [pd.read_csv(entry, **read_csv_options) for entry in data_flist]
+
+    for entry in data_flist:
+        print(entry)
 
     try:
         df = pd.concat(df_loaded, ignore_index=True)
@@ -1341,8 +1345,26 @@ def main():
     if len(config['species_settings']['species_list']) < 1:
         raise RuntimeError('No gas species is specified in the config.')
 
+    # generate query strings if process only part of all available data
+    if config['run_options']['process_recent_period']:
+        tz = config['site_parameters']['time_zone']
+        # end timestamp
+        ts_end = pd.to_datetime(datetime.datetime.utcnow() +
+                                datetime.timedelta(seconds=tz * 3600.))
+        # start timestamp
+        ts_start = ts_end - \
+            pd.Timedelta(days=config['run_options']['traceback_in_days'])
+        ts_range = pd.date_range(start=ts_start.date(), end=ts_end.date())
+        # a list of timestamp query strings
+        ts_query = ts_range.strftime('%y%m%d').tolist()
+        # use 6-digit yymmdd for now
+        # @FIXME: add corresponding options in the `default_config` module,
+        # and parse those options here
+    else:
+        ts_query = None  # assign None to fall back to the default option
+
     # read biomet data
-    df_biomet = load_tabulated_data('biomet', config)
+    df_biomet = load_tabulated_data('biomet', config, query=ts_query)
     # check data size; if no data entry in it, terminate the program
     if df_biomet is None:
         raise RuntimeError('No biomet data file is found.')
@@ -1355,7 +1377,7 @@ def main():
     # read concentration data
     if config['data_dir']['separate_conc_data']:
         # if concentration data are in their own files, read from files
-        df_conc = load_tabulated_data('conc', config)
+        df_conc = load_tabulated_data('conc', config, query=ts_query)
         # check data size; if no data entry in it, terminate the program
         if df_conc is None:
             raise RuntimeError('No concentration data file is found.')
@@ -1376,7 +1398,7 @@ def main():
     if config['data_dir']['separate_flow_data']:
         # if flow data are in their own files, read from files
         # df_flow = load_flow_data(config)
-        df_flow = load_tabulated_data('flow', config)
+        df_flow = load_tabulated_data('flow', config, query=ts_query)
         # check data size; if no data entry in it, terminate the program
         if df_flow is None:
             raise RuntimeError('No flow data file is found.')

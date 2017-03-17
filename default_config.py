@@ -30,9 +30,13 @@ default_config = {
         'curve_fitting_method': 'all',
         # Curve fitting method: 'nonlinear', 'linear', 'robust_linear', 'all'.
 
-        'process_today': False,
-        # If True, process only today's data. This will be useful for online
-        # daily processing. If False, process all available data.
+        'process_recent_period': False,
+        # If True, process only recent few days' data. This will be useful for
+        # online daily processing. If False, process all available data.
+
+        'traceback_in_days': 1,
+        # number of days to trace back when processing recent periods
+        # only used when 'process_recent_period' is True; must be int type
 
         'save_fitting_plots': False,
         # If True, save the curve fitting plots for every chamber sampling
@@ -374,7 +378,7 @@ default_config = {
         # In Pascal. Default behavior (`None`) is to use the standard pressure.
 
         'time_zone': 0,
-        # Timezone with respect to UTC. For example, -8 means UTC-8.
+        # Time zone with respect to UTC. For example, -8 means UTC-8.
         # Warning: does not support daylight saving transition. Use standard
         # non daylight saving time, or process separately the data before
         # and after daylight saving.
