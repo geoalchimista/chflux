@@ -1,24 +1,24 @@
 Starting data processing...
-2017-03-17 03:26:50
+2017-03-20 16:55:55
 numpy version = 1.11.3
 pandas version = 0.19.2
 matplotlib version = 2.0.0
 Config file is set as `user_config.yaml`
-Chamber config file is set as './chamber.yaml'
+Chamber config file is set as 'chamber.yaml'
 
 2 biomet data files are found. Loading...
 ./test/input/biomet/DataTab_2013_04_01_0001.dat
 ./test/input/biomet/DataTab_2013_04_02_0001.dat
-17261 lines read from biomet data.
+17263 lines read from biomet data.
 2 conc data files are found. Loading...
 ./test/input/conc/130401_000000.str
 ./test/input/conc/130402_000000.str
-163003 lines read from conc data.
+163005 lines read from conc data.
 Notice: Flow rate data are extracted from biomet data, because they are not stored in their own files.
 Calculating fluxes...
 Raw data on the day 20130401 processed.
 Processed data and curve fitting diagnostics written to files.
 Raw data on the day 20130402 processed.
 Processed data and curve fitting diagnostics written to files.
-2017-03-17 03:27:09
-Done. Finished in 18.22 seconds.
+2017-03-20 16:56:13
+Done. Finished in 17.83 seconds.

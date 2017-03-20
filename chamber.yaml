@@ -3,7 +3,7 @@
 # use PyYAML <http://pyyaml.org/> to parse into Python.
 
 
-# Caveats for the YAML formatting:
+# Notice on the YAML formatting:
 # - This config file allows only one nested level.
 # - Boolean values are in lowercase: `true` and `false`
 # - The `null` value is parsed into Python as `None`

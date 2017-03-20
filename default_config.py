@@ -101,7 +101,7 @@ default_config = {
         #   - tab: '\\t'
 
         'header': 'infer',
-        # Number of rows to skip at the beginning of the file.
+        # Row number of the last line of the header (starting from 0)
         # Default behavior is to infer it with `pandas.read_csv()`.
 
         'names': None,
@@ -170,7 +170,7 @@ default_config = {
         #   - tab: '\\t'
 
         'header': 'infer',
-        # Number of rows to skip at the beginning of the file.
+        # Row number of the last line of the header (starting from 0)
         # Default behavior is to infer it with `pandas.read_csv()`.
 
         'names': None,
@@ -237,7 +237,7 @@ default_config = {
         #   - tab: '\\t'
 
         'header': 'infer',
-        # Number of rows to skip at the beginning of the file.
+        # Row number of the last line of the header (starting from 0)
         # Default behavior is to infer it with `pandas.read_csv()`.
 
         'names': None,
@@ -315,7 +315,7 @@ default_config = {
         #   - tab: '\\t'
 
         'header': 'infer',
-        # Number of rows to skip at the beginning of the file.
+        # Row number of the last line of the header (starting from 0)
         # Default behavior is to infer it with `pandas.read_csv()`.
 
         'names': None,
@@ -438,10 +438,10 @@ default_config = {
             'multiplier': 1.0,
         },
 
-        # You may add your own gas species following the same format
+        # You may add your own gas species following the same format.
         # The name that represents the added gas species is not so important
         # as long as it is used *consistently*. For example, if you define the
         # species name for CO2 to be `CO_2`, you must use the same name `CO_2`
-        # in the `species_list` key and the following unit definition.
+        # in the `species_list` key and in the following unit definition.
     },
 }
