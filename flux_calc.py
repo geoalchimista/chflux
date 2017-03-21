@@ -1095,7 +1095,9 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
                         '%.3f (nonlinear)' % flux_nonlin[loop_num, i])
 
                 # set the common x axis
-                t_min = np.floor(np.nanmin(atmb_time) / 60. - 0.5) * 60.
+                t_min = np.floor(
+                    np.nanmin(np.append(atmb_time, ch_full_time)) /
+                    60. - 0.5) * 60.
                 t_max = np.ceil(np.nanmax(ch_full_time) / 60. + 0.5) * 60.
                 axes[-1].set_xlim([t_min, t_max])
                 axes[-1].set_xticks(np.arange(t_min, t_max + 60., 60.))
@@ -1338,7 +1340,7 @@ def main():
 
     chamber_config = load_config(
         config['run_options']['chamber_config_filepath'])
-    print("Chamber config file is set as '%s'\n" %
+    print('Chamber config file is set as `%s`\n' %
           config['run_options']['chamber_config_filepath'])
 
     # sanity check for config file
