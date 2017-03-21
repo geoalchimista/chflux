@@ -8,9 +8,12 @@
 - Daily summary plots.
 - Correct error in RMSE calculation.
 
-@FIXME:
+# 0.1.8 (2017-03-21)
 
-- Concentration-fitting plot will crash the program if `conc_atmb` or `conc_atma` array is empty.
+- Daily flux summary plot has been implemented. It can be enabled from the key `save_daily_plots` under `run_options` in the configuration file.
+- Bug fix: the issue that an empty `conc_atmb` array caused the concentration-fitting plot to crash has been fixed.
+- Bug fix: measurement periods with negative flow rates will not be used for flux calculation.
+- Bug fix: erroneously large water concentration will not be used for dew temperature calculation.
 
 # 0.1.7 (2017-03-16)
 

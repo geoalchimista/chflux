@@ -17,6 +17,7 @@ import pandas as pd
 from scipy import stats, optimize
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib import ticker
 
 from common_func import *
 from default_config import default_config
@@ -788,8 +789,10 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
         # note that concentration data might not be sampled every second.
         # if this is the case, the criterion needs to be modified
         # `flag_calc_flux`: 0 - don't calculate fluxes; 1 - calculate fluxes
-        if n_ind_chc >= 2. * 60.:
+        if n_ind_chc >= 2. * 60. and flow[loop_num] > 0.:
             # needs at least 2 min good data in the closure period to proceed
+            # flow rate value needs to be positive, otherwise the chamber
+            # cannot be flushed by the inlet air
             flag_calc_flux = 1
         else:
             flag_calc_flux = 0
@@ -830,7 +833,9 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
 
         # if the species 'h2o' exist, calculate chamber dew temperature
         spc_id_h2o = np.where(np.array(species_list) == 'h2o')[0]
-        if conc_chb[loop_num, spc_id_h2o] > 0:
+        if (conc_chb[loop_num, spc_id_h2o] > 0 and
+            conc_chb[loop_num, spc_id_h2o] *
+                species_settings['h2o']['output_unit'] <= 1.):
             T_dew_ch[loop_num] = dew_temp(
                 conc_chb[loop_num, spc_id_h2o] *
                 species_settings['h2o']['output_unit'] * pres[loop_num])
@@ -1110,6 +1115,11 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
                            handlelength=3,
                            frameon=False, framealpha=0.5)
 
+                # figure annotation
+                plt.annotate(ch_label[loop_num],
+                             xy=(0.025, 0.985), xycoords='figure fraction',
+                             ha='left', va='top', fontsize=12)
+
                 fig.tight_layout()
 
                 run_datetime_str = datetime.datetime.strftime(
@@ -1233,7 +1243,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
     df_flux.to_csv(output_fname, sep=',', na_rep='NaN', index=False)
     # no need to have 'row index', therefore, set `index=False`
 
-    print('Raw data on the day %s processed.' % run_date_str)
+    print('\nRaw data on the day %s processed.' % run_date_str)
 
     # output curve fitting diagnostics
     # =========================================================================
@@ -1311,7 +1321,69 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
     df_diag.to_csv(diag_fname, sep=',', na_rep='NaN', index=False)
     # no need to have 'row index', therefore, set `index=False`
 
-    print('Processed data and curve fitting diagnostics written to files.')
+    print('Data and curve fitting diagnostics written to files.')
+
+    # generate daily summary plots
+    if run_options['save_daily_plots']:
+        hr_local = (ch_time - np.round(ch_time[0])) * 24.
+        if config['biomet_data_settings']['time_in_UTC']:
+            tz_str = 'UTC'
+        else:
+            tz_str = 'UTC+%d' % site_parameters['time_zone']
+
+        for i_ch in np.unique(ch_no):
+            fig_daily, axes_daily = plt.subplots(nrows=n_species, sharex=True,
+                                                 figsize=(8, 3 * n_species))
+            for j in range(n_species):
+                axes_daily[j].errorbar(
+                    hr_local[ch_no == i_ch], flux_lin[ch_no == i_ch, j],
+                    yerr=se_flux_lin[ch_no == i, spc_id] * 2.,
+                    c='k', fmt='o', markeredgecolor='None',
+                    linestyle='-', lw=1.5, capsize=0, label='linear')
+                axes_daily[j].errorbar(
+                    hr_local[ch_no == i_ch], flux_rlin[ch_no == i_ch, j],
+                    yerr=se_flux_rlin[ch_no == i, spc_id] * 2.,
+                    c='firebrick', fmt='o', markeredgecolor='None',
+                    linestyle='--', lw=1.5, capsize=0, label='robust linear')
+                axes_daily[j].errorbar(
+                    hr_local[ch_no == i_ch], flux_nonlin[ch_no == i_ch, j],
+                    yerr=se_flux_nonlin[ch_no == i, spc_id] * 2.,
+                    c='darkblue', fmt='o', markeredgecolor='None',
+                    linestyle='-.', lw=1.5, capsize=0, label='nonlinear')
+                # set y labels
+                axes_daily[j].set_ylabel(species_settings['species_names'][j] +
+                                         ' (%s)' % species_unit_names[j])
+
+            # set common x axis
+            axes_daily[-1].set_xlim((0, 24))
+            axes_daily[-1].xaxis.set_major_locator(ticker.MultipleLocator(2))
+            axes_daily[-1].xaxis.set_minor_locator(ticker.MultipleLocator(1))
+            axes_daily[-1].set_xlabel('Hour (%s)' % tz_str)
+
+            # figure legend
+            axes_daily[0].set_title(ch_label[np.where(ch_no == i_ch)[0][0]],
+                                    loc='left', fontsize=12)
+            fig_daily.legend(handles=axes_daily[0].lines[-3:],
+                             labels=['linear', 'robust linear', 'nonlinear'],
+                             loc='upper right', ncol=3, fontsize=12,
+                             handlelength=3,
+                             frameon=False, framealpha=0.5)
+
+            # # figure annotation
+            # plt.annotate(ch_label[np.where(ch_no == i_ch)[0][0]],
+            #              xy=(0.025, 0.985), xycoords='figure fraction',
+            #              ha='left', va='top', fontsize=12)
+
+            fig_daily.tight_layout()
+            fig_daily.savefig(
+                daily_plots_dir + 'daily_flux_%s_ch%d.png' %
+                (run_date_str, i_ch))
+
+            # important! release the memory after figure is saved
+            fig_daily.clf()
+            plt.close()
+
+        print('Daily flux summary plots generated.')
 
     return None
 
@@ -1463,7 +1535,7 @@ def main():
     # Echo program ending
     # =========================================================================
     dt_end = datetime.datetime.now()
-    print(datetime.datetime.strftime(dt_end, '%Y-%m-%d %X'))
+    print('\n%s' % datetime.datetime.strftime(dt_end, '%Y-%m-%d %X'))
     print('Done. Finished in %.2f seconds.' %
           (dt_end - dt_start).total_seconds())
 
