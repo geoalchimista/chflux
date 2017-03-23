@@ -12,6 +12,11 @@ import warnings
 import yaml
 from distutils.version import LooseVersion
 
+# multiprocessing functionality is still in testing
+import multiprocessing
+import functools
+import itertools
+
 import numpy as np
 import pandas as pd
 from scipy import stats, optimize
@@ -31,12 +36,6 @@ parser.add_argument('-c', '--config', dest='config',
                     action='store', help='set the config file')
 
 args = parser.parse_args()
-
-# current_dir = os.path.dirname(os.path.abspath(__file__))
-# default_config_filepath = current_dir + '/config.yaml'
-
-# if args.config is None:
-#     args.config = default_config_filepath
 
 
 # Global settings (not from the config file)
@@ -75,6 +74,7 @@ def load_config(filepath):
             config = yaml.load(stream)
         except yaml.YAMLError as exc_yaml:
             print(exc_yaml)
+            config = {}  # return a blank dict if fail to load
 
     return config
 
@@ -157,31 +157,6 @@ def load_tabulated_data(data_name, config, query=None):
 
     del df_loaded
 
-    # @DEPRECATED
-    # load all data
-    # use pd.concat() + list comprehension to boost speed
-    # df = None
-    # for entry in data_flist:
-    #     print(entry)
-    #     df_loaded = pd.read_csv(
-    #         entry, delimiter=data_settings['delimiter'],
-    #         header=data_settings['header'],
-    #         names=data_settings['names'],
-    #         usecols=data_settings['usecols'],
-    #         dtype=data_settings['dtype'],
-    #         na_values=data_settings['na_values'],
-    #         parse_dates=data_settings['parse_dates'],
-    #         date_parser=date_parser,
-    #         infer_datetime_format=True,
-    #         engine='c', encoding='utf-8')
-    #     # Note: sometimes it may need explicit definitions of data types to
-    #     # avoid a numpy NaN-to-integer error
-    #     if df is None:
-    #         df = df_loaded
-    #     else:
-    #         df = pd.concat([df, df_loaded], ignore_index=True)
-    #     del(df_loaded)
-
     # parse 'doy' as 'time_doy'
     if 'doy' in df.columns and 'time_doy' not in df.columns:
         df.rename(columns={'doy': 'time_doy'}, inplace=True)
@@ -193,6 +168,9 @@ def load_tabulated_data(data_name, config, query=None):
     # echo data status
     print('%d lines read from %s data.' % (df.shape[0], data_name))
 
+    # the year number to which the day of year values are referenced
+    year_ref = config['%s_data_settings' % data_name]['year_ref']
+
     # parse time variables if not already exist
     if 'timestamp' in df.columns.values:
         if type(df.loc[0, 'timestamp']) is not pd.Timestamp:
@@ -200,25 +178,27 @@ def load_tabulated_data(data_name, config, query=None):
             # no need to catch out-of bound error if set 'coerce'
         # add a time variable in days of year (float) if not already there
         if 'time_doy' not in df.columns.values:
-            year_start = df.loc[0, 'timestamp'].year
+            year_start = year_ref if year_ref is not None else \
+                df.loc[0, 'timestamp'].year
             df['time_doy'] = (df['timestamp'] -
-                              pd.Timestamp('%d-01-01 00:00' % year_start)) / \
+                              pd.Timestamp('%d-01-01' % year_start)) / \
                 pd.Timedelta(days=1)
     elif 'time_doy' in df.columns.values:
         # starting year must be specified for day of year
-        year_start = config['%s_data_settings' % data_name]['year_ref']
-        df['timestamp'] = pd.Timestamp('%d-01-01 00:00' % year_start) + \
+        year_start = year_ref
+        df['timestamp'] = pd.Timestamp('%d-01-01' % year_start) + \
             df['time_doy'] * pd.Timedelta(days=1.)
     elif 'time_sec' in df.columns.values:
         time_sec_start = config[
             '%s_data_settings' % data_name]['time_sec_start']
         if time_sec_start is None:
             time_sec_start = 1904
-        df['timestamp'] = pd.Timestamp('%d-01-01 00:00' % time_sec_start) + \
+        df['timestamp'] = pd.Timestamp('%d-01-01' % time_sec_start) + \
             df['time_sec'] * pd.Timedelta(seconds=1)
         # add a time variable in days of year (float) if not already there
         if 'time_doy' not in df.columns.values:
-            year_start = df.loc[0, 'timestamp'].year
+            year_start = year_ref if year_ref is not None else \
+                df.loc[0, 'timestamp'].year
             year_start_in_sec = (
                 pd.Timestamp('%d-01-01' % year_start) -
                 pd.Timestamp('%d-01-01' % time_sec_start)) / \
@@ -260,33 +240,28 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
     # unpack config
     run_options = config['run_options']
     data_dir = config['data_dir']
-    # biomet_data_settings = config['biomet_data_settings']
-    # conc_data_settings = config['conc_data_settings']
-    # flow_data_settings = config['flow_data_settings']
-    # consts = config['constants']
     site_parameters = config['site_parameters']
     species_settings = config['species_settings']
 
-    if run_options['plot_style'] is not None:
-        plt.style.use(run_options['plot_style'])
-
     # extract species settings
+    # @TODO: this can be moved to `main()` to reduce unnecessary steps
     n_species = len(species_settings['species_list'])
     species_list = species_settings['species_list']
     conc_factor = [species_settings[s]['multiplier'] for s in species_list]
     species_unit_names = []
     for i, s in enumerate(species_settings['species_list']):
-        if np.isclose(species_settings[s]['output_unit'], 1e-12):
+        output_unit = species_settings[s]['output_unit']
+        if np.isclose(output_unit, 1e-12):
             unit_name = 'pmol mol$^{-1}$'
-        elif np.isclose(species_settings[s]['output_unit'], 1e-9):
+        elif np.isclose(output_unit, 1e-9):
             unit_name = 'nmol mol$^{-1}$'
-        elif np.isclose(species_settings[s]['output_unit'], 1e-6):
+        elif np.isclose(output_unit, 1e-6):
             unit_name = '$\mu$mol mol$^{-1}$'
-        elif np.isclose(species_settings[s]['output_unit'], 1e-3):
+        elif np.isclose(output_unit, 1e-3):
             unit_name = 'mmol mol$^{-1}$'
-        elif np.isclose(species_settings[s]['output_unit'], 1e-2):
+        elif np.isclose(output_unit, 1e-2):
             unit_name = '%'
-        elif np.isclose(species_settings[s]['output_unit'], 1.):
+        elif np.isclose(output_unit, 1.):
             unit_name = 'mol mol$^{-1}$'
         else:
             unit_name = 'undefined unit'
@@ -294,11 +269,13 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
 
     # create or locate directories for output
     # for output data
+    # @TODO: this can be moved to `main()` to reduce unnecessary steps
     output_dir = data_dir['output_dir']
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
     # for daily flux summary plots
+    # @TODO: this can be moved to `main()` to reduce unnecessary steps
     if run_options['save_daily_plots']:
         daily_plots_dir = data_dir['plot_dir'] + '/daily_plots/'
         if not os.path.exists(daily_plots_dir):
@@ -308,7 +285,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
     run_date_str = (datetime.datetime(year, 1, 1) +
                     datetime.timedelta(doy + 0.5)).strftime('%Y%m%d')
 
-    # for fitting plots
+    # for curve-fitting plots of chamber headspace concentrations
     if run_options['save_fitting_plots']:
         fitting_plots_path = data_dir['plot_dir'] + \
             '/fitting/%s/' % run_date_str
@@ -588,6 +565,9 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
     time_lag_optmz = np.zeros(n_smpl_per_day) * np.nan
     status_time_lag_optmz = np.zeros(n_smpl_per_day, dtype='int') - 1
 
+    # @DEBUG: debug print for time optimization
+    # print(datetime.datetime.now())
+
     # loops for averaging biomet variables and calculating fluxes
     # =========================================================================
     for loop_num in range(n_smpl_per_day):
@@ -661,51 +641,68 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
 
             # atmospheric temperature
             if len(T_atm_names) > 0:
-                for i in range(len(T_atm_names)):
-                    T_atm[loop_num, i] = np.nanmean(
-                        df_biomet.loc[ind_ch_biomet, T_atm_names[i]].values)
+                # use 'axis=0' to average by column
+                T_atm[loop_num, :] = np.nanmean(
+                    df_biomet.loc[ind_ch_biomet, T_atm_names].values, axis=0)
+                # for i in range(len(T_atm_names)):
+                #     T_atm[loop_num, i] = np.nanmean(
+                #         df_biomet.loc[ind_ch_biomet, T_atm_names[i]].values)
 
             # atmospheric RH
             if len(RH_atm_names) > 0:
-                for i in range(len(RH_atm_names)):
-                    RH_atm[loop_num, i] = np.nanmean(
-                        df_biomet.loc[ind_ch_biomet, RH_atm_names[i]].values)
+                RH_atm[loop_num, :] = np.nanmean(
+                    df_biomet.loc[ind_ch_biomet, RH_atm_names].values, axis=0)
+                # for i in range(len(RH_atm_names)):
+                #     RH_atm[loop_num, i] = np.nanmean(
+                #         df_biomet.loc[ind_ch_biomet, RH_atm_names[i]].values)
 
             # chamber temperatures
             if len(T_ch_names) > 0:
-                for i in range(len(T_ch_names)):
-                    T_ch[loop_num, i] = np.nanmean(
-                        df_biomet.loc[ind_ch_biomet, T_ch_names[i]].values)
+                T_ch[loop_num, :] = np.nanmean(
+                    df_biomet.loc[ind_ch_biomet, T_ch_names].values, axis=0)
+                # for i in range(len(T_ch_names)):
+                #     T_ch[loop_num, i] = np.nanmean(
+                #         df_biomet.loc[ind_ch_biomet, T_ch_names[i]].values)
 
             # PAR (not associated with chambers)
             if len(PAR_names) > 0:
-                for i in range(len(PAR_names)):
-                    PAR[loop_num, i] = np.nanmean(
-                        df_biomet.loc[ind_ch_biomet, PAR_names[i]].values)
+                PAR[loop_num, :] = np.nanmean(
+                    df_biomet.loc[ind_ch_biomet, PAR_names].values, axis=0)
+                # for i in range(len(PAR_names)):
+                #     PAR[loop_num, i] = np.nanmean(
+                #         df_biomet.loc[ind_ch_biomet, PAR_names[i]].values)
 
             # PAR associated with chambers
             if len(PAR_ch_names) > 0:
-                for i in range(len(PAR_ch_names)):
-                    PAR_ch[loop_num, i] = np.nanmean(
-                        df_biomet.loc[ind_ch_biomet, PAR_ch_names[i]].values)
+                PAR_ch[loop_num, :] = np.nanmean(
+                    df_biomet.loc[ind_ch_biomet, PAR_ch_names].values, axis=0)
+                # for i in range(len(PAR_ch_names)):
+                #     PAR_ch[loop_num, i] = np.nanmean(
+                #         df_biomet.loc[ind_ch_biomet, PAR_ch_names[i]].values)
 
             # leaf temperatures
             if len(T_leaf_names) > 0:
-                for i in range(len(T_leaf_names)):
-                    T_leaf[loop_num, i] = np.nanmean(
-                        df_biomet.loc[ind_ch_biomet, T_leaf_names[i]].values)
+                T_leaf[loop_num, :] = np.nanmean(
+                    df_biomet.loc[ind_ch_biomet, T_leaf_names].values, axis=0)
+                # for i in range(len(T_leaf_names)):
+                #     T_leaf[loop_num, i] = np.nanmean(
+                #         df_biomet.loc[ind_ch_biomet, T_leaf_names[i]].values)
 
             # soil temperatures
             if len(T_soil_names) > 0:
-                for i in range(len(T_soil_names)):
-                    T_soil[loop_num, i] = np.nanmean(
-                        df_biomet.loc[ind_ch_biomet, T_soil_names[i]].values)
+                T_soil[loop_num, :] = np.nanmean(
+                    df_biomet.loc[ind_ch_biomet, T_soil_names].values, axis=0)
+                # for i in range(len(T_soil_names)):
+                #     T_soil[loop_num, i] = np.nanmean(
+                #         df_biomet.loc[ind_ch_biomet, T_soil_names[i]].values)
 
             # soil water content in volumetric fraction (m^3 water m^-3 soil)
             if len(w_soil_names) > 0:
-                for i in range(len(w_soil_names)):
-                    w_soil[loop_num, i] = np.nanmean(
-                        df_biomet.loc[ind_ch_biomet, w_soil_names[i]].values)
+                w_soil[loop_num, :] = np.nanmean(
+                    df_biomet.loc[ind_ch_biomet, w_soil_names].values, axis=0)
+                # for i in range(len(w_soil_names)):
+                #     w_soil[loop_num, i] = np.nanmean(
+                #         df_biomet.loc[ind_ch_biomet, w_soil_names[i]].values)
 
         # extract indices for averaging flow rates, no time lag
         ind_ch_flow = np.where((doy_flow >= ch_start[loop_num]) &
@@ -1394,6 +1391,7 @@ def main():
     print('Starting data processing...')
     dt_start = datetime.datetime.now()
     print(datetime.datetime.strftime(dt_start, '%Y-%m-%d %X'))
+    print('Checking environmental specifications:')
     print('numpy version = %s\n' % np.__version__ +
           'pandas version = %s\n' % pd.__version__ +
           'matplotlib version = %s\n' % mpl.__version__ +
@@ -1418,6 +1416,10 @@ def main():
     # sanity check for config file
     if len(config['species_settings']['species_list']) < 1:
         raise RuntimeError('No gas species is specified in the config.')
+
+    # customize matplotlib plotting style
+    if config['run_options']['plot_style'] is not None:
+        plt.style.use(config['run_options']['plot_style'])
 
     # generate query strings if process only part of all available data
     if config['run_options']['process_recent_period']:
