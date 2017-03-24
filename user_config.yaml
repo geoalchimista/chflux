@@ -17,6 +17,13 @@ run_options:  # Running options
     chamber_config_filepath: "chamber.yaml"
     # Configuration file that describes chamber settings.
 
+    load_data_by_day: false
+    # Load and process raw data by daily chunks if `True`. Default is
+    # `False` to load all data at once and then process daily chunks.
+    # Note: If the total size of the raw data files are larger than
+    # the size of computer memory, this should be enabled. Otherwise it
+    # may take for ever in reading the data.
+
     save_fitting_plots: false
     # If true, save the curve fitting plots for every chamber sampling period.
 
@@ -28,8 +35,14 @@ data_dir:  # Input and output directories, and other related settings
     biomet_data: "./test/input/biomet/*.dat"
     # Absolute or relative directory to search for biomet data files.
 
+    biomet_data.date_format: "%Y_%m_%d"
+    # date format string in the file name (not that in the data table)
+
     conc_data: "./test/input/conc/*.str"
     # Absolute or relative directory to search for concentration data files.
+
+    conc_data.date_format: "%y%m%d"
+    # date format string in the file name (not that in the data table)
 
     output_dir: "./test/output/"
     # Output directory for the processed flux data.

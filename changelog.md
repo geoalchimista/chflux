@@ -2,11 +2,15 @@
 
 @TODO:
 
+- Replace Theil-Sen estimator with a more efficient robust linear regression method (perhaps MM-estimator?).
 - Use `pandas.Timestamp` as the standard timestamp passed between functions.
 - Add timelag control in `chamber.yaml`
 - Test and refine the chamber schedule function for timelag optimization.
-- Daily summary plots.
 - Correct error in RMSE calculation.
+
+# 0.1.9 (2017-03-23)
+
+- Added a running option `load_data_by_day` for loading and processing the data by daily chunks. This will be useful when dealing with a large number of data files.
 
 # 0.1.8 (2017-03-21)
 

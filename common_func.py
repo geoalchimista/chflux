@@ -8,9 +8,10 @@ from collections import namedtuple
 import warnings
 
 import numpy as np
-from scipy import optimize
+from scipy import stats, optimize
 import scipy.constants.constants as sci_const
 import pandas as pd
+# import numba
 
 
 # Physical constants
@@ -358,6 +359,11 @@ def IQR_func(x, axis=None):
         return q3 - q1
     else:
         return np.nan
+
+
+# @numba.autojit  # doesn't work; need rewrite theilslopes() ab initio
+# def numba_theilslopes(y, x, alpha):
+#     return stats.theilslopes(y, x, alpha)
 
 
 def p_sat_h2o(temp, ice=False, kelvin=False, method='gg'):

@@ -30,6 +30,13 @@ default_config = {
         'curve_fitting_method': 'all',
         # Curve fitting method: 'nonlinear', 'linear', 'robust_linear', 'all'.
 
+        'load_data_by_day': False,
+        # Load and process raw data by daily chunks if `True`. Default is
+        # `False` to load all data at once and then process daily chunks.
+        # Note: If the total size of the raw data files are larger than
+        # the size of computer memory, this should be enabled. Otherwise it
+        # may take for ever in reading the data.
+
         'process_recent_period': False,
         # If True, process only recent few days' data. This will be useful for
         # online daily processing. If False, process all available data.
@@ -57,12 +64,21 @@ default_config = {
         'biomet_data': './biomet/*.csv',
         # Absolute or relative directory to search for biomet data files.
 
+        'biomet_data.date_format': '%Y%m%d',
+        # date format string in the file name (not that in the data table)
+
         'conc_data': './conc/*.csv',
         # Absolute or relative directory to search for concentration data
         # files.
 
+        'conc_data.date_format': '%Y%m%d',
+        # date format string in the file name (not that in the data table)
+
         'flow_data': None,
         # Absolute or relative directory to search for flow rate data files.
+
+        'flow_data.date_format': '%Y%m%d',
+        # date format string in the file name (not that in the data table)
 
         'leaf_data': None,
         # Absolute or relative directory to search for leaf area data files.

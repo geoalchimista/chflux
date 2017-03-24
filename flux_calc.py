@@ -5,6 +5,8 @@ Main program for flux calculation
 
 """
 import os
+import re
+import copy
 import glob
 import datetime
 import argparse
@@ -12,10 +14,10 @@ import warnings
 import yaml
 from distutils.version import LooseVersion
 
-# multiprocessing functionality is still in testing
-import multiprocessing
-import functools
-import itertools
+# # multiprocessing functionality is still in testing
+# import multiprocessing
+# import functools
+# import itertools
 
 import numpy as np
 import pandas as pd
@@ -47,8 +49,6 @@ if LooseVersion(mpl.__version__) < LooseVersion('2.0.0'):
 # suppress the annoying numpy runtime warning of "mean of empty slice"
 # @FIXME: warning suppression is lame; needs to be improved
 warnings.simplefilter('ignore', category=RuntimeWarning)
-# suppress the annoying matplotlib tight_layout user warning
-# warnings.simplefilter('ignore', category=UserWarning)
 
 
 # a collection of date parsers to use, when dates are stored in multiple
@@ -77,6 +77,29 @@ def load_config(filepath):
             config = {}  # return a blank dict if fail to load
 
     return config
+
+
+def extract_date_substr(flist, date_format='%Y%m%d'):
+    """
+    Extract date substring from a list of file paths, and parse to timestamps.
+
+    Date format supported: '%Y%m%d', '%Y_%m_%d', '%Y-%m-%d', or similar
+    formats with two-digit year number (replacing '%Y' with '%y').
+    However, it is not guaranteed that a format other than these would work.
+
+    """
+    re_date_format = copy.copy(date_format)  # regex date format
+    re_date_format = re_date_format.replace('-', '\-')  # dash separators
+    re_date_format = re_date_format.replace('%Y', '[0-9]{4}')  # 4-digit year
+    re_date_format = re_date_format.replace('%y', '[0-9]{2}')  # 2-digit
+    re_date_format = re_date_format.replace('%m', '[0-9]{2}')
+    re_date_format = re_date_format.replace('%d', '[0-9]{2}')
+    date_substr_list = [re.search(re_date_format, os.path.basename(f)).group()
+                        for f in flist]
+
+    ts_series = pd.to_datetime(date_substr_list, format=date_format,
+                               errors='coerce')
+    return date_substr_list, ts_series
 
 
 def load_tabulated_data(data_name, config, query=None):
@@ -113,6 +136,14 @@ def load_tabulated_data(data_name, config, query=None):
     # get the data settings
     data_settings = config[data_name + '_data_settings']
 
+    if type(query) is str:
+        # force `query` to be a list if it is given as a string
+        query = [query]
+
+    if query is not None:
+        data_flist = [f for f in data_flist if any(q in f for q in query)]
+        data_flist = sorted(data_flist)  # ensure the list is sorted by name
+
     # check data existence
     if not len(data_flist):
         print('Cannot find the %s data file!' % data_name)
@@ -120,10 +151,6 @@ def load_tabulated_data(data_name, config, query=None):
     else:
         print('%d %s data files are found. ' % (len(data_flist), data_name) +
               'Loading...')
-
-    if query is not None:
-        data_flist = [f for f in data_flist if any(q in f for q in query)]
-        data_flist = sorted(data_flist)  # ensure the list is sorted by name
 
     # check date parser: if legit, extract it, and if not, set it to `None`
     if data_settings['date_parser'] in date_parsers_dict:
@@ -244,7 +271,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
     species_settings = config['species_settings']
 
     # extract species settings
-    # @TODO: this can be moved to `main()` to reduce unnecessary steps
+    # @TODO: this may be moved to `main()` to reduce unnecessary steps
     n_species = len(species_settings['species_list'])
     species_list = species_settings['species_list']
     conc_factor = [species_settings[s]['multiplier'] for s in species_list]
@@ -269,13 +296,11 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
 
     # create or locate directories for output
     # for output data
-    # @TODO: this can be moved to `main()` to reduce unnecessary steps
+    # keep this in the `flux_calc()` function for safety
     output_dir = data_dir['output_dir']
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-
     # for daily flux summary plots
-    # @TODO: this can be moved to `main()` to reduce unnecessary steps
     if run_options['save_daily_plots']:
         daily_plots_dir = data_dir['plot_dir'] + '/daily_plots/'
         if not os.path.exists(daily_plots_dir):
@@ -293,7 +318,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
             os.makedirs(fitting_plots_path)
 
     # unpack time variables
-    # @TODO: switch from day of year based subsetting to timestamp subsetting
+    # @TODO: switch from day of year based subsetting to timestamp subsetting?
     if 'timestamp' not in df_biomet.columns.values:
         raise RuntimeError('No time variable found in the biomet data.')
 
@@ -326,7 +351,6 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
         df_chlut = chlut.df
         # n_ch = chlut.n_ch
         smpl_cycle_len = chlut.smpl_cycle_len
-        # n_cycle_per_day = chlut.n_cycle_per_day
         schedule_end = chlut.schedule_end
 
         ch_start = np.append(ch_start,
@@ -339,13 +363,10 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
             ch_start = ch_start[ch_start < schedule_end]
             switch_index = ch_no.size
             # apply the switched schedule
-            # chlut_now, n_ch, smpl_cycle_len, n_cycle_per_day, _, = \
-            #     chamber_lookup_table_func_old(doy + timer, return_all=True)
             chlut = chamber_lookup_table_func(doy + timer, chamber_config)
             df_chlut = chlut.df
             # n_ch = chlut.n_ch
             smpl_cycle_len = chlut.smpl_cycle_len
-            # n_cycle_per_day = chlut.n_cycle_per_day
             schedule_end = chlut.schedule_end
 
             timer = np.floor(timer / smpl_cycle_len - 1) * smpl_cycle_len
@@ -644,65 +665,41 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
                 # use 'axis=0' to average by column
                 T_atm[loop_num, :] = np.nanmean(
                     df_biomet.loc[ind_ch_biomet, T_atm_names].values, axis=0)
-                # for i in range(len(T_atm_names)):
-                #     T_atm[loop_num, i] = np.nanmean(
-                #         df_biomet.loc[ind_ch_biomet, T_atm_names[i]].values)
 
             # atmospheric RH
             if len(RH_atm_names) > 0:
                 RH_atm[loop_num, :] = np.nanmean(
                     df_biomet.loc[ind_ch_biomet, RH_atm_names].values, axis=0)
-                # for i in range(len(RH_atm_names)):
-                #     RH_atm[loop_num, i] = np.nanmean(
-                #         df_biomet.loc[ind_ch_biomet, RH_atm_names[i]].values)
 
             # chamber temperatures
             if len(T_ch_names) > 0:
                 T_ch[loop_num, :] = np.nanmean(
                     df_biomet.loc[ind_ch_biomet, T_ch_names].values, axis=0)
-                # for i in range(len(T_ch_names)):
-                #     T_ch[loop_num, i] = np.nanmean(
-                #         df_biomet.loc[ind_ch_biomet, T_ch_names[i]].values)
 
             # PAR (not associated with chambers)
             if len(PAR_names) > 0:
                 PAR[loop_num, :] = np.nanmean(
                     df_biomet.loc[ind_ch_biomet, PAR_names].values, axis=0)
-                # for i in range(len(PAR_names)):
-                #     PAR[loop_num, i] = np.nanmean(
-                #         df_biomet.loc[ind_ch_biomet, PAR_names[i]].values)
 
             # PAR associated with chambers
             if len(PAR_ch_names) > 0:
                 PAR_ch[loop_num, :] = np.nanmean(
                     df_biomet.loc[ind_ch_biomet, PAR_ch_names].values, axis=0)
-                # for i in range(len(PAR_ch_names)):
-                #     PAR_ch[loop_num, i] = np.nanmean(
-                #         df_biomet.loc[ind_ch_biomet, PAR_ch_names[i]].values)
 
             # leaf temperatures
             if len(T_leaf_names) > 0:
                 T_leaf[loop_num, :] = np.nanmean(
                     df_biomet.loc[ind_ch_biomet, T_leaf_names].values, axis=0)
-                # for i in range(len(T_leaf_names)):
-                #     T_leaf[loop_num, i] = np.nanmean(
-                #         df_biomet.loc[ind_ch_biomet, T_leaf_names[i]].values)
 
             # soil temperatures
             if len(T_soil_names) > 0:
                 T_soil[loop_num, :] = np.nanmean(
                     df_biomet.loc[ind_ch_biomet, T_soil_names].values, axis=0)
-                # for i in range(len(T_soil_names)):
-                #     T_soil[loop_num, i] = np.nanmean(
-                #         df_biomet.loc[ind_ch_biomet, T_soil_names[i]].values)
 
             # soil water content in volumetric fraction (m^3 water m^-3 soil)
             if len(w_soil_names) > 0:
                 w_soil[loop_num, :] = np.nanmean(
                     df_biomet.loc[ind_ch_biomet, w_soil_names].values, axis=0)
-                # for i in range(len(w_soil_names)):
-                #     w_soil[loop_num, i] = np.nanmean(
-                #         df_biomet.loc[ind_ch_biomet, w_soil_names[i]].values)
 
         # extract indices for averaging flow rates, no time lag
         ind_ch_flow = np.where((doy_flow >= ch_start[loop_num]) &
@@ -951,6 +948,9 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
                 del slope, intercept, r_value, p_value, se_slope
 
                 # robust linear fit
+                # @TODO: replace Theil-Sen estimator with RANSAC method??
+                # the original algorithm of Theil-Sen method uses numpy.sort()
+                # and is thus time consuming
                 # -------------------------------------------------------------
                 medslope, medintercept, lo_slope, up_slope = \
                     stats.theilslopes(y_fit, x_fit, alpha=0.95)
@@ -1211,6 +1211,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
         df_flux[w_soil_names[i]] = w_soil[:, i]
 
     for spc_id in range(n_species):
+        # concentrations
         df_flux[species_list[spc_id] + '_atmb'] = conc_atmb[:, spc_id]
         df_flux['sd_%s_atmb' % species_list[spc_id]] = sd_conc_atmb[:, spc_id]
         df_flux[species_list[spc_id] + '_chb'] = conc_chb[:, spc_id]
@@ -1220,7 +1221,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
         df_flux[species_list[spc_id] + '_atma'] = conc_atma[:, spc_id]
         df_flux['sd_%s_atma' % species_list[spc_id]] = sd_conc_atma[:, spc_id]
         df_flux[species_list[spc_id] + '_chc_iqr'] = conc_chc_iqr[:, spc_id]
-
+        # fluxes
         df_flux['f%s_lin' % species_list[spc_id]] = flux_lin[:, spc_id]
         df_flux['se_f%s_lin' % species_list[spc_id]] = se_flux_lin[:, spc_id]
         df_flux['f%s_rlin' % species_list[spc_id]] = flux_rlin[:, spc_id]
@@ -1397,7 +1398,7 @@ def main():
           'matplotlib version = %s\n' % mpl.__version__ +
           'Config file is set as `%s`' % args.config)
 
-    # Load config file and data files; extract time as day of year
+    # Load config files
     # =========================================================================
     if args.config is None:
         config = default_config
@@ -1439,100 +1440,220 @@ def main():
     else:
         ts_query = None  # assign None to fall back to the default option
 
-    # read biomet data
-    df_biomet = load_tabulated_data('biomet', config, query=ts_query)
-    # check data size; if no data entry in it, terminate the program
-    if df_biomet is None:
-        raise RuntimeError('No biomet data file is found.')
-    elif df_biomet.shape[0] == 0:
-        raise RuntimeError('No entry in the biomet data.')
-    # check timestamp existence
-    if 'timestamp' not in df_biomet.columns.values:
-        raise RuntimeError('No time variable found in the biomet data.')
-
-    # read concentration data
-    if config['data_dir']['separate_conc_data']:
-        # if concentration data are in their own files, read from files
-        df_conc = load_tabulated_data('conc', config, query=ts_query)
-        # check data size; if no data entry in it, terminate the program
-        if df_conc is None:
-            raise RuntimeError('No concentration data file is found.')
-        elif df_conc.shape[0] == 0:
-            raise RuntimeError('No entry in the concentration data.')
-        # check timestamp existence
-        if 'timestamp' not in df_conc.columns.values:
-            raise RuntimeError(
-                'No time variable found in the concentration data.')
-    else:
-        # if concentration data are not in their own files, create aliases
-        # for biomet data and the parsed time variable
-        df_conc = df_biomet
-        print('Notice: Concentration data are extracted from biomet data, ' +
-              'because they are not stored in their own files.')
-
-    # read flow data
-    if config['data_dir']['separate_flow_data']:
-        # if flow data are in their own files, read from files
-        # df_flow = load_flow_data(config)
-        df_flow = load_tabulated_data('flow', config, query=ts_query)
-        # check data size; if no data entry in it, terminate the program
-        if df_flow is None:
-            raise RuntimeError('No flow data file is found.')
-        elif df_flow.shape[0] == 0:
-            raise RuntimeError('No entry in the flow data.')
-        # check timestamp existence
-        if 'timestamp' not in df_flow.columns.values:
-            raise RuntimeError('No time variable found in the flow rate data.')
-    else:
-        # if flow data are not in their own files, create aliases for
-        # biomet data and the parsed time variable
-        df_flow = df_biomet
-        print('Notice: Flow rate data are extracted from biomet data, ' +
-              'because they are not stored in their own files.')
-
-    # read leaf data
-    if config['data_dir']['separate_leaf_data']:
-        print('Notice: Leaf area data are stored separately ' +
-              'from chamber configuration.')
-        # if leaf data are in their own files, read from files
-        # df_leaf = load_leaf_data(config)
-        df_leaf = load_tabulated_data('leaf', config)
-        # check data size; if no data entry in it, terminate the program
-        if df_leaf is None:
-            raise RuntimeError('No leaf area data file is found.')
-        elif df_leaf.shape[0] == 0:
-            raise RuntimeError('No entry in the leaf area data.')
-        # check timestamp existence
-        if 'timestamp' not in df_leaf.columns.values:
-            raise RuntimeError('No time variable found in the leaf area data.')
-    else:
-        # if leaf data are not in their own files, set them to None
-        df_leaf = None
-
-    year_biomet = df_biomet.loc[0, 'timestamp'].year
-    if year_biomet is None:
-        year_biomet = config['biomet_data_settings']['year_ref']
-
-    year_conc = df_conc.loc[0, 'timestamp'].year
-    if year_conc is None:
-        year_conc = config['conc_data_settings']['year_ref']
-
-    if year_biomet != year_conc and config['data_dir']['separate_conc_data']:
-        raise RuntimeError('Year numbers do not match between ' +
-                           'biomet data and concentration data.')
-
-    # Calculate fluxes, and output plots and the processed data
+    # Load data files
     # =========================================================================
-    print('Calculating fluxes...')
+    if config['run_options']['load_data_by_day']:
+        # this branch loads data by daily chunks
+        biomet_data_flist = glob.glob(config['data_dir']['biomet_data'])
+        biomet_query_list, biomet_date_series = extract_date_substr(
+            biomet_data_flist,
+            date_format=config['data_dir']['biomet_data.date_format'])
 
-    doy_start = np.floor(df_biomet['time_doy'].min())  # NaN skipped by default
-    doy_end = np.ceil(df_biomet['time_doy'].max())  # NaN skipped by default
-    year = year_biomet
+        # read leaf data (outside of the loop)
+        if config['data_dir']['separate_leaf_data']:
+            print('Notice: Leaf area data are stored separately ' +
+                  'from chamber configuration.')
+            # if leaf data are in their own files, read from files
+            df_leaf = load_tabulated_data('leaf', config)
+            # check data size; if no data entry in it, terminate the program
+            if df_leaf is None:
+                raise RuntimeError('No leaf area data file is found.')
+            elif df_leaf.shape[0] == 0:
+                raise RuntimeError('No entry in the leaf area data.')
+            # check timestamp existence
+            if 'timestamp' not in df_leaf.columns.values:
+                raise RuntimeError(
+                    'No time variable found in the leaf area data.')
+        else:
+            # if leaf data are not in their own files, set them to None
+            df_leaf = None
 
-    # calculate fluxes day by day
-    for doy in np.arange(doy_start, doy_end):
-        flux_calc(df_biomet, df_conc, df_flow, df_leaf,
-                  doy, year, config, chamber_config)
+        for i in range(len(biomet_query_list)):
+            biomet_ts_query = biomet_query_list[i]
+            conc_ts_query = biomet_date_series[i].strftime(
+                config['data_dir']['conc_data.date_format'])
+            flow_ts_query = biomet_date_series[i].strftime(
+                config['data_dir']['flow_data.date_format'])
+            # read biomet data
+            df_biomet = \
+                load_tabulated_data('biomet', config, query=biomet_ts_query)
+            # check data size; if no data entry in it, skip
+            if df_biomet is None:
+                print('No biomet data file is found on day %s. Skip.' %
+                      biomet_ts_query)
+                continue
+            elif df_biomet.shape[0] == 0:
+                print('No entry in the biomet data on day %s. Skip.' %
+                      biomet_ts_query)
+            # check timestamp existence
+            if 'timestamp' not in df_biomet.columns.values:
+                print('No time variable found in the biomet data ' +
+                      'on day %s. Skip.' % biomet_ts_query)
+
+            # read concentration data
+            if config['data_dir']['separate_conc_data']:
+                # if concentration data are in their own files, read from files
+                df_conc = \
+                    load_tabulated_data('conc', config, query=conc_ts_query)
+                # check data size; if no data entry in it, skip
+                if df_conc is None:
+                    print('No concentration data file is found on day %s. ' %
+                          conc_ts_query + 'Skip.')
+                elif df_conc.shape[0] == 0:
+                    print('No entry in the concentration data on day %s. ' %
+                          conc_ts_query + 'Skip.')
+                # check timestamp existence
+                if 'timestamp' not in df_conc.columns.values:
+                    print('No time variable found in the concentration data' +
+                          'on day %s. Skip.' % conc_ts_query)
+            else:
+                # if concentration data are not in their own files
+                # create aliases for biomet data and the parsed time variable
+                df_conc = df_biomet
+
+            # read flow data
+            if config['data_dir']['separate_flow_data']:
+                # if flow data are in their own files, read from files
+                df_flow = \
+                    load_tabulated_data('flow', config, query=flow_ts_query)
+                # check data size; if no data entry in it, skip
+                if df_flow is None:
+                    print('No flow data file is found on day %s. Skip.' %
+                          flow_ts_query)
+                elif df_flow.shape[0] == 0:
+                    print('No entry in the flow data on day %s. Skip.' %
+                          flow_ts_query)
+                # check timestamp existence
+                if 'timestamp' not in df_flow.columns.values:
+                    print('No time variable found in the flow rate data ' +
+                          'on day %s. Skip.' % flow_ts_query)
+            else:
+                # if flow data are not in their own files, create aliases for
+                # biomet data and the parsed time variable
+                df_flow = df_biomet
+
+            year_biomet = df_biomet.loc[0, 'timestamp'].year
+            if year_biomet is None:
+                year_biomet = config['biomet_data_settings']['year_ref']
+
+            year_conc = df_conc.loc[0, 'timestamp'].year
+            if year_conc is None:
+                year_conc = config['conc_data_settings']['year_ref']
+
+            if (year_biomet != year_conc and
+                    config['data_dir']['separate_conc_data']):
+                raise RuntimeError('Year numbers do not match between ' +
+                                   'biomet data and concentration data.')
+
+            # Calculate fluxes, and output plots and the processed data
+            # =================================================================
+            print('Calculating fluxes...')
+
+            doy = (biomet_date_series[i] -
+                   pd.Timestamp('%s-01-01' % year_biomet)) / \
+                pd.Timedelta(days=1)
+            year = year_biomet
+
+            # calculate fluxes
+            flux_calc(df_biomet, df_conc, df_flow, df_leaf,
+                      doy, year, config, chamber_config)
+    else:
+        # this branch loads all the data at once
+        # read biomet data
+        df_biomet = load_tabulated_data('biomet', config, query=ts_query)
+        # check data size; if no data entry in it, terminate the program
+        if df_biomet is None:
+            raise RuntimeError('No biomet data file is found.')
+        elif df_biomet.shape[0] == 0:
+            raise RuntimeError('No entry in the biomet data.')
+        # check timestamp existence
+        if 'timestamp' not in df_biomet.columns.values:
+            raise RuntimeError('No time variable found in the biomet data.')
+
+        # read concentration data
+        if config['data_dir']['separate_conc_data']:
+            # if concentration data are in their own files, read from files
+            df_conc = load_tabulated_data('conc', config, query=ts_query)
+            # check data size; if no data entry in it, terminate the program
+            if df_conc is None:
+                raise RuntimeError('No concentration data file is found.')
+            elif df_conc.shape[0] == 0:
+                raise RuntimeError('No entry in the concentration data.')
+            # check timestamp existence
+            if 'timestamp' not in df_conc.columns.values:
+                raise RuntimeError(
+                    'No time variable found in the concentration data.')
+        else:
+            # if concentration data are not in their own files, create aliases
+            # for biomet data and the parsed time variable
+            df_conc = df_biomet
+            print('Notice: Concentration data are extracted from biomet ' +
+                  'data, because they are not stored in their own files.')
+
+        # read flow data
+        if config['data_dir']['separate_flow_data']:
+            # if flow data are in their own files, read from files
+            df_flow = load_tabulated_data('flow', config, query=ts_query)
+            # check data size; if no data entry in it, terminate the program
+            if df_flow is None:
+                raise RuntimeError('No flow data file is found.')
+            elif df_flow.shape[0] == 0:
+                raise RuntimeError('No entry in the flow data.')
+            # check timestamp existence
+            if 'timestamp' not in df_flow.columns.values:
+                raise RuntimeError(
+                    'No time variable found in the flow rate data.')
+        else:
+            # if flow data are not in their own files, create aliases for
+            # biomet data and the parsed time variable
+            df_flow = df_biomet
+            print('Notice: Flow rate data are extracted from biomet data, ' +
+                  'because they are not stored in their own files.')
+
+        # read leaf data
+        if config['data_dir']['separate_leaf_data']:
+            print('Notice: Leaf area data are stored separately ' +
+                  'from chamber configuration.')
+            # if leaf data are in their own files, read from files
+            df_leaf = load_tabulated_data('leaf', config)
+            # check data size; if no data entry in it, terminate the program
+            if df_leaf is None:
+                raise RuntimeError('No leaf area data file is found.')
+            elif df_leaf.shape[0] == 0:
+                raise RuntimeError('No entry in the leaf area data.')
+            # check timestamp existence
+            if 'timestamp' not in df_leaf.columns.values:
+                raise RuntimeError(
+                    'No time variable found in the leaf area data.')
+        else:
+            # if leaf data are not in their own files, set them to None
+            df_leaf = None
+
+        year_biomet = df_biomet.loc[0, 'timestamp'].year
+        if year_biomet is None:
+            year_biomet = config['biomet_data_settings']['year_ref']
+
+        year_conc = df_conc.loc[0, 'timestamp'].year
+        if year_conc is None:
+            year_conc = config['conc_data_settings']['year_ref']
+
+        if (year_biomet != year_conc and
+                config['data_dir']['separate_conc_data']):
+            raise RuntimeError('Year numbers do not match between ' +
+                               'biomet data and concentration data.')
+
+        # Calculate fluxes, and output plots and the processed data
+        # =====================================================================
+        print('Calculating fluxes...')
+
+        doy_start = np.floor(df_biomet['time_doy'].min())  # NaN skipped
+        doy_end = np.ceil(df_biomet['time_doy'].max())  # NaN skipped
+        year = year_biomet
+
+        # calculate fluxes day by day
+        for doy in np.arange(doy_start, doy_end):
+            flux_calc(df_biomet, df_conc, df_flow, df_leaf,
+                      doy, year, config, chamber_config)
 
     # Echo program ending
     # =========================================================================
