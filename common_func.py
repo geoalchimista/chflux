@@ -71,7 +71,7 @@ def chamber_lookup_table_func(doy, chamber_config):
     for key in ['ch_no', 'A_ch', 'A_ch_std', 'V_ch', 'ch_label',
                 'is_leaf_chamber', 'flowmeter_no', 'TC_no', 'PAR_no',
                 'ch_start', 'ch_o_b', 'ch_cls', 'ch_o_a',
-                'ch_end', 'ch_atm_a', 'timelag_nominal',
+                'ch_end', 'ch_atm_a', 'optimize_timelag', 'timelag_nominal',
                 'timelag_upper_limit', 'timelag_lower_limit']:
         df[key] = current_schedule[key]
 
@@ -219,9 +219,10 @@ def optimize_timelag(time, conc, t_turnover,
               dt_open_before, dt_close, dt_open_after,
               dt_left_margin, dt_right_margin,
               closure_period_only),
-        method='Nelder-Mead', options={'xtol': 1e-6, 'ftol': 1e-6})
+        method='Nelder-Mead',
+        options={'xatol': 1e-6, 'fatol': 1e-6, 'disp': False})
 
-    timelag = timelag_results.x
+    timelag = timelag_results.x[0]
     status_timelag = timelag_results.status
     return timelag, status_timelag
 

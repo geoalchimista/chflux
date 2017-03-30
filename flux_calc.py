@@ -295,6 +295,13 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
             unit_name = 'undefined unit'
         species_unit_names.append(unit_name)
 
+    species_for_timelag_optmz = \
+        config['run_options']['timelag_optimization_species']
+    if species_for_timelag_optmz not in species_list:
+        spc_optmz_id = 0
+    else:
+        spc_optmz_id = species_list.index(species_for_timelag_optmz)
+
     # create or locate directories for output
     # for output data
     # keep this in the `flux_calc()` function for safety
@@ -579,13 +586,13 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
 
     # timelag diagnostics
     # -------------------
-    # - `time_lag_nominal`: nominal time lag in seconds
-    # - `time_lag_optmz`: optimized time lag in seconds
-    # - `status_time_lag_optmz`: status code for time lag optimization
+    # - `timelag_nominal`: nominal time lag in seconds
+    # - `timelag_optmz`: optimized time lag in seconds
+    # - `status_timelag_optmz`: status code for time lag optimization
     #   initial value is -1
-    time_lag_nominal = np.zeros(n_smpl_per_day) * np.nan
-    time_lag_optmz = np.zeros(n_smpl_per_day) * np.nan
-    status_time_lag_optmz = np.zeros(n_smpl_per_day, dtype='int') - 1
+    timelag_nominal = np.zeros(n_smpl_per_day) * np.nan
+    timelag_optmz = np.zeros(n_smpl_per_day) * np.nan
+    status_timelag_optmz = np.zeros(n_smpl_per_day, dtype='int') - 1
 
     # @DEBUG: debug print for time optimization
     # print(datetime.datetime.now())
@@ -764,32 +771,74 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
         # - '_chs' - starting 1 min of the closure  # disabled
         # - '_cha' - after closure
 
-        # these need to be assigned properly later
+        # timelag optimization (still in active development & testing)
         dt_lmargin = 0.
         dt_rmargin = 0.
-        time_lag_in_day = 0.
+        if df_chlut_current['optimize_timelag'].values[0]:
+            timelag_nominal[loop_num] = \
+                df_chlut_current['timelag_nominal'].values[0] * 86400.
+            timelag_upper_limit = \
+                df_chlut_current['timelag_upper_limit'].values[0] * 86400.
+            # a temporary variable
+            timelag_lower_limit = \
+                df_chlut_current['timelag_lower_limit'].values[0] * 86400.
+            # a temporary variable
+
+            # print('DEBUG: ', timelag_lower_limit, timelag_upper_limit)
+            ind_optmz = np.where(
+                (doy_conc > ch_o_b[loop_num]) &
+                (doy_conc < ch_end[loop_num] +
+                    timelag_upper_limit / 86400.))[0]
+            time_optmz = (doy_conc[ind_optmz] - ch_start[loop_num]) * 86400.
+            conc_optmz = \
+                df_conc.loc[ind_optmz, species_list[spc_optmz_id]].values * \
+                conc_factor[spc_optmz_id]
+
+            dt_open_before = (df_chlut_current['ch_cls'].values[0] -
+                              df_chlut_current['ch_o_b'].values[0]) * 86400.
+            dt_close = (df_chlut_current['ch_o_a'].values[0] -
+                        df_chlut_current['ch_cls'].values[0]) * 86400.
+            dt_open_after = (df_chlut_current['ch_end'].values[0] -
+                             df_chlut_current['ch_o_a'].values[0]) * 86400.
+
+            # print('DEBUG: ', np.nanmin(time_optmz), np.nanmax(time_optmz))
+            # print('DEBUG: ', time_optmz, conc_optmz)
+            # print('DEBUG: ', dt_open_before, dt_close, dt_open_after)
+
+            timelag_optmz_results = optimize_timelag(
+                time_optmz, conc_optmz, t_turnover[loop_num],
+                dt_open_before, dt_close, dt_open_after,
+                closure_period_only=True,
+                bounds=(timelag_lower_limit, timelag_upper_limit),
+                guess=timelag_nominal[loop_num])
+            timelag_optmz[loop_num], status_timelag_optmz[loop_num] = \
+                timelag_optmz_results
+            # print('DEBUG: ', timelag_optmz_results)
+            timelag_in_day = timelag_optmz_results[0] / 86400.  # in day
+        else:
+            timelag_in_day = 0.
 
         # 'ind_ch_full' index is only used for plotting
         ind_ch_full = np.where((doy_conc > ch_o_b[loop_num]) &
                                (doy_conc < ch_end[loop_num] +
-                                time_lag_in_day))[0]
+                                timelag_in_day))[0]
         ind_atmb = np.where(
-            (doy_conc > ch_start[loop_num] + time_lag_in_day + dt_lmargin) &
-            (doy_conc < ch_o_b[loop_num] + time_lag_in_day - dt_rmargin))[0]
+            (doy_conc > ch_start[loop_num] + timelag_in_day + dt_lmargin) &
+            (doy_conc < ch_o_b[loop_num] + timelag_in_day - dt_rmargin))[0]
         ind_chb = np.where(
-            (doy_conc > ch_o_b[loop_num] + time_lag_in_day + dt_lmargin) &
-            (doy_conc < ch_cls[loop_num] + time_lag_in_day - dt_rmargin))[0]
+            (doy_conc > ch_o_b[loop_num] + timelag_in_day + dt_lmargin) &
+            (doy_conc < ch_cls[loop_num] + timelag_in_day - dt_rmargin))[0]
         ind_chc = np.where(
-            (doy_conc > ch_cls[loop_num] + time_lag_in_day + dt_lmargin) &
-            (doy_conc < ch_o_a[loop_num] + time_lag_in_day - dt_rmargin))[0]
+            (doy_conc > ch_cls[loop_num] + timelag_in_day + dt_lmargin) &
+            (doy_conc < ch_o_a[loop_num] + timelag_in_day - dt_rmargin))[0]
         # Note: after the line is switched, regardless of the time lag,
         # the analyzer will sample the next line.
         # This is the reason that a time lag is not added to the terminal time.
         ind_cha = np.where(
-            (doy_conc > ch_o_a[loop_num] + time_lag_in_day + dt_lmargin) &
+            (doy_conc > ch_o_a[loop_num] + timelag_in_day + dt_lmargin) &
             (doy_conc < ch_atm_a[loop_num]))[0]
         ind_atma = np.where(
-            (doy_conc > ch_atm_a[loop_num] + time_lag_in_day + dt_lmargin) &
+            (doy_conc > ch_atm_a[loop_num] + timelag_in_day + dt_lmargin) &
             (doy_conc < ch_end[loop_num]))[0]
 
         n_ind_atmb = ind_atmb.size
@@ -933,7 +982,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
                 # see the supp. info of Sun et al. (2016) JGR-Biogeosci.
                 y_fit = (chc_conc - conc_bl) * flow[loop_num] / A_ch[loop_num]
                 x_fit = np.exp(- (chc_time - chc_time[0] +
-                                  (time_lag_in_day + dt_lmargin) * 8.64e4) /
+                                  (timelag_in_day + dt_lmargin) * 8.64e4) /
                                t_turnover[loop_num])
 
                 # boolean index array for finite concentration values
@@ -1000,7 +1049,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
                 # nonlinear fit
                 # -------------------------------------------------------------
                 t_fit = (chc_time - chc_time[0] +
-                         (time_lag_in_day + dt_lmargin) * 8.64e4) / \
+                         (timelag_in_day + dt_lmargin) * 8.64e4) / \
                     t_turnover[loop_num]
                 params_nonlin_guess = [- flux_lin[loop_num, spc_id], 0.]
                 params_nonlin = optimize.least_squares(
@@ -1095,7 +1144,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
                                  'x--', c='gray', linewidth=1.5,
                                  markeredgewidth=1.25)
                     # draw timelag lines
-                    axes[i].axvline(x=time_lag_in_day * 86400.,
+                    axes[i].axvline(x=timelag_in_day * 86400.,
                                     linestyle='dashed', c='k')
                     # draw fitted lines
                     axes[i].plot(chc_time, conc_fitted_lin[i, :], '-',
@@ -1203,6 +1252,9 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
     df_flux['T_inst'] = T_inst
     df_flux['flow_lpm'] = flow_lpm
     df_flux['t_turnover'] = t_turnover
+    df_flux['t_lag_nom'] = timelag_nominal
+    df_flux['t_lag_optmz'] = timelag_optmz
+    df_flux['status_tlag'] = status_timelag_optmz
     df_flux['T_dew_ch'] = T_dew_ch
 
     for i in range(len(T_atm_names)):
