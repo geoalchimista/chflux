@@ -6,6 +6,7 @@ Main program for flux calculation
 """
 import os
 import re
+import math
 import copy
 import glob
 import datetime
@@ -278,17 +279,17 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
     species_unit_names = []
     for i, s in enumerate(species_settings['species_list']):
         output_unit = species_settings[s]['output_unit']
-        if np.isclose(output_unit, 1e-12):
+        if math.isclose(output_unit, 1e-12):
             unit_name = 'pmol mol$^{-1}$'
-        elif np.isclose(output_unit, 1e-9):
+        elif math.isclose(output_unit, 1e-9):
             unit_name = 'nmol mol$^{-1}$'
-        elif np.isclose(output_unit, 1e-6):
+        elif math.isclose(output_unit, 1e-6):
             unit_name = '$\mu$mol mol$^{-1}$'
-        elif np.isclose(output_unit, 1e-3):
+        elif math.isclose(output_unit, 1e-3):
             unit_name = 'mmol mol$^{-1}$'
-        elif np.isclose(output_unit, 1e-2):
+        elif math.isclose(output_unit, 1e-2):
             unit_name = '%'
-        elif np.isclose(output_unit, 1.):
+        elif math.isclose(output_unit, 1.):
             unit_name = 'mol mol$^{-1}$'
         else:
             unit_name = 'undefined unit'
@@ -602,6 +603,11 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
         ch_label.append(df_chlut_current['ch_label'].values[0])
         # Note: 'ch_label' is a list! not an array
 
+        # get sensor numbers to search in the biomet data table
+        TC_no = np.int(df_chlut_current['TC_no'].values[0])
+        PAR_no = np.int(df_chlut_current['PAR_no'].values[0])
+        flowmeter_no = np.int(df_chlut_current['flowmeter_no'].values[0])
+
         ch_o_b[loop_num] = ch_start[loop_num] + \
             df_chlut_current['ch_o_b'].values[0]
         ch_cls[loop_num] = ch_start[loop_num] + \
@@ -711,8 +717,10 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
         if len(flow_ch_names) > 0:
             # find the column location to extract the flow rate of the current
             # chamber
+            # flow_loc = [k for k, s in enumerate(flow_ch_names)
+            #             if 'ch_' + str(ch_no[loop_num]) in s]
             flow_loc = [k for k, s in enumerate(flow_ch_names)
-                        if 'ch_' + str(ch_no[loop_num]) in s]
+                        if 'ch_%d' % flowmeter_no in s]
             if len(flow_loc) > 0:
                 flow_lpm[loop_num] = \
                     np.nanmean(df_flow.loc[ind_ch_flow,
@@ -720,21 +728,32 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
                 # convert standard liter per minute to liter per minute, if
                 # applicable
                 if config['flow_data_settings']['flow_rate_in_STP']:
+                    # flow_lpm[loop_num] *= \
+                    #     (T_ch[loop_num, ch_no[loop_num] - 1] +
+                    #         phys_const['T_0']) / \
+                    #     phys_const['T_0'] * \
+                    #     phys_const['p_std'] / pres[loop_num]
                     flow_lpm[loop_num] *= \
-                        (T_ch[loop_num, ch_no[loop_num] - 1] +
+                        (T_ch[loop_num, TC_no - 1] +
                             phys_const['T_0']) / \
                         phys_const['T_0'] * \
                         phys_const['p_std'] / pres[loop_num]
 
         # convert volumetric flow to mass flow (mol s^-1)
+        # flow[loop_num] = flow_lpm[loop_num] * 1e-3 / 60. * \
+        #     pres[loop_num] / phys_const['R_gas'] / \
+        #     (T_ch[loop_num, ch_no[loop_num] - 1] + phys_const['T_0'])
         flow[loop_num] = flow_lpm[loop_num] * 1e-3 / 60. * \
             pres[loop_num] / phys_const['R_gas'] / \
-            (T_ch[loop_num, ch_no[loop_num] - 1] + phys_const['T_0'])
+            (T_ch[loop_num, TC_no - 1] + phys_const['T_0'])
 
         # convert chamber volume to mol
+        # V_ch_mol[loop_num] = V_ch[loop_num] * pres[loop_num] / \
+        #     phys_const['R_gas'] / \
+        #     (T_ch[loop_num, ch_no[loop_num] - 1] + phys_const['T_0'])
         V_ch_mol[loop_num] = V_ch[loop_num] * pres[loop_num] / \
             phys_const['R_gas'] / \
-            (T_ch[loop_num, ch_no[loop_num] - 1] + phys_const['T_0'])
+            (T_ch[loop_num, TC_no - 1] + phys_const['T_0'])
 
         t_turnover[loop_num] = V_ch_mol[loop_num] / flow[loop_num]
         # turnover time in seconds, useful in flux calculation

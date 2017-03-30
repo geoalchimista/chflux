@@ -101,84 +101,129 @@ def chamber_lookup_table_func(doy, chamber_config):
     return chamber_lookup_table
 
 
-def timelag_optmz_func():
+def optimize_timelag(time, conc, t_turnover,
+                     dt_open_before, dt_close, dt_open_after,
+                     dt_left_margin=0., dt_right_margin=0.,
+                     closure_period_only=False, bounds=None, guess=None):
     # @TODO: to complete this function
 
-    # the timelag optimization function to fit
-    def __timelag_resid_func(t_lag, time, conc, t_turnover, 
-                        dt_open_before = 60., dt_close = 240., dt_open_after = 180., 
-                        dt_left_margin = 0., dt_right_margin = 0., 
-                        closure_period_only = False):
+    def __timelag_resid_func(t_lag, time, conc, t_turnover,
+                             dt_open_before, dt_close, dt_open_after,
+                             dt_left_margin, dt_right_margin,
+                             closure_period_only=False):
         """
-        parameter to optimize: t_lag - time lag, in sec
-        inputs
-        * time - time since switching to chamber line, in sec
-        * conc - concentration (in its most convenient unit)
-        * t_turnover - turnover time, `V_ch_mol` (in mol) divided by `f_ch` (in mol/s)
+        The timelag optimization function to minimize.
+
+        Parameters
+        ----------
+        t_lag : float
+            Time lag, in sec
+        time : array_like
+            Time since switching to chamber line, in sec
+        conc : array_like
+            Concentrations
+        t_turnover : float
+            The turnover time, `V_ch_mol` (in mol) divided by `f_ch` (in mol/s)
+
+        Returns
+        -------
+        MSR : float
+            Mean squared difference.
         """
-        # all index arrays should only contain the indices of finite `conc` values
-        _ind_chb = np.where( (time >= t_lag + dt_left_margin) & (time < t_lag + dt_open_before - dt_right_margin) & 
-                            np.isfinite(time) & np.isfinite(conc) )
-        _ind_chc = np.where( (time >= t_lag + dt_open_before + dt_left_margin) & 
-                            (time < t_lag + dt_open_before + dt_close - dt_right_margin) & 
-                            np.isfinite(time) & np.isfinite(conc) )
-        _ind_cha = np.where( (time >= t_lag + dt_open_before + dt_close + dt_left_margin) & 
-                            (time < t_lag + dt_open_before + dt_close + dt_open_after - dt_right_margin) & 
-                            np.isfinite(time) & np.isfinite(conc) )
-        
-        _median_chb = np.nanmedian( conc[_ind_chb] )
-        _median_cha = np.nanmedian( conc[_ind_cha] )
-        _t_mid_chb = np.nanmedian( time[_ind_chb] )
-        _t_mid_cha = np.nanmedian( time[_ind_cha] )
-        
+        # all index arrays should only contain the indices of finite values
+        _ind_chb = np.where(
+            (time >= t_lag + dt_left_margin) &
+            (time < t_lag + dt_open_before - dt_right_margin) &
+            np.isfinite(time) & np.isfinite(conc))
+        _ind_chc = np.where(
+            (time >= t_lag + dt_open_before + dt_left_margin) &
+            (time < t_lag + dt_open_before + dt_close - dt_right_margin) &
+            np.isfinite(time) & np.isfinite(conc))
+        _ind_cha = np.where(
+            (time >= t_lag + dt_open_before + dt_close + dt_left_margin) &
+            (time < t_lag + dt_open_before + dt_close + dt_open_after -
+                dt_right_margin) &
+            np.isfinite(time) & np.isfinite(conc))
+
+        _median_chb = np.nanmedian(conc[_ind_chb])
+        _median_cha = np.nanmedian(conc[_ind_cha])
+        _t_mid_chb = np.nanmedian(time[_ind_chb])
+        _t_mid_cha = np.nanmedian(time[_ind_cha])
+
         # baseline
         _k_bl = (_median_cha - _median_chb) / (_t_mid_cha - _t_mid_chb)
         _b_bl = _median_chb - _k_bl * _t_mid_chb
         _conc_bl = _k_bl * time + _b_bl
-        
-        _x_obs = np.exp( - (time[_ind_chc] - t_lag - dt_open_before) / t_turnover )
-        _y_obs = conc[_ind_chc] - _conc_bl[_ind_chc]
-        
-        if _x_obs.size == 0: return(np.nan)
-        # if no valid observations in chamber closure period, return NaN value
-        # this will terminate the optimization procedure, and returns a 'status code' of 1 in `optimize.minimize`
 
-        _slope, _intercept, _r_value, _p_value, _sd_slope = stats.linregress( _x_obs, _y_obs )
+        _x_obs = np.exp(- (time[_ind_chc] - t_lag -
+                           dt_open_before) / t_turnover)
+        _y_obs = conc[_ind_chc] - _conc_bl[_ind_chc]
+
+        if _x_obs.size == 0:
+            return(np.nan)
+        # if no valid observations in chamber closure period, return NaN value
+        # this will terminate the optimization procedure, and returns a
+        # 'status code' of 1 in `optimize.minimize`
+
+        # _slope, _intercept, _r_value, _p_value, _sd_slope = \
+        #     stats.linregress(_x_obs, _y_obs)
+        _slope, _intercept, _, _, _ = stats.linregress(_x_obs, _y_obs)
         _y_fitted = _slope * _x_obs + _intercept
 
         if closure_period_only:
-            MSR = np.nansum((_y_fitted - _y_obs)**2) / (_ind_chc[0].size - 2) # mean squared residual
+            MSR = np.nansum((_y_fitted - _y_obs) ** 2) / \
+                (_ind_chc[0].size - 2)  # mean squared residual
         else:
-            '''
-            MSR = ( np.nansum((_y_fitted - _y_obs)**2) + np.nansum((conc[_ind_chb] - _median_chb)**2) + \
-                  np.nansum((conc[_ind_cha] - _median_cha)**2) ) / (_ind_chc[0].size - 2 + _ind_chb[0].size - 1 + _ind_cha[0].size - 1)
-            '''
-            _conc_fitted = _slope * np.exp( - (time - t_lag - dt_open_before) / t_turnover ) + _intercept + _conc_bl
-            _conc_fitted[ (time < t_lag + dt_open_before) & (time > t_lag + dt_open_before + dt_close) ] = _conc_bl[ (time < t_lag + dt_open_before) & (time > t_lag + dt_open_before + dt_close) ]
-            # MSR = np.nansum((conc - _conc_fitted)**2) / (np.sum(np.isfinite(conc - _conc_fitted)) - 4.)  # degree of freedom = 4
+            _conc_fitted = _slope * \
+                np.exp(- (time - t_lag - dt_open_before) /
+                       t_turnover) + _intercept + _conc_bl
+            _conc_fitted[(time < t_lag + dt_open_before) &
+                         (time > t_lag + dt_open_before + dt_close)] = \
+                _conc_bl[(time < t_lag + dt_open_before) &
+                         (time > t_lag + dt_open_before + dt_close)]
             resid = conc - _conc_fitted
-            resid_trunc = resid[ time <= t_lag + dt_open_before + dt_close ]  # do not include the chamber open period after closure
-            MSR = np.nansum(resid_trunc**2) / (np.sum(np.isfinite(resid_trunc)) - 3.)  # degree of freedom = 3
+            # do not include the chamber open period after closure
+            resid_trunc = resid[time <= t_lag + dt_open_before + dt_close]
+            # degree of freedom = 3
+            MSR = np.nansum(resid_trunc ** 2) / \
+                (np.sum(np.isfinite(resid_trunc)) - 3.)
         return(MSR)
 
-
     # do time lag optimization
-    time_lag_uplim = 180.  # upper bound of the time lag
-    time_lag_lolim = 90. # time_lag_nominal[loop_num] * 0.5  # lower bound of the time lag
-    if ch_time[loop_num] > 196.25: time_lag_lolim = 60. # after 6am on DOY 197, leaf chamber flow rates were adjusted to 0.9 lpm
-    # '_trial': extract a trial period for the sampling on the current chamber according to the nominal time lag
-    ind_ch_full_trial = np.where((qcl_doy > t_o_b) & (qcl_doy < t_end))
-    ch_full_time_trial = (qcl_doy[ind_ch_full_trial] - t_start) * 86400.
-    co2_full_trial = qcl_data[ind_ch_full_trial]['co2'] * 1e-3
-    # initial guess of the time lag will be limited to no larger than 120 sec
-    time_lag_guess = np.nanmin((time_lag_nominal[loop_num], 120.))
-    time_lag_co2_results = optimize.minimize(__timelag_resid_func, x0=time_lag_guess, 
-                args=(ch_full_time_trial, co2_full_trial, V_ch_mol[loop_num] / f_ch[loop_num]), 
-                method='Nelder-Mead', options={'xtol': 1e-6, 'ftol': 1e-6})  # unbounded optimization
-    time_lag_co2[loop_num] = time_lag_co2_results.x
-    status_time_lag_co2[loop_num] = time_lag_co2_results.status
+    if bounds is None:
+        timelag_lolim, timelag_uplim = [-1., 1.]
+    else:
+        timelag_lolim, timelag_uplim = bounds
 
-    return None
+    if guess is None:
+        timelag_guess = 0.5 * (timelag_lolim + timelag_uplim)
+    else:
+        try:
+            timelag_guess = float(guess)
+        except ValueError:
+            timelag_guess = 0.5 * (timelag_lolim + timelag_uplim)
+
+    if np.isnan(timelag_guess):
+        timelag_guess = 0.5 * (timelag_lolim + timelag_uplim)
+
+    # # '_trial': extract a trial period for the sampling
+    # # on the current chamber according to the nominal time lag
+    # ind_ch_full_trial = np.where((qcl_doy > t_o_b) & (qcl_doy < t_end))
+    # ch_full_time_trial = (qcl_doy[ind_ch_full_trial] - t_start) * 86400.
+    # co2_full_trial = qcl_data[ind_ch_full_trial]['co2'] * 1e-3
+    # # initial guess of the time lag will be limited to no larger than 120 sec
+    # time_lag_guess = np.nanmin((time_lag_nominal[loop_num], 120.))
+    timelag_results = optimize.minimize(
+        __timelag_resid_func, x0=timelag_guess,
+        args=(time, conc, t_turnover,
+              dt_open_before, dt_close, dt_open_after,
+              dt_left_margin, dt_right_margin,
+              closure_period_only),
+        method='Nelder-Mead', options={'xtol': 1e-6, 'ftol': 1e-6})
+
+    timelag = timelag_results.x
+    status_timelag = timelag_results.status
+    return timelag, status_timelag
 
 
 def volume_eff_optmz_func():

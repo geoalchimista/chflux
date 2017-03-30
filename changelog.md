@@ -11,6 +11,8 @@
 # 0.1.9 (2017-03-23)
 
 - Added a running option `load_data_by_day` for loading and processing the data by daily chunks. This will be useful when dealing with a large number of data files.
+- Fixed the error of CO concentration unit. Replaced `numpy.isclose` with `math.isclose` for accuracy.
+- Fixed the error in assigning temperature and flow rate sensors to chambers.
 
 # 0.1.8 (2017-03-21)
 
