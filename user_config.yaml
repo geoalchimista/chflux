@@ -170,16 +170,19 @@ species_settings:
         unit: 1.0e-9
         output_unit: 1.0e-3
         multiplier: 1.0e-6
+        baseline_correction: 'none'
 
     co2:
         unit: 1.0e-9
         output_unit: 1.0e-6
         multiplier: 1.0e-3
+        baseline_correction: 'median'
 
     cos:
         unit: 1.0e-9
         output_unit: 1.0e-12
         multiplier: 1.0e+3
+        baseline_correction: 'median'
 
     # You may add your own gas species following the same format.
     # The name that represents the added gas species is not so important

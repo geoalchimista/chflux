@@ -1,7 +1,7 @@
 """
 Common functions used in flux calculation
 
-(c) Wu Sun <wu.sun@ucla.edu> 2016-2017
+(c) 2016-2017 Wu Sun <wu.sun@ucla.edu>
 
 """
 from collections import namedtuple
@@ -11,7 +11,6 @@ import numpy as np
 from scipy import stats, optimize
 import scipy.constants.constants as sci_const
 import pandas as pd
-# import numba
 
 
 # Physical constants
@@ -206,13 +205,6 @@ def optimize_timelag(time, conc, t_turnover,
     if np.isnan(timelag_guess):
         timelag_guess = 0.5 * (timelag_lolim + timelag_uplim)
 
-    # # '_trial': extract a trial period for the sampling
-    # # on the current chamber according to the nominal time lag
-    # ind_ch_full_trial = np.where((qcl_doy > t_o_b) & (qcl_doy < t_end))
-    # ch_full_time_trial = (qcl_doy[ind_ch_full_trial] - t_start) * 86400.
-    # co2_full_trial = qcl_data[ind_ch_full_trial]['co2'] * 1e-3
-    # # initial guess of the time lag will be limited to no larger than 120 sec
-    # time_lag_guess = np.nanmin((time_lag_nominal[loop_num], 120.))
     timelag_results = optimize.minimize(
         __timelag_resid_func, x0=timelag_guess,
         args=(time, conc, t_turnover,
@@ -405,11 +397,6 @@ def IQR_func(x, axis=None):
         return q3 - q1
     else:
         return np.nan
-
-
-# @numba.autojit  # doesn't work; need rewrite theilslopes() ab initio
-# def numba_theilslopes(y, x, alpha):
-#     return stats.theilslopes(y, x, alpha)
 
 
 def p_sat_h2o(temp, ice=False, kelvin=False, method='gg'):

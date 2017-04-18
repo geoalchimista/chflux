@@ -1,7 +1,7 @@
 """
 PyChamberFlux default settings
 
-(c) Wu Sun <wu.sun@ucla.edu> 2016-2017
+(c) 2016-2017 Wu Sun <wu.sun@ucla.edu>
 
 """
 default_config = {
@@ -9,25 +9,23 @@ default_config = {
         'chamber_config_filepath': './chamber.yaml',
         # Configuration file that describes chamber settings.
 
-        'baseline_correction': True,
-        # If True, a zero-flux baseline correction is applied.
-
-        'median_baseline': True,
-        # If True, use medians as the baseline.
-        # If False, use means as the baseline.
-
         'timelag_method': 'nominal',
+        # NOT IMPLEMENTED YET
         # Timelag detection methods: 'nominal', 'manual' or 'optimized'.
         # For the 'manual' method, a fixed timelag must be assigned.
         # For the 'optimized' method, timelag will be optimized based on
         # a nonlinear fitting of the concentration changes.
 
         'timelag_optimization_species': 'co2',
+        # NOT IMPLEMENTED YET
+        # The gas species used for timelag optimization. 'co2' is recommended.
 
         'volume_correction': False,
+        # NOT IMPLEMENTED YET
         # If True, optimize the effective volume (V_eff) to fit the curvature.
 
         'curve_fitting_method': 'all',
+        # NOT IMPLEMENTED YET
         # Curve fitting method: 'nonlinear', 'linear', 'robust_linear', 'all'.
 
         'load_data_by_day': False,
@@ -83,6 +81,10 @@ default_config = {
         'leaf_data': None,
         # Absolute or relative directory to search for leaf area data files.
 
+        'timelag_data': None,
+        # NOT IMPLEMENTED YET
+        # Absolute or relative directory to search for timelag data files.
+
         'output_dir': './output/',
         # Output directory for the processed flux data.
 
@@ -107,6 +109,10 @@ default_config = {
         # the chamber schedule configuration.
         # If `True`, leaf area measurements are stored on their own, not in
         # the chamber schedule configuration file.
+
+        'use_timelag_data': False,
+        # NOT IMPLEMENTED YET
+        # ???
     },
     'biomet_data_settings': {  # Settings for reading the biomet data
         'delimiter': ',',
@@ -157,10 +163,6 @@ default_config = {
         # - 'ymdhms', YYYY MM DD HH MM SS, down to second
         # - 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
         # note: no need to use this if the date string is in a single column
-
-        'columns_to_save': None,
-        # If `None`, save all columns of the 'standardized variables' parsed
-        # from the biomet data table
 
         'time_sec_start': None,
         # If None, the starting year of the time_sec format is 1904 (LabVIEW).
@@ -225,10 +227,6 @@ default_config = {
         # - 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
         # note: no need to use this if the date string is in a single column
 
-        'columns_to_save': None,
-        # If `None`, save all columns of the 'standardized variables' parsed
-        # from the biomet data table
-
         'time_sec_start': None,
         # If None, the starting year of the time_sec format is 1904 (LabVIEW).
         # This option only takes the year number in four digits (integer).
@@ -291,10 +289,6 @@ default_config = {
         # - 'ymdhms', YYYY MM DD HH MM SS, down to second
         # - 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
         # note: no need to use this if the date string is in a single column
-
-        'columns_to_save': None,
-        # If `None`, save all columns of the 'standardized variables' parsed
-        # from the biomet data table
 
         'time_sec_start': None,
         # If None, the starting year of the time_sec format is 1904 (LabVIEW).
@@ -370,10 +364,6 @@ default_config = {
         # - 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
         # note: no need to use this if the date string is in a single column
 
-        'columns_to_save': None,
-        # If `None`, save all columns of the 'standardized variables' parsed
-        # from the biomet data table
-
         'time_sec_start': None,
         # If None, the starting year of the time_sec format is 1904 (LabVIEW).
         # This option only takes the year number in four digits (integer).
@@ -409,13 +399,9 @@ default_config = {
         # names of gas species shown in the plot axis labels.
         # LaTeX format is supported by matplotlib.
 
+        # Options for individual species
+        #
         # `unit`: the unit of mixing ratio in the concentration data file
-        # `output_unit`: the unit of mixing ratio in the output file
-        # `multiplier`: the number to multiply to the input values for
-        # conversion to the output unit, must equal to `unit / output_unit`.
-        # For example, if H2O in the input data file was recorded in percentage
-        # (1.0e-2), and the output unit of H2O concentration needs to be parts
-        # per thousand (1.0e-3), then the multiplier would be 10.
         # Some commonly used units:
         #     1.0 = mole fraction [0 to 1]
         #     1.0e-2 = percent (%)
@@ -423,41 +409,70 @@ default_config = {
         #     1.0e-6 = ppmv or mumol mol^-1
         #     1.0e-9 = ppbv or nmol mol^-1
         #     1.0e-12 = pptv (parts per trillion) or pmol mol^-1
+        #
+        # `output_unit`: the unit of mixing ratio in the output file
+        #
+        # `multiplier`: the number to multiply to the input values for
+        #     conversion to the output unit, must equal to
+        #     `unit / output_unit`. For example, if H2O in the input data file
+        #     was recorded in percentage (1.0e-2), and the output unit of H2O
+        #     concentration needs to be parts per thousand (1.0e-3), then the
+        #     multiplier would be 10.
+        #
+        # `baseline_correction`: str, baseline correction method
+        #     'median': use medians as the baseline (default)
+        #     'mean': use means as the baseline
+        #     'none': do not apply baseline correction
+        # Note: 'median' baseline setting is generally recommended, except for
+        # water and other adsorptive molecules. Depending on the ambient
+        # condition, sometimes 'none' works better for water flux calculation.
 
         'h2o': {
             'unit': 1.0e-9,
             'output_unit': 1.0e-3,
             'multiplier': 1.0e-6,
+            'baseline_correction': 'median',
         },
 
         'co2': {
             'unit': 1.0e-9,
             'output_unit': 1.0e-6,
             'multiplier': 1.0e-3,
+            'baseline_correction': 'median',
         },
 
         'cos': {
             'unit': 1.0e-9,
             'output_unit': 1.0e-12,
             'multiplier': 1.0e+3,
+            'baseline_correction': 'median',
         },
 
         'co': {
             'unit': 1.0e-9,
             'output_unit': 1.0e-9,
             'multiplier': 1.0,
+            'baseline_correction': 'median',
         },
 
         'ch4': {
             'unit': 1.0e-9,
             'output_unit': 1.0e-9,
             'multiplier': 1.0,
+            'baseline_correction': 'median',
         },
 
-        # You may add your own gas species following the same format.
+        'n2o': {
+            'unit': 1.0e-9,
+            'output_unit': 1.0e-9,
+            'multiplier': 1.0,
+            'baseline_correction': 'median',
+        },
+
+        # Customize your own gas species following the same format.
         # The name that represents the added gas species is not so important
-        # as long as it is used *consistently*. For example, if you define the
-        # species name for CO2 to be `CO_2`, you must use the same name `CO_2`
+        # as long as it is used *consistently*. For example, if the species
+        # name for CO2 is defined as `CO_2`, the same name `CO_2` must be used
         # in the `species_list` key and in the following unit definition.
     },
 }

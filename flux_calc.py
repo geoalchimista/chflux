@@ -1,7 +1,7 @@
 """
 Main program for flux calculation
 
-(c) Wu Sun <wu.sun@ucla.edu> 2016-2017
+(c) 2016-2017 Wu Sun <wu.sun@ucla.edu>
 
 """
 import os
@@ -14,11 +14,6 @@ import argparse
 import warnings
 import yaml
 from distutils.version import LooseVersion
-
-# # multiprocessing functionality is still in testing
-# import multiprocessing
-# import functools
-# import itertools
 
 import numpy as np
 import pandas as pd
@@ -57,14 +52,17 @@ warnings.simplefilter('ignore', category=RuntimeWarning)
 # does not support month-first (American) or day-first (European) format,
 # put them by the year-month-day order using index orders.
 date_parsers_dict = {
-    # date only
     'ymd': lambda s: pd.to_datetime(s, format='%Y %m %d'),
-    # down to minute
+    # date only
+
     'ymdhm': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M'),
-    # down second
+    # down to minute
+
     'ymdhms': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M %S'),
-    # down to nanosecond
+    # down to second
+
     'ymdhmsf': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M %S %f')
+    # down to nanosecond
 }
 
 
@@ -949,29 +947,40 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
 
                 # calculate slopes and intercepts of the zero-flux baselines
                 # baseline end points changed from mean to medians (05/05/2016)
-                # - `median_chb_time`: median time for chamber open period
+                # - `t_bl_chb`: median or mean time for chamber open period
                 #   (before closure), in seconds
-                # - `median_cha_time`: median time for chamber open period
+                # - `t_bl_cha`: median or mean time for chamber open period
                 #   (after closure), in seconds
-                median_chb_time = np.nanmedian(
+                if (species_settings[species_list[spc_id]][
+                        'baseline_correction'] in ['mean', 'average']):
+                    bl_calc_func = np.nanmean
+                else:
+                    bl_calc_func = np.nanmedian
+
+                t_bl_chb = bl_calc_func(
                     doy_conc[ind_chb] - ch_start[loop_num]) * 86400.
-                median_cha_time = np.nanmedian(
+                t_bl_cha = bl_calc_func(
                     doy_conc[ind_cha] - ch_start[loop_num]) * 86400.
-                median_chb_conc = np.nanmedian(
+                conc_bl_chb = bl_calc_func(
                     df_conc.loc[ind_chb, species_list[spc_id]].values) * \
                     conc_factor[spc_id]
-                median_cha_conc = np.nanmedian(
-                    df_conc.loc[ind_cha, species_list[spc_id]].values) * \
-                    conc_factor[spc_id]
-                # if `median_cha_conc` is not a finite value, set it equal to
-                # `median_chb_conc`. Thus `k_bl` will be zero.
-                if np.isnan(median_cha_conc):
-                    median_cha_conc = median_chb_conc
-                    median_cha_time = chc_time[-1]
 
-                k_bl = (median_cha_conc - median_chb_conc) / \
-                    (median_cha_time - median_chb_time)
-                b_bl = median_chb_conc - k_bl * median_chb_time
+                if (species_settings[species_list[spc_id]][
+                        'baseline_correction'] in ['none', 'None', None]):
+                    conc_bl_cha = conc_bl_chb
+                else:
+                    conc_bl_cha = bl_calc_func(
+                        df_conc.loc[ind_cha, species_list[spc_id]].values) * \
+                        conc_factor[spc_id]
+                    # if `conc_bl_cha` is not a finite value, set it equal to
+                    # `conc_bl_chb`. Thus `k_bl` will be zero.
+                    if np.isnan(conc_bl_cha):
+                        conc_bl_cha = conc_bl_chb
+                        t_bl_cha = chc_time[-1]
+
+                k_bl = (conc_bl_cha - conc_bl_chb) / \
+                    (t_bl_cha - t_bl_chb)
+                b_bl = conc_bl_chb - k_bl * t_bl_chb
 
                 # subtract the baseline to correct for instrument drift
                 # (assuming linear drift)
@@ -1103,10 +1112,10 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
 
                 # save the baseline conc's
                 # baseline end points changed from mean to medians
-                conc_bl_pts[spc_id, :] = median_chb_conc, median_cha_conc
+                conc_bl_pts[spc_id, :] = conc_bl_chb, conc_bl_cha
 
             # used for plotting the baseline
-            t_bl_pts[:] = median_chb_time, median_cha_time
+            t_bl_pts[:] = t_bl_chb, t_bl_cha
 
             # generate fitting plots
             # -----------------------------------------------------------------
@@ -1463,7 +1472,7 @@ def main():
     print('Starting data processing...')
     dt_start = datetime.datetime.now()
     print(datetime.datetime.strftime(dt_start, '%Y-%m-%d %X'))
-    print('Checking environmental specifications:')
+    print('Checking specifications:')
     print('numpy version = %s\n' % np.__version__ +
           'pandas version = %s\n' % pd.__version__ +
           'matplotlib version = %s\n' % mpl.__version__ +

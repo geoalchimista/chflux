@@ -1,12 +1,17 @@
 # Change Log
 
 @TODO:
-
+- Add external timelag file as input.
 - Replace Theil-Sen estimator with a more efficient robust linear regression method (perhaps MM-estimator?).
 - Use `pandas.Timestamp` as the standard timestamp passed between functions.
 - Add timelag control in `chamber.yaml`
 - Test and refine the chamber schedule function for timelag optimization.
 - Correct error in RMSE calculation.
+- Add options to save configuration files in the output folder.
+
+# 0.1.10 (2017-04-17)
+
+- Added baseline correction options: 'median', 'mean', and 'none'.
 
 # 0.1.9 (2017-03-23)
 
