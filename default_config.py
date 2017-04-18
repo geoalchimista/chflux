@@ -9,16 +9,17 @@ default_config = {
         'chamber_config_filepath': './chamber.yaml',
         # Configuration file that describes chamber settings.
 
-        'timelag_method': 'nominal',
+        'timelag_method': 'none',
         # NOT IMPLEMENTED YET
-        # Timelag detection methods: 'nominal', 'manual' or 'optimized'.
-        # For the 'manual' method, a fixed timelag must be assigned.
+        # Timelag detection methods: 'none', 'optimized', 'prescribed'
+        # For the 'prescribed' method, fixed timelag values are assigned.
         # For the 'optimized' method, timelag will be optimized based on
         # a nonlinear fitting of the concentration changes.
 
         'timelag_optimization_species': 'co2',
         # NOT IMPLEMENTED YET
         # The gas species used for timelag optimization. 'co2' is recommended.
+        # This option is only effective for timelag method 'optimized'.
 
         'volume_correction': False,
         # NOT IMPLEMENTED YET
@@ -112,7 +113,7 @@ default_config = {
 
         'use_timelag_data': False,
         # NOT IMPLEMENTED YET
-        # ???
+        # Read external data for prescribed timelag values.
     },
     'biomet_data_settings': {  # Settings for reading the biomet data
         'delimiter': ',',

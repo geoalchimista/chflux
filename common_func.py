@@ -104,7 +104,6 @@ def optimize_timelag(time, conc, t_turnover,
                      dt_open_before, dt_close, dt_open_after,
                      dt_left_margin=0., dt_right_margin=0.,
                      closure_period_only=False, bounds=None, guess=None):
-    # @TODO: to complete this function
 
     def __timelag_resid_func(t_lag, time, conc, t_turnover,
                              dt_open_before, dt_close, dt_open_after,
@@ -122,7 +121,7 @@ def optimize_timelag(time, conc, t_turnover,
         conc : array_like
             Concentrations
         t_turnover : float
-            The turnover time, `V_ch_mol` (in mol) divided by `f_ch` (in mol/s)
+            The turnover time, `V_ch_mol` [mol] divided by `f_ch` [mol s^-1]
 
         Returns
         -------
@@ -154,8 +153,8 @@ def optimize_timelag(time, conc, t_turnover,
         _b_bl = _median_chb - _k_bl * _t_mid_chb
         _conc_bl = _k_bl * time + _b_bl
 
-        _x_obs = np.exp(- (time[_ind_chc] - t_lag -
-                           dt_open_before) / t_turnover)
+        _x_obs = 1. - np.exp(- (time[_ind_chc] - t_lag - dt_open_before) /
+                             t_turnover)
         _y_obs = conc[_ind_chc] - _conc_bl[_ind_chc]
 
         if _x_obs.size == 0:
@@ -166,7 +165,9 @@ def optimize_timelag(time, conc, t_turnover,
 
         # _slope, _intercept, _r_value, _p_value, _sd_slope = \
         #     stats.linregress(_x_obs, _y_obs)
-        _slope, _intercept, _, _, _ = stats.linregress(_x_obs, _y_obs)
+        # _slope, _intercept, _, _, _ = stats.linregress(_x_obs, _y_obs)
+        _slope = np.sum(_y_obs * _x_obs) / np.sum(_x_obs * _x_obs)
+        _intercept = 0.
         _y_fitted = _slope * _x_obs + _intercept
 
         if closure_period_only:
@@ -174,8 +175,8 @@ def optimize_timelag(time, conc, t_turnover,
                 (_ind_chc[0].size - 2)  # mean squared residual
         else:
             _conc_fitted = _slope * \
-                np.exp(- (time - t_lag - dt_open_before) /
-                       t_turnover) + _intercept + _conc_bl
+                (1. - np.exp(- (time - t_lag - dt_open_before) /
+                             t_turnover)) + _intercept + _conc_bl
             _conc_fitted[(time < t_lag + dt_open_before) &
                          (time > t_lag + dt_open_before + dt_close)] = \
                 _conc_bl[(time < t_lag + dt_open_before) &
