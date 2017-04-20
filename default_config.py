@@ -9,22 +9,6 @@ default_config = {
         'chamber_config_filepath': './chamber.yaml',
         # Configuration file that describes chamber settings.
 
-        'timelag_method': 'none',
-        # NOT IMPLEMENTED YET
-        # Timelag detection methods: 'none', 'optimized', 'prescribed'
-        # For the 'prescribed' method, fixed timelag values are assigned.
-        # For the 'optimized' method, timelag will be optimized based on
-        # a nonlinear fitting of the concentration changes.
-
-        'timelag_optimization_species': 'co2',
-        # NOT IMPLEMENTED YET
-        # The gas species used for timelag optimization. 'co2' is recommended.
-        # This option is only effective for timelag method 'optimized'.
-
-        'volume_correction': False,
-        # NOT IMPLEMENTED YET
-        # If True, optimize the effective volume (V_eff) to fit the curvature.
-
         'curve_fitting_method': 'all',
         # NOT IMPLEMENTED YET
         # Curve fitting method: 'nonlinear', 'linear', 'robust_linear', 'all'.
@@ -43,6 +27,23 @@ default_config = {
         'traceback_in_days': 1,
         # number of days to trace back when processing recent periods
         # only used when 'process_recent_period' is True; must be int type
+
+        'timelag_method': 'none',
+        # NOT IMPLEMENTED YET
+        # Timelag detection methods: 'none', 'optimized', 'prescribed'
+        # For the 'optimized' method, timelag will be optimized based on
+        # a nonlinear fitting of the concentration changes.
+        # For the 'prescribed' method, fixed timelag values are assigned from
+        # input data table (must enable 'use_timelag_data').
+
+        'timelag_optimization_species': 'co2',
+        # NOT IMPLEMENTED YET
+        # The gas species used for timelag optimization. 'co2' is recommended.
+        # This option is only effective for timelag method 'optimized'.
+
+        'volume_correction': False,
+        # NOT IMPLEMENTED YET
+        # If True, optimize the effective volume (V_eff) to fit the curvature.
 
         'save_fitting_plots': False,
         # If True, save the curve fitting plots for every chamber sampling

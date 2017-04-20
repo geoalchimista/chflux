@@ -323,6 +323,12 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
         if not os.path.exists(fitting_plots_path):
             os.makedirs(fitting_plots_path)
 
+    # get timelag optimization settings
+    if run_options['timelag_method'] == 'optimized':
+        flag_optimize_timelag = True
+    else:
+        flag_optimize_timelag = False
+
     # unpack time variables
     # @TODO: switch from day of year based subsetting to timestamp subsetting?
     if 'timestamp' not in df_biomet.columns.values:
@@ -772,7 +778,8 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
         # timelag optimization (still in active development & testing)
         dt_lmargin = 0.
         dt_rmargin = 0.
-        if df_chlut_current['optimize_timelag'].values[0]:
+        if (df_chlut_current['optimize_timelag'].values[0] and
+                flag_optimize_timelag):
             timelag_nominal[loop_num] = \
                 df_chlut_current['timelag_nominal'].values[0] * 86400.
             timelag_upper_limit = \
