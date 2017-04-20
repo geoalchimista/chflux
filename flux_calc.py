@@ -998,8 +998,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
                 # see the supp. info of Sun et al. (2016) JGR-Biogeosci.
                 y_fit = (chc_conc - conc_bl) * flow[loop_num] / A_ch[loop_num]
                 x_fit = np.exp(- (chc_time - chc_time[0] +
-                                  (timelag_in_day + dt_lmargin) * 8.64e4) /
-                               t_turnover[loop_num])
+                                  dt_lmargin * 8.64e4) / t_turnover[loop_num])
 
                 # boolean index array for finite concentration values
                 ind_conc_fit = np.isfinite(y_fit)
@@ -1064,8 +1063,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
 
                 # nonlinear fit
                 # -------------------------------------------------------------
-                t_fit = (chc_time - chc_time[0] +
-                         (timelag_in_day + dt_lmargin) * 8.64e4) / \
+                t_fit = (chc_time - chc_time[0] + dt_lmargin * 8.64e4) / \
                     t_turnover[loop_num]
                 params_nonlin_guess = [- flux_lin[loop_num, spc_id], 0.]
                 params_nonlin = optimize.least_squares(
