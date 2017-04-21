@@ -4,14 +4,17 @@
 - Add external timelag file as input.
 - Replace Theil-Sen estimator with a more efficient robust linear regression method (perhaps MM-estimator?).
 - Use `pandas.Timestamp` as the standard timestamp passed between functions.
-- Add timelag control in `chamber.yaml`
-- Test and refine the chamber schedule function for timelag optimization.
-- Correct error in RMSE calculation.
 - Add options to save configuration files in the output folder.
 
-# 0.1.10 (2017-04-17)
+# 0.1.11
 
-- Added baseline correction options: 'median', 'mean', and 'none'.
+
+# 0.1.10 (2017-04-21)
+
+- Added baseline correction options: `'median'`, `'mean'`, and `'none'`.
+- Timelag optimization (method `'optimized'`) have been implemented.
+- Default units for predefined species (`h2o`, `co2`, `cos`, `co`, `ch4`, `n2o`) have been changed. The user must define the units explicitly in the configuration file if units in their data differ from the default.
+- Warning filtering mechanism improved.
 
 # 0.1.9 (2017-03-23)
 

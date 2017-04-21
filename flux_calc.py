@@ -42,9 +42,10 @@ if LooseVersion(mpl.__version__) < LooseVersion('2.0.0'):
     # enforce sans-serif math for matplotlib version before 2.0.0
     plt.rcParams.update({'mathtext.default': 'regular'})
 
-# suppress the annoying numpy runtime warning of "mean of empty slice"
-# @FIXME: warning suppression is lame; needs to be improved
-warnings.simplefilter('ignore', category=RuntimeWarning)
+# suppress numpy runtime warning when dealing with NaN containing arrays
+# # warnings.simplefilter('ignore', category=RuntimeWarning)  # suppresses all
+warnings.filterwarnings('ignore', 'Mean of empty slice')
+warnings.filterwarnings('ignore', 'Degrees of freedom <= 0 for slice.')
 
 
 # a collection of date parsers to use, when dates are stored in multiple

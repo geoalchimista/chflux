@@ -430,16 +430,16 @@ default_config = {
         # condition, sometimes 'none' works better for water flux calculation.
 
         'h2o': {
-            'unit': 1.0e-9,
+            'unit': 1.0e-3,
             'output_unit': 1.0e-3,
-            'multiplier': 1.0e-6,
+            'multiplier': 1.0,
             'baseline_correction': 'median',
         },
 
         'co2': {
-            'unit': 1.0e-9,
+            'unit': 1.0e-6,
             'output_unit': 1.0e-6,
-            'multiplier': 1.0e-3,
+            'multiplier': 1.0,
             'baseline_correction': 'median',
         },
 
