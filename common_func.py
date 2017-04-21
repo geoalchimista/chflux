@@ -8,7 +8,7 @@ from collections import namedtuple
 import warnings
 
 import numpy as np
-from scipy import stats, optimize
+from scipy import optimize
 import scipy.constants.constants as sci_const
 import pandas as pd
 
@@ -104,6 +104,45 @@ def optimize_timelag(time, conc, t_turnover,
                      dt_open_before, dt_close, dt_open_after,
                      dt_left_margin=0., dt_right_margin=0.,
                      closure_period_only=False, bounds=None, guess=None):
+    """
+    The time lag optimization function.
+
+    Parameters
+    ----------
+    time : array_like
+        Time since switching to the current chamber line, in seconds.
+    conc : array_like
+        Concentrations
+    t_turnover : float
+        The turnover time, `V_ch_mol` [mol] divided by `f_ch` [mol s^-1].
+    dt_open_before : float
+        Chamber opening period before closure measurement, in seconds.
+    dt_open_after : float
+        Chamber opening period after closure measurement, in seconds.
+    dt_left_margin : optional, float
+        Left margin on the closure period series to exclude, in seconds.
+    dt_right_margin : optional, float
+        Right margin on the closure period series to exclude, in seconds.
+    closure_period_only : optional, bool
+        If True (default), use the closure period only in evaluating the cost
+        function for time lag optimization. If False, use the closure period
+        and the opening period before it to evaluate the cost function.
+    bounds : optional, tuple
+        Lower and upper bounds of the time lag, in seconds.
+    guess: optional, float
+        The initial guess value for the time lag, in seconds. If not given, the
+        default value will be the mid point of the upper and lower bounds.
+
+    Returns
+    -------
+    timelag : float
+        The optimized time lag value in seconds.
+    status_timelag : int
+        Status code for the time lag optimization procedure.
+        * 0 -- Convergence
+        * 1 -- Failure to converge.
+
+    """
 
     def __timelag_resid_func(t_lag, time, conc, t_turnover,
                              dt_open_before, dt_close, dt_open_after,
@@ -117,16 +156,17 @@ def optimize_timelag(time, conc, t_turnover,
         t_lag : float
             Time lag, in sec
         time : array_like
-            Time since switching to chamber line, in sec
+            Time since switching to the current chamber line, in seconds.
         conc : array_like
-            Concentrations
+            Concentrations.
         t_turnover : float
-            The turnover time, `V_ch_mol` [mol] divided by `f_ch` [mol s^-1]
+            The turnover time, `V_ch_mol` [mol] divided by `f_ch` [mol s^-1].
 
         Returns
         -------
         MSR : float
             Mean squared difference.
+
         """
         # all index arrays should only contain the indices of finite values
         _ind_chb = np.where(
@@ -177,15 +217,15 @@ def optimize_timelag(time, conc, t_turnover,
             _conc_fitted = _slope * \
                 (1. - np.exp(- (time - t_lag - dt_open_before) /
                              t_turnover)) + _intercept + _conc_bl
-            _conc_fitted[(time < t_lag + dt_open_before) &
+            _conc_fitted[(time < t_lag + dt_open_before) |
                          (time > t_lag + dt_open_before + dt_close)] = \
-                _conc_bl[(time < t_lag + dt_open_before) &
+                _conc_bl[(time < t_lag + dt_open_before) |
                          (time > t_lag + dt_open_before + dt_close)]
             resid = conc - _conc_fitted
             # do not include the chamber open period after closure
             resid_trunc = resid[time <= t_lag + dt_open_before + dt_close]
             # degree of freedom = 3
-            MSR = np.nansum(resid_trunc ** 2) / \
+            MSR = np.nansum(resid_trunc * resid_trunc) / \
                 (np.sum(np.isfinite(resid_trunc)) - 3.)
         return(MSR)
 

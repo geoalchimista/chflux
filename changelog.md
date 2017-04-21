@@ -6,7 +6,9 @@
 - Use `pandas.Timestamp` as the standard timestamp passed between functions.
 - Add options to save configuration files in the output folder.
 
-# 0.1.11
+# 0.1.11 (2017-04-21)
+
+- Bug fix in the timelag optimization function (when `closure_period_only` is set `False`).
 
 
 # 0.1.10 (2017-04-21)
