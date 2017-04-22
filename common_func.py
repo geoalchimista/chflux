@@ -128,10 +128,11 @@ def optimize_timelag(time, conc, t_turnover,
         function for time lag optimization. If False, use the closure period
         and the opening period before it to evaluate the cost function.
     bounds : optional, tuple
-        Lower and upper bounds of the time lag, in seconds.
+        Lower and upper bounds of the time lag, in seconds. Only when both
+        values are given does it call a bounded optimization.
     guess: optional, float
         The initial guess value for the time lag, in seconds. If not given, the
-        default value will be the mid point of the upper and lower bounds.
+        default value will be 0.
 
     Returns
     -------
@@ -230,33 +231,72 @@ def optimize_timelag(time, conc, t_turnover,
         return(MSR)
 
     # do time lag optimization
+    # get the bounds
+    # legal input of bounds: 1. must be finite numbers; 2. the lower bound
+    # must be less than the upper bound
     if bounds is None:
-        timelag_lolim, timelag_uplim = [-1., 1.]
+        flag_bounded_optimization = False
     else:
-        timelag_lolim, timelag_uplim = bounds
+        try:
+            timelag_lolim, timelag_uplim = bounds
+        except TypeError:
+            flag_bounded_optimization = False
+            warnings.warn('Illegal bounds given to timelag optimization!' +
+                          'Default to unbounded optimization method.',
+                          RuntimeWarning)
+        else:
+            if np.isfinite(timelag_lolim) and np.isfinite(timelag_uplim):
+                flag_bounded_optimization = timelag_lolim < timelag_uplim
+            else:
+                flag_bounded_optimization = False
+                warnings.warn('Illegal bounds given to timelag optimization!' +
+                              ' Default to unbounded optimization method.',
+                              RuntimeWarning)
 
+    # get initial guess value
     if guess is None:
-        timelag_guess = 0.5 * (timelag_lolim + timelag_uplim)
+        timelag_guess = 0.
     else:
         try:
             timelag_guess = float(guess)
         except ValueError:
-            timelag_guess = 0.5 * (timelag_lolim + timelag_uplim)
+            warnings.warn('Illegal timelag guess! Default to 0.',
+                          RuntimeWarning)
+            timelag_guess = 0.
+        except TypeError:
+            warnings.warn('Illegal timelag guess! Default to 0.',
+                          RuntimeWarning)
+            timelag_guess = 0.
+        if not np.isfinite(timelag_guess):
+            warnings.warn('Illegal timelag guess! Default to 0.',
+                          RuntimeWarning)
+            timelag_guess = 0.
 
-    if np.isnan(timelag_guess):
-        timelag_guess = 0.5 * (timelag_lolim + timelag_uplim)
+    if flag_bounded_optimization:
+        # bounded optimization uses `scipy.optimize.minimize_scalar`
+        timelag_results = optimize.minimize_scalar(
+            __timelag_resid_func,
+            bounds=(timelag_lolim, timelag_uplim),
+            args=(time, conc, t_turnover,
+                  dt_open_before, dt_close, dt_open_after,
+                  dt_left_margin, dt_right_margin,
+                  closure_period_only),
+            method='bounded', options={'xatol': 1e-6})
+        timelag = timelag_results.x
+        status_timelag = 0 if timelag_results.success else 1
+    else:
+        # unbounded optimization uses `scipy.optimize.minimize`
+        timelag_results = optimize.minimize(
+            __timelag_resid_func, x0=timelag_guess,
+            args=(time, conc, t_turnover,
+                  dt_open_before, dt_close, dt_open_after,
+                  dt_left_margin, dt_right_margin,
+                  closure_period_only),
+            method='Nelder-Mead',
+            options={'xatol': 1e-6, 'fatol': 1e-6, 'disp': False})
+        timelag = timelag_results.x[0]
+        status_timelag = timelag_results.status
 
-    timelag_results = optimize.minimize(
-        __timelag_resid_func, x0=timelag_guess,
-        args=(time, conc, t_turnover,
-              dt_open_before, dt_close, dt_open_after,
-              dt_left_margin, dt_right_margin,
-              closure_period_only),
-        method='Nelder-Mead',
-        options={'xatol': 1e-6, 'fatol': 1e-6, 'disp': False})
-
-    timelag = timelag_results.x[0]
-    status_timelag = timelag_results.status
     return timelag, status_timelag
 
 

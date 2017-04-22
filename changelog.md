@@ -9,6 +9,7 @@
 # 0.1.11 (2017-04-21)
 
 - Bug fix in the timelag optimization function (when `closure_period_only` is set `False`).
+- Implemented the bounded timelag optimization method.
 
 
 # 0.1.10 (2017-04-21)
