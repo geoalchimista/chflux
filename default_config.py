@@ -50,7 +50,7 @@ default_config = {
         # period.
 
         'save_daily_plots': False,
-        # If True, save daily plots of chamber fluxes and biomet variables.
+        # If True, save daily plots of chamber fluxes.
 
         'plot_style': 'ggplot',
         # plot style for matplotlib; default is 'ggplot'

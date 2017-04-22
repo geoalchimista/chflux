@@ -28,7 +28,7 @@ run_options:  # Running options
     # If true, save the curve fitting plots for every chamber sampling period.
 
     save_daily_plots: false
-    # If true, save daily plots of chamber fluxes and biomet variables.
+    # If true, save daily plots of chamber fluxes.
 
 
 data_dir:  # Input and output directories, and other related settings

@@ -1413,63 +1413,75 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
 
     # generate daily summary plots
     if run_options['save_daily_plots']:
+        dailyplot_fontsize = 9
         hr_local = (ch_time - np.round(ch_time[0])) * 24.
         if config['biomet_data_settings']['time_in_UTC']:
             tz_str = 'UTC'
         else:
             tz_str = 'UTC+%d' % site_parameters['time_zone']
 
-        for i_ch in np.unique(ch_no):
-            fig_daily, axes_daily = plt.subplots(nrows=n_species, sharex=True,
-                                                 figsize=(8, 3 * n_species))
-            for j in range(n_species):
-                axes_daily[j].errorbar(
-                    hr_local[ch_no == i_ch], flux_lin[ch_no == i_ch, j],
-                    yerr=se_flux_lin[ch_no == i, spc_id] * 2.,
-                    c='k', fmt='o', markeredgecolor='None',
+        arr_ch_label = np.array(ch_label)
+        unique_ch_label = np.unique(arr_ch_label)
+        fig_daily, axes_daily = plt.subplots(
+            nrows=n_species, ncols=len(unique_ch_label),
+            sharex=True, sharey=False,
+            figsize=(2.5 * len(unique_ch_label) + 1., 2 * n_species + 0.5))
+        for j in range(n_species):
+            for k, lb_ch in enumerate(unique_ch_label):
+                axes_daily[j, k].errorbar(
+                    hr_local[arr_ch_label == lb_ch],
+                    flux_lin[arr_ch_label == lb_ch, j],
+                    yerr=se_flux_lin[arr_ch_label == lb_ch, spc_id] * 2.,
+                    c='#d62728', fmt='o', markeredgecolor='None', markersize=5,
                     linestyle='-', lw=1.5, capsize=0, label='linear')
-                axes_daily[j].errorbar(
-                    hr_local[ch_no == i_ch], flux_rlin[ch_no == i_ch, j],
-                    yerr=se_flux_rlin[ch_no == i, spc_id] * 2.,
-                    c='firebrick', fmt='o', markeredgecolor='None',
+                axes_daily[j, k].errorbar(
+                    hr_local[arr_ch_label == lb_ch],
+                    flux_rlin[arr_ch_label == lb_ch, j],
+                    yerr=se_flux_rlin[arr_ch_label == lb_ch, spc_id] * 2.,
+                    c='#1f77b4', fmt='d', markeredgecolor='None', markersize=5,
                     linestyle='--', lw=1.5, capsize=0, label='robust linear')
-                axes_daily[j].errorbar(
-                    hr_local[ch_no == i_ch], flux_nonlin[ch_no == i_ch, j],
-                    yerr=se_flux_nonlin[ch_no == i, spc_id] * 2.,
-                    c='darkblue', fmt='o', markeredgecolor='None',
+                axes_daily[j, k].errorbar(
+                    hr_local[arr_ch_label == lb_ch],
+                    flux_nonlin[arr_ch_label == lb_ch, j],
+                    yerr=se_flux_nonlin[arr_ch_label == lb_ch, spc_id] * 2.,
+                    c='#7f7f7f', fmt='P', markeredgecolor='None', ms=5,
                     linestyle='-.', lw=1.5, capsize=0, label='nonlinear')
-                # set y labels
-                axes_daily[j].set_ylabel(species_settings['species_names'][j] +
-                                         ' (%s)' % species_unit_names[j])
+                axes_daily[j, k].tick_params(labelsize=dailyplot_fontsize)
+                plt.setp(axes_daily[j, k].get_xticklabels(), visible=True)
 
-            # set common x axis
-            axes_daily[-1].set_xlim((0, 24))
-            axes_daily[-1].xaxis.set_major_locator(ticker.MultipleLocator(2))
-            axes_daily[-1].xaxis.set_minor_locator(ticker.MultipleLocator(1))
-            axes_daily[-1].set_xlabel('Hour (%s)' % tz_str)
+        # set y labels
+        for j in range(n_species):
+            axes_daily[j, 0].set_ylabel(
+                species_settings['species_names'][j] +
+                ' (%s)' % species_unit_names[j], fontsize=dailyplot_fontsize)
 
-            # figure legend
-            axes_daily[0].set_title(ch_label[np.where(ch_no == i_ch)[0][0]],
-                                    loc='left', fontsize=12)
-            fig_daily.legend(handles=axes_daily[0].lines[-3:],
-                             labels=['linear', 'robust linear', 'nonlinear'],
-                             loc='upper right', ncol=3, fontsize=12,
-                             handlelength=3,
-                             frameon=False, framealpha=0.5)
+        # set common column titles and x-axes
+        for k, lb_ch in enumerate(unique_ch_label):
+            axes_daily[0, k].set_title('\n' + lb_ch,
+                                       fontsize=dailyplot_fontsize)
+            axes_daily[-1, k].set_xlim((0, 24))
+            axes_daily[-1, k].xaxis.set_major_locator(
+                ticker.MultipleLocator(6))
+            axes_daily[-1, k].xaxis.set_minor_locator(
+                ticker.MultipleLocator(2))
+            axes_daily[-1, k].set_xlabel('Hour (%s)' % tz_str,
+                                         fontsize=dailyplot_fontsize)
 
-            # # figure annotation
-            # plt.annotate(ch_label[np.where(ch_no == i_ch)[0][0]],
-            #              xy=(0.025, 0.985), xycoords='figure fraction',
-            #              ha='left', va='top', fontsize=12)
+        # figure legend
+        fig_daily.suptitle(run_date_str, x=0.01, horizontalalignment='left',
+                           fontsize=dailyplot_fontsize)
+        fig_daily.legend(handles=axes_daily[0, 0].lines[-3:],
+                         labels=['linear', 'robust linear', 'nonlinear'],
+                         loc='upper right', ncol=3, handlelength=3,
+                         fontsize=dailyplot_fontsize,
+                         frameon=False, framealpha=0.5)
 
-            fig_daily.tight_layout()
-            fig_daily.savefig(
-                daily_plots_dir + 'daily_flux_%s_ch%d.png' %
-                (run_date_str, i_ch))
+        fig_daily.tight_layout()
+        fig_daily.savefig(daily_plots_dir + 'daily_flux_%s.png' % run_date_str)
 
-            # important! release the memory after figure is saved
-            fig_daily.clf()
-            plt.close()
+        # important! release the memory after figure is saved
+        fig_daily.clf()
+        plt.close()
 
         print('Daily flux summary plots generated.')
 
