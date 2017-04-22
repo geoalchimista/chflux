@@ -5,11 +5,15 @@
 - Replace Theil-Sen estimator with a more efficient robust linear regression method (perhaps MM-estimator?).
 - Use `pandas.Timestamp` as the standard timestamp passed between functions.
 - Add options to save configuration files in the output folder.
+- Improve daily summary plots.
+- Add quality flags.
 
 # 0.1.11 (2017-04-21)
 
 - Bug fix in the timelag optimization function (when `closure_period_only` is set `False`).
 - Implemented the bounded timelag optimization method.
+- Fixed a bug that terminates the program when skipping days with missing data.
+- Added warning filtering rules for array division (by zero and by NaN).
 
 
 # 0.1.10 (2017-04-21)

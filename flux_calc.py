@@ -44,9 +44,13 @@ if LooseVersion(mpl.__version__) < LooseVersion('2.0.0'):
 
 # suppress numpy runtime warning when dealing with NaN containing arrays
 # # warnings.simplefilter('ignore', category=RuntimeWarning)  # suppresses all
-warnings.filterwarnings('ignore', 'Mean of empty slice')
-warnings.filterwarnings('ignore', 'Degrees of freedom <= 0 for slice.')
-
+warnings_to_ignore = [
+    'Mean of empty slice',
+    'Degrees of freedom <= 0 for slice.',
+    'divide by zero encountered in true_divide',
+    'invalid value encountered in true_divide']
+for msg in warnings_to_ignore:
+    warnings.filterwarnings('ignore', msg)
 
 # a collection of date parsers to use, when dates are stored in multiple
 # columns, like YYYY MM DD etc.
@@ -1585,6 +1589,7 @@ def main():
                 if df_conc is None:
                     print('No concentration data file is found on day %s. ' %
                           conc_ts_query + 'Skip.')
+                    continue
                 elif df_conc.shape[0] == 0:
                     print('No entry in the concentration data on day %s. ' %
                           conc_ts_query + 'Skip.')
