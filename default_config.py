@@ -25,11 +25,11 @@ default_config = {
         # online daily processing. If False, process all available data.
 
         'traceback_in_days': 1,
-        # number of days to trace back when processing recent periods
+        # Number of days to trace back when processing recent periods
         # only used when 'process_recent_period' is True; must be int type
 
         'timelag_method': 'none',
-        # NOT IMPLEMENTED YET
+        # NOT FULLY IMPLEMENTED YET
         # Timelag detection methods: 'none', 'optimized', 'prescribed'
         # For the 'optimized' method, timelag will be optimized based on
         # a nonlinear fitting of the concentration changes.
@@ -37,13 +37,17 @@ default_config = {
         # input data table (must enable 'use_timelag_data').
 
         'timelag_optimization_species': 'co2',
-        # NOT IMPLEMENTED YET
         # The gas species used for timelag optimization. 'co2' is recommended.
         # This option is only effective for timelag method 'optimized'.
+        # If the designated species is not found, default to the first one in
+        # the species list.
 
         'volume_correction': False,
         # NOT IMPLEMENTED YET
         # If True, optimize the effective volume (V_eff) to fit the curvature.
+
+        'save_fitting_diagnostics': True,
+        # If True, save fitting diagnostics to files.
 
         'save_fitting_plots': False,
         # If True, save the curve fitting plots for every chamber sampling

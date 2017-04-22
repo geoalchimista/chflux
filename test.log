@@ -1,5 +1,5 @@
 Starting data processing...
-2017-04-17 18:24:38
+2017-04-22 16:27:16
 Checking specifications:
 numpy version = 1.11.3
 pandas version = 0.19.2
@@ -19,10 +19,12 @@ Notice: Flow rate data are extracted from biomet data, because they are not stor
 Calculating fluxes...
 
 Raw data on the day 20130401 processed.
-Data and curve fitting diagnostics written to files.
+Data table saved to ./test/output/sr_flux_20130401.csv
+Curve fitting diagnostics saved to ./test/output//diag/sr_diag_20130401.csv
 
 Raw data on the day 20130402 processed.
-Data and curve fitting diagnostics written to files.
+Data table saved to ./test/output/sr_flux_20130402.csv
+Curve fitting diagnostics saved to ./test/output//diag/sr_diag_20130402.csv
 
-2017-04-17 18:24:56
-Done. Finished in 18.53 seconds.
+2017-04-22 16:27:33
+Done. Finished in 17.23 seconds.

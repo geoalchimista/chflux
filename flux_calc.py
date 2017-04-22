@@ -311,6 +311,9 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
     output_dir = data_dir['output_dir']
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
+    if (run_options['save_fitting_diagnostics'] and
+            not os.path.exists(output_dir + '/diag')):
+        os.makedirs(output_dir + '/diag')
     # for daily flux summary plots
     if run_options['save_daily_plots']:
         daily_plots_dir = data_dir['plot_dir'] + '/daily_plots/'
@@ -1332,84 +1335,93 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
     # no need to have 'row index', therefore, set `index=False`
 
     print('\nRaw data on the day %s processed.' % run_date_str)
+    print('Data table saved to %s' % output_fname)
 
     # output curve fitting diagnostics
     # =========================================================================
-    if data_dir['output_filename_prefix'] != '':
-        diag_fname = output_dir + data_dir['output_filename_prefix'] + \
-            '_diag_%s.csv' % run_date_str
-    else:
-        diag_fname = output_dir + 'diag_' + run_date_str + '.csv'
+    if run_options['save_fitting_diagnostics']:
+        if data_dir['output_filename_prefix'] != '':
+            diag_fname = output_dir + '/diag/' + \
+                data_dir['output_filename_prefix'] + \
+                '_diag_%s.csv' % run_date_str
+        else:
+            diag_fname = output_dir + '/diag/' + \
+                'diag_' + run_date_str + '.csv'
 
-    header_diag = ['doy_utc', 'doy_local', 'ch_no', ]
-    for s in species_settings['species_list']:
-        header_diag += ['k_lin_' + s, 'b_lin_' + s, 'r_lin_' + s,
-                        'p_lin_' + s, 'rmse_lin_' + s, 'delta_lin_' + s]
+        header_diag = ['doy_utc', 'doy_local', 'ch_no', ]
+        for s in species_settings['species_list']:
+            header_diag += ['k_lin_' + s, 'b_lin_' + s, 'r_lin_' + s,
+                            'p_lin_' + s, 'rmse_lin_' + s, 'delta_lin_' + s]
 
-    for s in species_settings['species_list']:
-        header_diag += ['k_rlin_' + s, 'b_rlin_' + s,
-                        'k_lolim_rlin_' + s, 'k_uplim_rlin_' + s,
-                        'rmse_rlin_' + s, 'delta_rlin_' + s]
+        for s in species_settings['species_list']:
+            header_diag += ['k_rlin_' + s, 'b_rlin_' + s,
+                            'k_lolim_rlin_' + s, 'k_uplim_rlin_' + s,
+                            'rmse_rlin_' + s, 'delta_rlin_' + s]
 
-    for s in species_settings['species_list']:
-        header_diag += ['p0_nonlin_' + s, 'p1_nonlin_' + s,
-                        'se_p0_nonlin_' + s, 'se_p1_nonlin_' + s,
-                        'rmse_nonlin_' + s, 'delta_nonlin_' + s]
+        for s in species_settings['species_list']:
+            header_diag += ['p0_nonlin_' + s, 'p1_nonlin_' + s,
+                            'se_p0_nonlin_' + s, 'se_p1_nonlin_' + s,
+                            'rmse_nonlin_' + s, 'delta_nonlin_' + s]
 
-    # create output dataframe for fitting diagnostics
-    # no need to define `dtype` since it self-adapts to the assigned columns
-    df_diag = pd.DataFrame(index=range(n_smpl_per_day), columns=header_diag)
+        # create output dataframe for fitting diagnostics
+        # `dtype` not needed since it self-adapts to the assigned columns
+        df_diag = pd.DataFrame(index=range(n_smpl_per_day),
+                               columns=header_diag)
 
-    # assign columns
-    if config['biomet_data_settings']['time_in_UTC']:
-        df_diag['doy_utc'] = ch_time
-        df_diag['doy_local'] = ch_time + site_parameters['time_zone'] / 24.
-    else:
-        df_diag['doy_local'] = ch_time
-        df_diag['doy_utc'] = ch_time - site_parameters['time_zone'] / 24.
+        # assign columns
+        if config['biomet_data_settings']['time_in_UTC']:
+            df_diag['doy_utc'] = ch_time
+            df_diag['doy_local'] = ch_time + site_parameters['time_zone'] / 24.
+        else:
+            df_diag['doy_local'] = ch_time
+            df_diag['doy_utc'] = ch_time - site_parameters['time_zone'] / 24.
 
-    df_diag['ch_no'] = ch_no
+        df_diag['ch_no'] = ch_no
 
-    for spc_id in range(n_species):
-        df_diag['k_lin_' + species_list[spc_id]] = k_lin[:, spc_id]
-        df_diag['b_lin_' + species_list[spc_id]] = b_lin[:, spc_id]
-        df_diag['r_lin_' + species_list[spc_id]] = r_lin[:, spc_id]
-        df_diag['p_lin_' + species_list[spc_id]] = p_lin[:, spc_id]
-        df_diag['rmse_lin_' + species_list[spc_id]] = rmse_lin[:, spc_id]
-        df_diag['delta_lin_' + species_list[spc_id]] = delta_lin[:, spc_id]
+        for spc_id in range(n_species):
+            df_diag['k_lin_' + species_list[spc_id]] = k_lin[:, spc_id]
+            df_diag['b_lin_' + species_list[spc_id]] = b_lin[:, spc_id]
+            df_diag['r_lin_' + species_list[spc_id]] = r_lin[:, spc_id]
+            df_diag['p_lin_' + species_list[spc_id]] = p_lin[:, spc_id]
+            df_diag['rmse_lin_' + species_list[spc_id]] = rmse_lin[:, spc_id]
+            df_diag['delta_lin_' + species_list[spc_id]] = delta_lin[:, spc_id]
 
-        df_diag['k_rlin_' + species_list[spc_id]] = k_rlin[:, spc_id]
-        df_diag['b_rlin_' + species_list[spc_id]] = b_rlin[:, spc_id]
-        df_diag['k_lolim_rlin_' + species_list[spc_id]] = \
-            k_lolim_rlin[:, spc_id]
-        df_diag['k_uplim_rlin_' + species_list[spc_id]] = \
-            k_uplim_rlin[:, spc_id]
-        df_diag['rmse_rlin_' + species_list[spc_id]] = rmse_rlin[:, spc_id]
-        df_diag['delta_rlin_' + species_list[spc_id]] = delta_rlin[:, spc_id]
+            df_diag['k_rlin_' + species_list[spc_id]] = k_rlin[:, spc_id]
+            df_diag['b_rlin_' + species_list[spc_id]] = b_rlin[:, spc_id]
+            df_diag['k_lolim_rlin_' + species_list[spc_id]] = \
+                k_lolim_rlin[:, spc_id]
+            df_diag['k_uplim_rlin_' + species_list[spc_id]] = \
+                k_uplim_rlin[:, spc_id]
+            df_diag['rmse_rlin_' + species_list[spc_id]] = rmse_rlin[:, spc_id]
+            df_diag['delta_rlin_' + species_list[spc_id]] = \
+                delta_rlin[:, spc_id]
 
-        df_diag['p0_nonlin_' + species_list[spc_id]] = p0_nonlin[:, spc_id]
-        df_diag['p1_nonlin_' + species_list[spc_id]] = p1_nonlin[:, spc_id]
-        df_diag['se_p0_nonlin_' + species_list[spc_id]] = \
-            se_p0_nonlin[:, spc_id]
-        df_diag['se_p1_nonlin_' + species_list[spc_id]] = \
-            se_p1_nonlin[:, spc_id]
-        df_diag['rmse_nonlin_' + species_list[spc_id]] = \
-            rmse_nonlin[:, spc_id]
-        df_diag['delta_nonlin_' + species_list[spc_id]] = \
-            delta_nonlin[:, spc_id]
+            df_diag['p0_nonlin_' + species_list[spc_id]] = p0_nonlin[:, spc_id]
+            df_diag['p1_nonlin_' + species_list[spc_id]] = p1_nonlin[:, spc_id]
+            df_diag['se_p0_nonlin_' + species_list[spc_id]] = \
+                se_p0_nonlin[:, spc_id]
+            df_diag['se_p1_nonlin_' + species_list[spc_id]] = \
+                se_p1_nonlin[:, spc_id]
+            df_diag['rmse_nonlin_' + species_list[spc_id]] = \
+                rmse_nonlin[:, spc_id]
+            df_diag['delta_nonlin_' + species_list[spc_id]] = \
+                delta_nonlin[:, spc_id]
 
-    # rounding off to reduce output file size
-    # '%.6f' is the accuracy of single-precision floating numbers
-    # do not round off day of year variables or chamber descriptors
-    # also, do not round off p-value
-    df_diag = df_diag.round(
-        {key: 6 for key in df_diag.columns.values
-         if key not in ['doy_utc', 'doy_local', 'ch_no'] and 'p_' not in key})
+        # rounding off to reduce output file size
+        # '%.6f' is the accuracy of single-precision floating numbers
+        # do not round off day of year variables or chamber descriptors
+        # also, do not round off p-value
+        df_diag = df_diag.round(
+            {key: 6 for key in df_diag.columns.values
+             if (key not in ['doy_utc', 'doy_local', 'ch_no'] and
+                 'p_' not in key)})
 
-    df_diag.to_csv(diag_fname, sep=',', na_rep='NaN', index=False)
-    # no need to have 'row index', therefore, set `index=False`
+        df_diag.to_csv(diag_fname, sep=',', na_rep='NaN', index=False)
+        # no need to have 'row index', therefore, set `index=False`
 
-    print('Data and curve fitting diagnostics written to files.')
+        print('Curve fitting diagnostics saved to %s' % diag_fname)
+
+    # print('Data and curve fitting diagnostics written to files.')
 
     # generate daily summary plots
     if run_options['save_daily_plots']:
