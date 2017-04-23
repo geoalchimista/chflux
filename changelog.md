@@ -2,13 +2,12 @@
 
 @TODO:
 - Add external timelag file as input.
-- Move the saving place of diagnostic files to the subfolder `../diagnostics`
 - Replace Theil-Sen estimator with a more efficient robust linear regression method (perhaps MM-estimator?).
 - Use `pandas.Timestamp` as the standard timestamp passed between functions.
 - Add options to save configuration files in the output folder.
 - Add quality flags.
 
-# 0.1.11 (2017-04-22)
+# 0.1.11 (2017-04-23)
 
 - Improved the daily summary plot of chamber fluxes.
 - Bug fix in the timelag optimization function (when `closure_period_only` is set `False`).

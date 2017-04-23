@@ -279,24 +279,33 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
     n_species = len(species_settings['species_list'])
     species_list = species_settings['species_list']
     conc_factor = [species_settings[s]['multiplier'] for s in species_list]
-    species_unit_names = []
+    conc_unit_names = []
+    flux_unit_names = []
     for i, s in enumerate(species_settings['species_list']):
         output_unit = species_settings[s]['output_unit']
         if math.isclose(output_unit, 1e-12):
-            unit_name = 'pmol mol$^{-1}$'
+            conc_unit = 'pmol mol$^{-1}$'
+            flux_unit = 'pmol m$^{-2}$ s$^{-1}$'
         elif math.isclose(output_unit, 1e-9):
-            unit_name = 'nmol mol$^{-1}$'
+            conc_unit = 'nmol mol$^{-1}$'
+            flux_unit = 'nmol m$^{-2}$ s$^{-1}$'
         elif math.isclose(output_unit, 1e-6):
-            unit_name = '$\mu$mol mol$^{-1}$'
+            conc_unit = '$\mu$mol mol$^{-1}$'
+            flux_unit = '$\mu$mol m$^{-2}$ s$^{-1}$'
         elif math.isclose(output_unit, 1e-3):
-            unit_name = 'mmol mol$^{-1}$'
+            conc_unit = 'mmol mol$^{-1}$'
+            flux_unit = 'mmol m$^{-2}$ s$^{-1}$'
         elif math.isclose(output_unit, 1e-2):
-            unit_name = '%'
+            conc_unit = '%'
+            flux_unit = '% m$^{-2}$ s$^{-1}$'
         elif math.isclose(output_unit, 1.):
-            unit_name = 'mol mol$^{-1}$'
+            conc_unit = 'mol mol$^{-1}$'
+            flux_unit = 'mol m$^{-2}$ s$^{-1}$'
         else:
-            unit_name = 'undefined unit'
-        species_unit_names.append(unit_name)
+            conc_unit = 'undefined unit'
+            flux_unit = 'undefined unit'
+        conc_unit_names.append(conc_unit)
+        flux_unit_names.append(flux_unit)
 
     species_for_timelag_optmz = \
         config['run_options']['timelag_optimization_species']
@@ -1177,7 +1186,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
                                  c='darkblue', lw=2, label='nonlinear')
                     # axis settings
                     axes[i].set_ylabel(species_settings['species_names'][i] +
-                                       ' (%s)' % species_unit_names[i])
+                                       ' (%s)' % conc_unit_names[i])
                     # title setting
                     # for the top panel, add an additional linebreak before it
                     axes[i].set_title(
@@ -1465,7 +1474,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
         for j in range(n_species):
             axes_daily[j, 0].set_ylabel(
                 species_settings['species_names'][j] +
-                ' (%s)' % species_unit_names[j], fontsize=dailyplot_fontsize)
+                ' (%s)' % flux_unit_names[j], fontsize=dailyplot_fontsize)
 
         # set common column titles and x-axes
         for k, lb_ch in enumerate(unique_ch_label):
