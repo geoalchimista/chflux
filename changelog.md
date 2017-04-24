@@ -5,7 +5,10 @@
 - Replace Theil-Sen estimator with a more efficient robust linear regression method (perhaps MM-estimator?).
 - Use `pandas.Timestamp` as the standard timestamp passed between functions.
 - Add options to save configuration files in the output folder.
-- Add quality flags.
+
+# 0.1.12 (2017-04-24)
+
+- Added suggestive quality flags based on the internal differences among the flux values calculated from three fitting methods.
 
 # 0.1.11 (2017-04-23)
 
@@ -72,9 +75,9 @@
 - Separate flow data files are supported with `load_flow_data()` function.
 - Refined saturation vapor pressure and dew temperature functions.
 - Refined summary statistics functions in `common_func.py`:
- * `resist_mean()`: outlier-resistant mean
- * `resist_std()`: outlier-resistant standard deviation
- * `IQR_func()`: interquartile range
+  * `resist_mean()`: outlier-resistant mean
+  * `resist_std()`: outlier-resistant standard deviation
+  * `IQR_func()`: interquartile range
 - List of physical constants moved from `config.yaml` to `common_func.py`.
 - Added a bash script for the test case.
 

@@ -523,6 +523,12 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
     rmse_nonlin = np.zeros((n_smpl_per_day, n_species)) * np.nan
     delta_nonlin = np.zeros((n_smpl_per_day, n_species)) * np.nan
 
+    # quality flags
+    qc_flags = np.zeros((n_smpl_per_day, n_species), dtype='int') - 1
+
+    # number of valid observations of concentrations in the closure period
+    n_obs = np.zeros((n_smpl_per_day, n_species), dtype='int')
+
     # search for biomet variable names
     # --------------------------------
     # but only those with possibly multiple names are searched
@@ -1020,6 +1026,9 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
                 # boolean index array for finite concentration values
                 ind_conc_fit = np.isfinite(y_fit)
 
+                # number of valid observations
+                n_obs[loop_num, spc_id] = np.sum(ind_conc_fit)
+
                 # if no finite concentration values, skip the current step
                 if np.sum(ind_conc_fit) == 0:
                     continue
@@ -1254,6 +1263,14 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
         header += ['se_f' + s + flux_method
                    for s in species_settings['species_list']]
 
+    # add quality flags to the columns
+    qc_cols = ['qc_' + s for s in species_settings['species_list']]
+    header += qc_cols
+
+    # add number of valid observations of concentrations to the columns
+    n_obs_cols = ['n_obs_' + s for s in species_settings['species_list']]
+    header += n_obs_cols
+
     # biomet variable names
     header = header + ['flow_lpm', 't_turnover', 't_lag_nom',
                        't_lag_optmz', 'status_tlag', 'pres',
@@ -1312,6 +1329,25 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
     for i in range(len(w_soil_names)):
         df_flux[w_soil_names[i]] = w_soil[:, i]
 
+    # flagging using Dixon's Q test for outlier detection on small samples
+    # 1 - if outlier exists in the flux values from three fitting methods
+    # 0 - if no outlier exists
+    # Note: the flagging system is at its best suggestive, not categorical
+    for spc_id in range(n_species):
+        arr_flag_test = np.hstack((
+            flux_lin[:, [spc_id]], flux_rlin[:, [spc_id]],
+            flux_nonlin[:, [spc_id]]))
+        for k in range(n_smpl_per_day):
+            try:
+                dixon_test_res = dixon_test(arr_flag_test[k, :])
+            except ValueError:
+                qc_flags[k, spc_id] = 0
+            else:
+                if dixon_test_res == [None, None]:
+                    qc_flags[k, spc_id] = 0
+                else:
+                    qc_flags[k, spc_id] = 1
+
     for spc_id in range(n_species):
         # concentrations
         df_flux[species_list[spc_id] + '_atmb'] = conc_atmb[:, spc_id]
@@ -1331,6 +1367,9 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
         df_flux['f%s_nonlin' % species_list[spc_id]] = flux_nonlin[:, spc_id]
         df_flux['se_f%s_nonlin' % species_list[spc_id]] = \
             se_flux_nonlin[:, spc_id]
+        # others
+        df_flux['qc_%s' % species_list[spc_id]] = qc_flags[:, spc_id]
+        df_flux['n_obs_%s' % species_list[spc_id]] = n_obs[:, spc_id]
 
     # rounding off to reduce output file size
     # '%.6f' is the accuracy of single-precision floating numbers
@@ -1338,7 +1377,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
     df_flux = df_flux.round(
         {key: 6 for key in df_flux.columns.values
          if key not in ['doy_utc', 'doy_local', 'ch_no',
-                        'ch_label', 'A_ch', 'V_ch']})
+                        'ch_label', 'A_ch', 'V_ch'] + qc_cols + n_obs_cols})
 
     df_flux.to_csv(output_fname, sep=',', na_rep='NaN', index=False)
     # no need to have 'row index', therefore, set `index=False`
@@ -1429,8 +1468,6 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
         # no need to have 'row index', therefore, set `index=False`
 
         print('Curve fitting diagnostics saved to %s' % diag_fname)
-
-    # print('Data and curve fitting diagnostics written to files.')
 
     # generate daily summary plots
     if run_options['save_daily_plots']:

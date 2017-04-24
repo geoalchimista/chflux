@@ -454,6 +454,78 @@ def resist_std(x, IQR_range=1.5):
         return x_rstd
 
 
+def dixon_test(x, left=True, right=True, q_conf='q95'):
+    """
+    Use Dixon's Q test to identify one or two outliers. The test is based upon
+    two assumptions: (1) data must be normally distributed; (2) the test may
+    only be used once to a dataset and not repeated.
+
+    Parameters
+    ----------
+    x : array_like
+        Data points. Must be a list or a one dimensional array without NaN.
+    left : bool, optional
+        If True, test the minimum value.
+    right : bool, optional
+        If True, test the maximum value.
+        (At least one of the two, `left` or `right`, must be True.)
+    q_conf : str, optional
+        Confidence level: 'q95' -- 95% confidence (default). Others supported
+        are 'q90' (90% C.I.) and 'q99' (99% C.I.).
+
+    Returns
+    -------
+    outliers : list
+        A list of two values containing the outliers or None. The first element
+        corresponds to the minimum value, and the second element corresponds
+        to the maximum value. If the tested value is not an outlier, return
+        None at its position.
+
+    """
+    # critical Q value table
+    q_dicts = {'q90': [0.941, 0.765, 0.642, 0.560, 0.507, 0.468, 0.437,
+                       0.412, 0.392, 0.376, 0.361, 0.349, 0.338, 0.329,
+                       0.320, 0.313, 0.306, 0.300, 0.295, 0.290, 0.285,
+                       0.281, 0.277, 0.273, 0.269, 0.266, 0.263, 0.260],
+               'q95': [0.970, 0.829, 0.710, 0.625, 0.568, 0.526, 0.493,
+                       0.466, 0.444, 0.426, 0.410, 0.396, 0.384, 0.374,
+                       0.365, 0.356, 0.349, 0.342, 0.337, 0.331, 0.326,
+                       0.321, 0.317, 0.312, 0.308, 0.305, 0.301, 0.290],
+               'q99': [0.994, 0.926, 0.821, 0.740, 0.680, 0.634, 0.598,
+                       0.568, 0.542, 0.522, 0.503, 0.488, 0.475, 0.463,
+                       0.452, 0.442, 0.433, 0.425, 0.418, 0.411, 0.404,
+                       0.399, 0.393, 0.388, 0.384, 0.38, 0.376, 0.372]}
+    # minimum and maximum data sizes allowed
+    min_size = 3
+    max_size = len(q_dicts[q_conf]) + min_size - 1
+    if len(x) < min_size:
+        raise ValueError('Sample size too small: ' +
+                         'at least %d data points are required' % min_size)
+    elif len(x) > max_size:
+        raise ValueError('Sample size too large')
+
+    if not (left or right):
+        raise ValueError('At least one of the two options, ' +
+                         '`left` or `right`, must be True.')
+
+    q_crit = q_dicts[q_conf][len(x) - 3]
+
+    # for small dataset, the built-in `sorted()` is faster than `np.sort()`
+    x_sorted = sorted(x)
+
+    x_range = x_sorted[-1] - x_sorted[0]
+    if x_range == 0:
+        outliers = [None, None]
+    else:
+        Q_min = abs((x_sorted[1] - x_sorted[0]) / x_range)
+        Q_max = abs((x_sorted[-1] - x_sorted[-2]) / x_range)
+        outliers = [
+            x_sorted[0] if (Q_min > q_crit) and (Q_min >= Q_max) else None,
+            x_sorted[-1] if (Q_max > q_crit) and (Q_max >= Q_min) else None]
+
+    return outliers
+
+
 def IQR_func(x, axis=None):
     """
     Calculate the interquartile range of an array.
