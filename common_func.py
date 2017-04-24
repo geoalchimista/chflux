@@ -460,10 +460,13 @@ def dixon_test(x, left=True, right=True, q_conf='q95'):
     two assumptions: (1) data must be normally distributed; (2) the test may
     only be used once to a dataset and not repeated.
 
+    Adapted from: <http://sebastianraschka.com/Articles/2014_dixon_test.html>
+    (Retrieved 23 Apr 2017).
+
     Parameters
     ----------
     x : array_like
-        Data points. Must be a list or a one dimensional array without NaN.
+        Data points. Must be a list or a one dimensional array.
     left : bool, optional
         If True, test the minimum value.
     right : bool, optional
@@ -481,6 +484,17 @@ def dixon_test(x, left=True, right=True, q_conf='q95'):
         to the maximum value. If the tested value is not an outlier, return
         None at its position.
 
+    References
+    ----------
+    .. [1] Dean, R. B. and Dixon, W. J. (1951). Simplified Statistics for Small
+       Numbers of Observations. Anal. Chem., 23(4), 636—638.
+    .. [2] Dixon, W. J. (1953). Processing data for outliers Reference.
+       J. Biometrics, 9, 74–89.
+    .. [3] Rorabacher, D. B. (1991). Statistical Treatment for Rejection of
+       Deviant Values: Critical Values of Dixon Q Parameter and Related
+       Subrange Ratios at the 95 percent Confidence Level. Anal. Chem., 63(2),
+       139–146.
+
     """
     # critical Q value table
     q_dicts = {'q90': [0.941, 0.765, 0.642, 0.560, 0.507, 0.468, 0.437,
@@ -495,23 +509,26 @@ def dixon_test(x, left=True, right=True, q_conf='q95'):
                        0.568, 0.542, 0.522, 0.503, 0.488, 0.475, 0.463,
                        0.452, 0.442, 0.433, 0.425, 0.418, 0.411, 0.404,
                        0.399, 0.393, 0.388, 0.384, 0.38, 0.376, 0.372]}
+    # cast to numpy array and remove NaNs
+    x_arr = np.array(x)
+    x_arr = x_arr[np.isfinite(x_arr)]
     # minimum and maximum data sizes allowed
     min_size = 3
     max_size = len(q_dicts[q_conf]) + min_size - 1
-    if len(x) < min_size:
+    if len(x_arr) < min_size:
         raise ValueError('Sample size too small: ' +
                          'at least %d data points are required' % min_size)
-    elif len(x) > max_size:
+    elif len(x_arr) > max_size:
         raise ValueError('Sample size too large')
 
     if not (left or right):
         raise ValueError('At least one of the two options, ' +
                          '`left` or `right`, must be True.')
 
-    q_crit = q_dicts[q_conf][len(x) - 3]
+    q_crit = q_dicts[q_conf][len(x_arr) - 3]
 
     # for small dataset, the built-in `sorted()` is faster than `np.sort()`
-    x_sorted = sorted(x)
+    x_sorted = sorted(x_arr)
 
     x_range = x_sorted[-1] - x_sorted[0]
     if x_range == 0:
