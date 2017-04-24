@@ -389,6 +389,74 @@ default_config = {
         'time_in_UTC': True,
         # Default is `True` to treat the time variable in UTC time.
     },
+    'timelag_data_settings': {  # Settings for timelag data
+        # must contain a timestamp variable;
+        # must have a chamber label variable that correspond to those defined
+        # in `ch_label` in the chamber schedule configuration;
+        # timelag values must be given in seconds
+
+        'delimiter': ',',
+        # Supported table delimiters:
+        #   - singe space: ' '
+        #   - indefinite number of spaces: '\\s+' (works also for single space)
+        #   - comma: ','
+        #   - tab: '\\t'
+
+        'header': 'infer',
+        # Row number of the last line of the header (starting from 0)
+        # Default behavior is to infer it with `pandas.read_csv()`.
+
+        'names': None,
+        # Define the data table column names.
+        # Default is `None`, i.e., to infer with `pandas.read_csv()`.
+        # Tip: copy the column names from the data file, and then change names
+        # of the variables of interest to the standardized names.
+
+        'usecols': None,
+        # Specify a sequence of indices for columns to read into the data
+        # structure. Column index starts from 0 in Python.
+        # Default behavior (`None`) is to read all columns.
+
+        'dtype': None,
+        # If `None`, falls back to the default setting of `pandas.read_csv()`.
+        # Its default settings handle data types pretty well without
+        # specification. You can also modify the line above to customize column
+        # data types. For example, dtype: 'f8, f8, f8, i8' indicates that the
+        # first 3 columns are (double) floating numbers and the last column is
+        # of integer type.
+
+        'na_values': None,
+        # Modify this if you need specify the missing values.
+
+        'parse_dates': False,
+        # if False, do not attempt to parse dates with `pandas.read_csv()`
+        # if given a list of column indices or names, parse those columns as
+        # dates when parse multiple columns to form a datetime variable, must
+        # specify a column name for the parsed result
+
+        'date_parser': None,
+        # a date parser for converting date strings stored in multiple columns
+        # - 'ymd', YYYY MM DD, date only
+        # - 'ymdhm', YYYY MM DD HH MM, down to minute
+        # - 'ymdhms', YYYY MM DD HH MM SS, down to second
+        # - 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
+        # note: no need to use this if the date string is in a single column
+
+        'time_sec_start': None,
+        # If None, the starting year of the time_sec format is 1904 (LabVIEW).
+        # This option only takes the year number in four digits (integer).
+        # For example, an instrument working on Unix system may give time in
+        # seconds since 1 Jan 1970 00:00, then this option must be set to 1970.
+        # Check your instrument manual for its specific time format, if it
+        # records time in seconds since a date.
+
+        'year_ref': None,
+        # must specify a reference year if the time variable is day of year
+        # number
+
+        'time_in_UTC': True,
+        # Default is `True` to treat the time variable in UTC time.
+    },
     'site_parameters': {  # Site-specific parameters
         'site_pressure': None,
         # In Pascal. Default behavior (`None`) is to use the standard pressure.

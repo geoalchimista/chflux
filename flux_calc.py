@@ -109,7 +109,7 @@ def extract_date_substr(flist, date_format='%Y%m%d'):
 def load_tabulated_data(data_name, config, query=None):
     """
     A general function to read tabulated data (biometeorological,
-    concentration, flow rate, and leaf area data).
+    concentration, flow rate, leaf area, and timelag data).
 
     Parameters
     ----------
@@ -119,6 +119,7 @@ def load_tabulated_data(data_name, config, query=None):
         - 'conc': concentration data
         - 'flow': flow rate data
         - 'leaf': leaf area data
+        - 'timelag': timelag data
     config : dict
         Configuration dictionary parsed from the YAML config file.
     query : list
@@ -132,9 +133,9 @@ def load_tabulated_data(data_name, config, query=None):
 
     """
     # check the legality of `data_name` parameter
-    if data_name not in ['biomet', 'conc', 'flow', 'leaf']:
+    if data_name not in ['biomet', 'conc', 'flow', 'leaf', 'timelag']:
         raise RuntimeError('Wrong data name. Allowed values are ' +
-                           "'biomet', 'conc', 'flow', 'leaf'.")
+                           "'biomet', 'conc', 'flow', 'leaf', 'timelag'.")
     # search file list
     data_flist = glob.glob(config['data_dir'][data_name + '_data'])
     # get the data settings
@@ -241,7 +242,7 @@ def load_tabulated_data(data_name, config, query=None):
     return df
 
 
-def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
+def flux_calc(df_biomet, df_conc, df_flow, df_leaf, df_timelag,
               doy, year, config, chamber_config):
     """
     Calculate fluxes and generate plots.
@@ -354,11 +355,11 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
         if not os.path.exists(fitting_plots_path):
             os.makedirs(fitting_plots_path)
 
-    # get timelag optimization settings
-    if run_options['timelag_method'] == 'optimized':
-        flag_optimize_timelag = True
-    else:
-        flag_optimize_timelag = False
+    # # get timelag optimization settings
+    # if run_options['timelag_method'] == 'optimized':
+    #     flag_optimize_timelag = True
+    # else:
+    #     flag_optimize_timelag = False
 
     # unpack time variables
     # @TODO: switch from day of year based subsetting to timestamp subsetting?
@@ -816,7 +817,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
         dt_lmargin = 0.
         dt_rmargin = 0.
         if (df_chlut_current['optimize_timelag'].values[0] and
-                flag_optimize_timelag):
+                run_options['timelag_method'] == 'optimized'):
             timelag_nominal[loop_num] = \
                 df_chlut_current['timelag_nominal'].values[0] * 86400.
             timelag_upper_limit = \
@@ -825,6 +826,62 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
             timelag_lower_limit = \
                 df_chlut_current['timelag_lower_limit'].values[0] * 86400.
             # a temporary variable
+
+            # print('DEBUG: ', timelag_lower_limit, timelag_upper_limit)
+            ind_optmz = np.where(
+                (doy_conc > ch_o_b[loop_num]) &
+                (doy_conc < ch_end[loop_num] +
+                    timelag_upper_limit / 86400.))[0]
+            time_optmz = (doy_conc[ind_optmz] - ch_start[loop_num]) * 86400.
+            conc_optmz = \
+                df_conc.loc[ind_optmz, species_list[spc_optmz_id]].values * \
+                conc_factor[spc_optmz_id]
+
+            dt_open_before = (df_chlut_current['ch_cls'].values[0] -
+                              df_chlut_current['ch_o_b'].values[0]) * 86400.
+            dt_close = (df_chlut_current['ch_o_a'].values[0] -
+                        df_chlut_current['ch_cls'].values[0]) * 86400.
+            dt_open_after = (df_chlut_current['ch_end'].values[0] -
+                             df_chlut_current['ch_o_a'].values[0]) * 86400.
+
+            # print('DEBUG: ', np.nanmin(time_optmz), np.nanmax(time_optmz))
+            # print('DEBUG: ', time_optmz, conc_optmz)
+            # print('DEBUG: ', dt_open_before, dt_close, dt_open_after)
+
+            timelag_optmz_results = optimize_timelag(
+                time_optmz, conc_optmz, t_turnover[loop_num],
+                dt_open_before, dt_close, dt_open_after,
+                closure_period_only=True,
+                bounds=(timelag_lower_limit, timelag_upper_limit),
+                guess=timelag_nominal[loop_num])
+            timelag_optmz[loop_num], status_timelag_optmz[loop_num] = \
+                timelag_optmz_results
+            # print('DEBUG: ', timelag_optmz_results)
+            timelag_in_day = timelag_optmz_results[0] / 86400.  # in day
+        elif (run_options['timelag_method'] == 'prescribed' and
+              df_timelag is not None):
+            df_timelag_subset = \
+                df_timelag.loc[df_timelag['ch_no'] == ch_no[loop_num], :]
+            timelag_nominal[loop_num] = np.interp(
+                ch_start[loop_num], df_timelag_subset['time_doy'].values,
+                df_timelag_subset['timelag_nom'].values)
+            timelag_upper_limit = np.interp(
+                ch_start[loop_num], df_timelag_subset['time_doy'].values,
+                df_timelag_subset['timelag_uplim'].values)
+            # a temporary variable
+            timelag_lower_limit = np.interp(
+                ch_start[loop_num], df_timelag_subset['time_doy'].values,
+                df_timelag_subset['timelag_lolim'].values)
+            # a temporary variable
+
+            # timelag_nominal[loop_num] = \
+            #     df_chlut_current['timelag_nominal'].values[0] * 86400.
+            # timelag_upper_limit = \
+            #     df_chlut_current['timelag_upper_limit'].values[0] * 86400.
+            # # a temporary variable
+            # timelag_lower_limit = \
+            #     df_chlut_current['timelag_lower_limit'].values[0] * 86400.
+            # # a temporary variable
 
             # print('DEBUG: ', timelag_lower_limit, timelag_upper_limit)
             ind_optmz = np.where(
@@ -1642,6 +1699,24 @@ def main():
             # if leaf data are not in their own files, set them to None
             df_leaf = None
 
+        # read timelag data (outside of the loop)
+        if config['data_dir']['use_timelag_data']:
+            # if use external timelag data
+            print('Notice: Use external timelag data.')
+            df_timelag = load_tabulated_data('timelag', config)
+            # check data size; if no data entry in it, terminate the program
+            if df_timelag is None:
+                raise RuntimeError('No timelag data file is found.')
+            elif df_timelag.shape[0] == 0:
+                raise RuntimeError('No entry in the timelag data.')
+            # check timestamp existence
+            if 'timestamp' not in df_timelag.columns.values:
+                raise RuntimeError(
+                    'No time variable found in the timelag data.')
+        else:
+            # if not using external timelag data
+            df_timelag = None
+
         for i in range(len(biomet_query_list)):
             biomet_ts_query = biomet_query_list[i]
             conc_ts_query = biomet_date_series[i].strftime(
@@ -1730,7 +1805,7 @@ def main():
             year = year_biomet
 
             # calculate fluxes
-            flux_calc(df_biomet, df_conc, df_flow, df_leaf,
+            flux_calc(df_biomet, df_conc, df_flow, df_leaf, df_timelag,
                       doy, year, config, chamber_config)
     else:
         # this branch loads all the data at once
@@ -1804,6 +1879,24 @@ def main():
             # if leaf data are not in their own files, set them to None
             df_leaf = None
 
+        # read timelag data
+        if config['data_dir']['use_timelag_data']:
+            # if use external timelag data
+            print('Notice: Use external timelag data.')
+            df_timelag = load_tabulated_data('timelag', config)
+            # check data size; if no data entry in it, terminate the program
+            if df_timelag is None:
+                raise RuntimeError('No timelag data file is found.')
+            elif df_timelag.shape[0] == 0:
+                raise RuntimeError('No entry in the timelag data.')
+            # check timestamp existence
+            if 'timestamp' not in df_timelag.columns.values:
+                raise RuntimeError(
+                    'No time variable found in the timelag data.')
+        else:
+            # if not using external timelag data
+            df_timelag = None
+
         year_biomet = df_biomet.loc[0, 'timestamp'].year
         if year_biomet is None:
             year_biomet = config['biomet_data_settings']['year_ref']
@@ -1827,7 +1920,7 @@ def main():
 
         # calculate fluxes day by day
         for doy in np.arange(doy_start, doy_end):
-            flux_calc(df_biomet, df_conc, df_flow, df_leaf,
+            flux_calc(df_biomet, df_conc, df_flow, df_leaf, df_timelag,
                       doy, year, config, chamber_config)
 
     # Echo program ending
