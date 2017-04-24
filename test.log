@@ -1,5 +1,5 @@
 Starting data processing...
-2017-04-22 16:27:16
+2017-04-24 13:31:35
 Checking specifications:
 numpy version = 1.11.3
 pandas version = 0.19.2
@@ -26,5 +26,5 @@ Raw data on the day 20130402 processed.
 Data table saved to ./test/output/sr_flux_20130402.csv
 Curve fitting diagnostics saved to ./test/output//diag/sr_diag_20130402.csv
 
-2017-04-22 16:27:33
-Done. Finished in 17.23 seconds.
+2017-04-24 13:31:54
+Done. Finished in 19.14 seconds.

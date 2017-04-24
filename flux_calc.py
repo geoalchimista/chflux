@@ -328,6 +328,20 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf,
         daily_plots_dir = data_dir['plot_dir'] + '/daily_plots/'
         if not os.path.exists(daily_plots_dir):
             os.makedirs(daily_plots_dir)
+    # save config if enabled
+    if run_options['save_config']:
+        if not os.path.exists(output_dir + '/config'):
+            os.makedirs(output_dir + '/config')
+        usercfg_filename = output_dir + '/config/user_config.yaml'
+        chcfg_filename = output_dir + '/config/chamber.yaml'
+        with open(usercfg_filename, 'w') as f:
+            yaml.dump(config, f, default_flow_style=False,
+                      allow_unicode=True, indent=4)
+            print('Configuration file saved to %s' % usercfg_filename)
+        with open(run_options['chamber_config_filepath'], 'r') as fsrc, \
+                open(chcfg_filename, 'w') as fdest:
+            fdest.write(fsrc.read())
+            print('Chamber setting file saved to %s' % chcfg_filename)
 
     # a date string for current run; used in echo and in output file names
     run_date_str = (datetime.datetime(year, 1, 1) +

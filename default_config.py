@@ -49,6 +49,10 @@ default_config = {
         'save_fitting_diagnostics': True,
         # If True, save fitting diagnostics to files.
 
+        'save_config': False,
+        # If True, save the configuration files in a subfolder 'config' in the
+        # output directory.
+
         'save_fitting_plots': False,
         # If True, save the curve fitting plots for every chamber sampling
         # period.

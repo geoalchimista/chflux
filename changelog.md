@@ -4,11 +4,11 @@
 - Add external timelag file as input.
 - Replace Theil-Sen estimator with a more efficient robust linear regression method (perhaps MM-estimator?).
 - Use `pandas.Timestamp` as the standard timestamp passed between functions.
-- Add options to save configuration files in the output folder.
 
 # 0.1.12 (2017-04-24)
 
 - Added suggestive quality flags based on the internal differences among the flux values calculated from three fitting methods.
+- Added options to save configuration files in the output folder.
 
 # 0.1.11 (2017-04-23)
 
