@@ -3,6 +3,7 @@
 import re
 import os
 import copy
+import numpy as np
 import pandas as pd
 
 
@@ -41,3 +42,50 @@ def extract_date_substr(flist, date_format='%Y%m%d'):
     ts_series = pd.to_datetime(date_substr_list, format=date_format,
                                errors='coerce')
     return date_substr_list, ts_series
+
+
+def parse_datetime(ts_input, year=None):
+    """
+    Parse datetime and convert to pandas.Timestamp.
+
+    Parameters
+    ----------
+    ts_input : float, str, or datetime.datetime, or array_like
+        Input timestamp, parsed differently according to its type. If
+        `ts_input` is float, parse it as the day of year number (must also
+        supply the year number). If `ts_input` is string or datetime.datetime,
+        use the default mechanism of `pandas.Timestamp` to parse. Support
+        array like input of the aforementioned types.
+    year : int, optional
+        If the `ts_input` is of float type, treated as day of year value, must
+        also supply the year number.
+
+    Returns
+    -------
+    ts : pandas.Timestamp or pandas.DatetimeIndex
+        Converted timestamp or array of timestamps.
+
+    """
+    if (issubclass(type(ts_input), float) or
+            issubclass(type(ts_input), np.floating)):
+        # parse as day of year number
+        if year is None:
+            raise ValueError('Missing `year` when parsing day of year input.')
+        ts = pd.Timestamp('%d-01-01' % year) + \
+            pd.to_timedelta(ts_input, unit='D', errors='coerce')
+    elif issubclass(type(ts_input), np.ndarray):
+        if issubclass(ts_input.dtype.type, np.floating):
+            # parse as day of year number
+            if year is None:
+                raise ValueError(
+                    'Missing `year` when parsing day of year input.')
+            ts = pd.Timestamp('%d-01-01' % year) + \
+                pd.to_timedelta(ts_input, unit='D', errors='coerce')
+        else:
+            # use pandas.to_datetime
+            ts = pd.to_datetime(ts_input, errors='coerce')
+    else:
+        # use pandas.to_datetime
+        ts = pd.to_datetime(ts_input, errors='coerce')
+
+    return ts
