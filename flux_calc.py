@@ -22,7 +22,8 @@ from matplotlib import ticker
 
 from common_func import *
 from chflux.default_config import default_config
-from chflux.datetools import *
+from chflux.datetools import extract_date_substr
+from chflux.iotools import load_config
 
 
 # Command-line argument parser
@@ -70,16 +71,15 @@ date_parsers_dict = {
 }
 
 
-def load_config(filepath):
-    """Load configuration file from a given filepath."""
-    with open(filepath, 'r') as stream:
-        try:
-            config = yaml.load(stream)
-        except yaml.YAMLError as exc_yaml:
-            print(exc_yaml)
-            config = {}  # return a blank dict if fail to load
-
-    return config
+# def load_config(filepath):
+#     """Load configuration file from a given filepath."""
+#     with open(filepath, 'r') as stream:
+#         try:
+#             config = yaml.load(stream)
+#         except yaml.YAMLError as exc_yaml:
+#             print(exc_yaml)
+#             config = {}  # return a blank dict if fail to load
+#     return config
 
 
 def load_tabulated_data(data_name, config, query=None):
