@@ -12,7 +12,7 @@ In active development. Documentation is coming soon.
 
 ## Updates
 
-See `changelog.md`.
+See `changes.md`.
 
 ## Dependencies
 

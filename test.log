@@ -1,5 +1,5 @@
 Starting data processing...
-2017-04-24 18:42:47
+2017-04-24 19:12:43
 Checking specifications:
 numpy version = 1.11.3
 pandas version = 0.19.2
@@ -8,23 +8,23 @@ Config file is set as `user_config.yaml`
 Chamber config file is set as `chamber.yaml`
 
 2 biomet data files are found. Loading...
-./test/input/biomet/DataTab_2013_04_01_0001.dat
-./test/input/biomet/DataTab_2013_04_02_0001.dat
+./tests/input/biomet/DataTab_2013_04_01_0001.dat
+./tests/input/biomet/DataTab_2013_04_02_0001.dat
 17263 lines read from biomet data.
 2 conc data files are found. Loading...
-./test/input/conc/130401_000000.str
-./test/input/conc/130402_000000.str
+./tests/input/conc/130401_000000.str
+./tests/input/conc/130402_000000.str
 163005 lines read from conc data.
 Notice: Flow rate data are extracted from biomet data, because they are not stored in their own files.
 Calculating fluxes...
 
 Raw data on the day 20130401 processed.
-Data table saved to ./test/output/sr_flux_20130401.csv
-Curve fitting diagnostics saved to ./test/output//diag/sr_diag_20130401.csv
+Data table saved to ./tests/output/sr_flux_20130401.csv
+Curve fitting diagnostics saved to ./tests/output//diag/sr_diag_20130401.csv
 
 Raw data on the day 20130402 processed.
-Data table saved to ./test/output/sr_flux_20130402.csv
-Curve fitting diagnostics saved to ./test/output//diag/sr_diag_20130402.csv
+Data table saved to ./tests/output/sr_flux_20130402.csv
+Curve fitting diagnostics saved to ./tests/output//diag/sr_diag_20130402.csv
 
-2017-04-24 18:43:05
-Done. Finished in 17.76 seconds.
+2017-04-24 19:13:00
+Done. Finished in 17.45 seconds.
