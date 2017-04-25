@@ -1,5 +1,9 @@
-"""A collection of tools dealing with date and time"""
+"""
+A collection of tools dealing with date and time for PyChamberFlux
 
+(c) 2016-2017 Wu Sun <wu.sun@ucla.edu>
+
+"""
 import re
 import os
 import copy
