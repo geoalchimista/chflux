@@ -27,6 +27,54 @@ phys_const = {
 T_0 = phys_const['T_0']
 
 
+# the metaclass for subclassing
+ChamberLookupTableMeta = namedtuple(
+    'ChamberLookupTableMeta',
+    ['schedule_start', 'schedule_end', 'n_ch', 'smpl_cycle_len',
+     'n_cycle_per_day', 'unit_of_time', 'df'])
+
+
+class ChamberLookupTable(ChamberLookupTableMeta):
+    """
+    Chamber Information Lookup Table
+
+    Parameters
+    ----------
+    chamber_config : dict
+        Chamber configuration dictionary loaded from file
+    time_query : float, str, or pandas.Timestamp
+        A time variable for inquiry (day of year number, or datetime string,
+        or pandas.Timestamp)
+    year : int, optional
+        If `time_query` is given as day of year number, must specify the year.
+
+    Attributes
+    ----------
+    schedule_start : panda.Timestamp
+        Starting time of the current schedule
+    schedule_end : panda.Timestamp
+        End time of the current schedule
+    n_ch : int
+        Number of chambers
+    smpl_cycle_len : float
+        Length of a full sampling cycle through all chambers [in day]
+    n_cycle_per_day : int
+        Number of cycles per day
+    unit_of_time : str
+        Unit of time in the chamber settings table ('s', 'min', or 'h')
+    df : pandas.DataFrame
+        Dataframe for the chamber settings table
+
+    """
+    def __new__(cls, chamber_config, time_query):
+        pass
+    # TO BE CONTINUED
+    # def __new__(cls, chamber_config, doy):
+    #     extract chamber_lookup_table_dict from chamber_config and doy
+    #     self = super().__init__(cls, **chamber_lookup_table_dict)
+    #     return self (an instance of this class)
+
+
 def chamber_lookup_table_func(doy, chamber_config):
     """
     Return a chamber meta information look-up table.

@@ -5,9 +5,7 @@ Main program for flux calculation
 
 """
 import os
-import re
 import math
-import copy
 import glob
 import datetime
 import argparse
@@ -23,7 +21,7 @@ import matplotlib.pyplot as plt
 from matplotlib import ticker
 
 from common_func import *
-from default_config import default_config
+from chflux.default_config import default_config
 from chflux.datetools import *
 
 
