@@ -1264,7 +1264,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf, df_timelag,
     df_flux.to_csv(output_fname, sep=',', na_rep='NaN', index=False)
     # no need to have 'row index', therefore, set `index=False`
 
-    print('\nRaw data on the day %s processed.' % run_date_str)
+    print('Raw data on the day %s processed.' % run_date_str)
     print('Data table saved to %s' % output_fname)
 
     # output curve fitting diagnostics
@@ -1425,6 +1425,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf, df_timelag,
 
         print('Daily flux summary plots generated.')
 
+    print('\n------\n')
     return None
 
 
