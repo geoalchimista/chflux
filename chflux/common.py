@@ -27,54 +27,6 @@ phys_const = {
 T_0 = phys_const['T_0']
 
 
-# the metaclass for subclassing
-ChamberLookupTableMeta = namedtuple(
-    'ChamberLookupTableMeta',
-    ['schedule_start', 'schedule_end', 'n_ch', 'smpl_cycle_len',
-     'n_cycle_per_day', 'unit_of_time', 'df'])
-
-
-class ChamberLookupTable(ChamberLookupTableMeta):
-    """
-    Chamber Information Lookup Table
-
-    Parameters
-    ----------
-    chamber_config : dict
-        Chamber configuration dictionary loaded from file
-    time_query : float, str, or pandas.Timestamp
-        A time variable for inquiry (day of year number, or datetime string,
-        or pandas.Timestamp)
-    year : int, optional
-        If `time_query` is given as day of year number, must specify the year.
-
-    Attributes
-    ----------
-    schedule_start : panda.Timestamp
-        Starting time of the current schedule
-    schedule_end : panda.Timestamp
-        End time of the current schedule
-    n_ch : int
-        Number of chambers
-    smpl_cycle_len : float
-        Length of a full sampling cycle through all chambers [in day]
-    n_cycle_per_day : int
-        Number of cycles per day
-    unit_of_time : str
-        Unit of time in the chamber settings table ('s', 'min', or 'h')
-    df : pandas.DataFrame
-        Dataframe for the chamber settings table
-
-    """
-    def __new__(cls, chamber_config, time_query):
-        pass
-    # TO BE CONTINUED
-    # def __new__(cls, chamber_config, doy):
-    #     extract chamber_lookup_table_dict from chamber_config and doy
-    #     self = super().__init__(cls, **chamber_lookup_table_dict)
-    #     return self (an instance of this class)
-
-
 def chamber_lookup_table_func(doy, chamber_config):
     """
     Return a chamber meta information look-up table.
@@ -193,10 +145,10 @@ def optimize_timelag(time, conc, t_turnover,
 
     """
 
-    def __timelag_resid_func(t_lag, time, conc, t_turnover,
-                             dt_open_before, dt_close, dt_open_after,
-                             dt_left_margin, dt_right_margin,
-                             closure_period_only=False):
+    def _timelag_resid_func(t_lag, time, conc, t_turnover,
+                            dt_open_before, dt_close, dt_open_after,
+                            dt_left_margin, dt_right_margin,
+                            closure_period_only=False):
         """
         The timelag optimization function to minimize.
 
@@ -278,6 +230,11 @@ def optimize_timelag(time, conc, t_turnover,
                 (np.sum(np.isfinite(resid_trunc)) - 3.)
         return(MSR)
 
+    # warning messages
+    msg_warn_bounds = 'Illegal bounds given to timelag optimization! ' + \
+        'Default to unbounded optimization method.'
+    msg_warn_guess = 'Illegal timelag guess! Default to 0.'
+
     # do time lag optimization
     # get the bounds
     # legal input of bounds: 1. must be finite numbers; 2. the lower bound
@@ -289,17 +246,13 @@ def optimize_timelag(time, conc, t_turnover,
             timelag_lolim, timelag_uplim = bounds
         except TypeError:
             flag_bounded_optimization = False
-            warnings.warn('Illegal bounds given to timelag optimization!' +
-                          'Default to unbounded optimization method.',
-                          RuntimeWarning)
+            warnings.warn(msg_warn_bounds, RuntimeWarning)
         else:
             if np.isfinite(timelag_lolim) and np.isfinite(timelag_uplim):
                 flag_bounded_optimization = timelag_lolim < timelag_uplim
             else:
                 flag_bounded_optimization = False
-                warnings.warn('Illegal bounds given to timelag optimization!' +
-                              ' Default to unbounded optimization method.',
-                              RuntimeWarning)
+                warnings.warn(msg_warn_bounds, RuntimeWarning)
 
     # get initial guess value
     if guess is None:
@@ -308,22 +261,19 @@ def optimize_timelag(time, conc, t_turnover,
         try:
             timelag_guess = float(guess)
         except ValueError:
-            warnings.warn('Illegal timelag guess! Default to 0.',
-                          RuntimeWarning)
+            warnings.warn(msg_warn_guess, RuntimeWarning)
             timelag_guess = 0.
         except TypeError:
-            warnings.warn('Illegal timelag guess! Default to 0.',
-                          RuntimeWarning)
+            warnings.warn(msg_warn_guess, RuntimeWarning)
             timelag_guess = 0.
         if not np.isfinite(timelag_guess):
-            warnings.warn('Illegal timelag guess! Default to 0.',
-                          RuntimeWarning)
+            warnings.warn(msg_warn_guess, RuntimeWarning)
             timelag_guess = 0.
 
     if flag_bounded_optimization:
         # bounded optimization uses `scipy.optimize.minimize_scalar`
         timelag_results = optimize.minimize_scalar(
-            __timelag_resid_func,
+            _timelag_resid_func,
             bounds=(timelag_lolim, timelag_uplim),
             args=(time, conc, t_turnover,
                   dt_open_before, dt_close, dt_open_after,
@@ -335,7 +285,7 @@ def optimize_timelag(time, conc, t_turnover,
     else:
         # unbounded optimization uses `scipy.optimize.minimize`
         timelag_results = optimize.minimize(
-            __timelag_resid_func, x0=timelag_guess,
+            _timelag_resid_func, x0=timelag_guess,
             args=(time, conc, t_turnover,
                   dt_open_before, dt_close, dt_open_after,
                   dt_left_margin, dt_right_margin,
@@ -346,11 +296,6 @@ def optimize_timelag(time, conc, t_turnover,
         status_timelag = timelag_results.status
 
     return timelag, status_timelag
-
-
-def volume_eff_optmz_func():
-    # @TODO: to add this function
-    return None
 
 
 def conc_func(p, t):
