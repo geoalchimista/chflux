@@ -18,7 +18,7 @@ def extract_date_substr(flist, date_format='%Y%m%d'):
     Parameters
     ----------
     flist : list
-        A list of file paths, typically generated from `glob.glob()`.
+        A list of file paths
     date_format : str, optional
         Date format for the substring in file names. Supported data formats
         include: '%Y%m%d', '%Y_%m_%d', '%Y-%m-%d', or similar formats with
@@ -28,11 +28,9 @@ def extract_date_substr(flist, date_format='%Y%m%d'):
     Returns
     -------
     date_substr_list : list
-        A list of date substring extracted from file names, in the same order
-        as the file paths in the input `flist`.
+        A list of date substrings extracted from file names in `flist`.
     ts_series : pandas.DatetimeIndex
-        A series of timestamps converted from `date_substr_list`.
-
+        A series of pandas timestamps converted from `date_substr_list`.
     """
     re_date_format = copy.copy(date_format)  # regex date format
     re_date_format = re_date_format.replace('-', '\-')  # dash separators
@@ -55,20 +53,20 @@ def parse_datetime(ts_input, year=None):
     Parameters
     ----------
     ts_input : float, str, or datetime.datetime, or array_like
-        Input timestamp, parsed differently according to its type. If
-        `ts_input` is float, parse it as the day of year number (must also
-        supply the year number). If `ts_input` is string or datetime.datetime,
-        use the default mechanism of `pandas.Timestamp` to parse. Support
-        array like input of the aforementioned types.
+        Input timestamp, parsed according to its type.
+        - `float`: parse as the day of year numbers (must specify the year)
+        - `str` or `datetime.datetime`: use the default mechanism of
+        `pandas.Timestamp` to parse.
+
+        Also supports array-like input of the aforementioned types.
     year : int, optional
-        If the `ts_input` is of float type, treated as day of year value, must
-        also supply the year number.
+        If `ts_input` is supplied as the day of year values, must specify
+        the year number.
 
     Returns
     -------
     ts : pandas.Timestamp or pandas.DatetimeIndex
         Converted timestamp or array of timestamps.
-
     """
     if (issubclass(type(ts_input), float) or
             issubclass(type(ts_input), np.floating)):
@@ -86,10 +84,8 @@ def parse_datetime(ts_input, year=None):
             ts = pd.Timestamp('%d-01-01' % year) + \
                 pd.to_timedelta(ts_input, unit='D', errors='coerce')
         else:
-            # use pandas.to_datetime
             ts = pd.to_datetime(ts_input, errors='coerce')
     else:
-        # use pandas.to_datetime
         ts = pd.to_datetime(ts_input, errors='coerce')
 
     return ts
