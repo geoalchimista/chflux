@@ -10,27 +10,27 @@ import warnings
 import pandas as pd
 
 
-# a collection of date parsers to use, when dates are stored in multiple
-# columns, like YYYY MM DD etc.
-# does not support month-first (American) or day-first (European) format,
-# put them by the year-month-day order using index orders.
+# a collection of date parsers to use for timestamps stored in multiple
+# columns (e.g., YYYY MM DD).
+# This does not support month-first (American) or day-first (European) format,
+# put them by the year-month-day order (ISO 8601) using index orders.
 date_parsers_dict = {
-    'ymd': lambda s: pd.to_datetime(s, format='%Y %m %d'),
     # date only
+    'ymd': lambda s: pd.to_datetime(s, format='%Y %m %d'),
 
-    'ymdhm': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M'),
     # down to minute
+    'ymdhm': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M'),
 
-    'ymdhms': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M %S'),
     # down to second
+    'ymdhms': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M %S'),
 
-    'ymdhmsf': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M %S %f')
     # down to nanosecond
+    'ymdhmsf': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M %S %f')
 }
 
 
 def load_config(filepath):
-    """Load configuration file from a given filepath."""
+    """Load YAML configuration file from a given filepath."""
     with open(filepath, 'r') as stream:
         try:
             config = yaml.load(stream)
@@ -65,9 +65,8 @@ def load_tabulated_data(data_name, config, query=None):
     ------
     df : pandas.DataFrame
         The loaded tabulated data.
-
     """
-    # check the legality of `data_name` parameter
+    # check the validity of `data_name` parameter
     if data_name not in ['biomet', 'conc', 'flow', 'leaf', 'timelag']:
         raise RuntimeError('Wrong data name. Allowed values are ' +
                            "'biomet', 'conc', 'flow', 'leaf', 'timelag'.")
@@ -77,7 +76,7 @@ def load_tabulated_data(data_name, config, query=None):
     data_settings = config[data_name + '_data_settings']
 
     if type(query) is str:
-        # force `query` to be a list if it is given as a string
+        # `query` must be a list
         query = [query]
 
     if query is not None:
@@ -119,8 +118,8 @@ def load_tabulated_data(data_name, config, query=None):
     try:
         df = pd.concat(df_loaded, ignore_index=True)
     except ValueError:
-        df = None  # if the list to concatenate is empty
-        return df  # return None if not a valid DataFrame
+        # if the list to concatenate is empty
+        return None
 
     del df_loaded
 
@@ -142,9 +141,9 @@ def load_tabulated_data(data_name, config, query=None):
     if 'timestamp' in df.columns.values:
         if type(df.loc[0, 'timestamp']) is not pd.Timestamp:
             df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
-            # no need to catch out-of bound error if set 'coerce'
-        # add a time variable in days of year (float) if not already there
+            # note: no need to catch out-of-bound error if set 'coerce'
         if 'time_doy' not in df.columns.values:
+            # add a time variable in days of year (float) if not already there
             year_start = year_ref if year_ref is not None else \
                 df.loc[0, 'timestamp'].year
             df['time_doy'] = (df['timestamp'] -
@@ -162,15 +161,14 @@ def load_tabulated_data(data_name, config, query=None):
             time_sec_start = 1904
         df['timestamp'] = pd.Timestamp('%d-01-01' % time_sec_start) + \
             df['time_sec'] * pd.Timedelta(seconds=1)
-        # add a time variable in days of year (float) if not already there
-        if 'time_doy' not in df.columns.values:
-            year_start = year_ref if year_ref is not None else \
-                df.loc[0, 'timestamp'].year
-            year_start_in_sec = (
-                pd.Timestamp('%d-01-01' % year_start) -
-                pd.Timestamp('%d-01-01' % time_sec_start)) / \
-                pd.Timedelta(seconds=1)
-            df['time_doy'] = (df['time_sec'] - year_start_in_sec) / 86400.
+        # add a time variable in days of year (float)
+        year_start = year_ref if year_ref is not None else \
+            df.loc[0, 'timestamp'].year
+        year_start_in_sec = (
+            pd.Timestamp('%d-01-01' % year_start) -
+            pd.Timestamp('%d-01-01' % time_sec_start)) / \
+            pd.Timedelta(seconds=1)
+        df['time_doy'] = (df['time_sec'] - year_start_in_sec) / 86400.
     else:
         warnings.warn('No time variable is found!', UserWarning)
 
