@@ -5,7 +5,6 @@ Main program for flux calculation
 
 """
 import os
-import math
 import glob
 import datetime
 import argparse
@@ -23,8 +22,8 @@ from matplotlib import ticker
 from chflux.common import *
 from chflux.default_config import default_config
 from chflux.datetools import extract_date_substr
-from chflux.iotools import load_config, load_tabulated_data, \
-    create_output_header
+from chflux.iotools import *
+from chflux.helpers import *
 
 
 # Command-line argument parser
@@ -92,33 +91,10 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf, df_timelag,
     n_species = len(species_settings['species_list'])
     species_list = species_settings['species_list']
     conc_factor = [species_settings[s]['multiplier'] for s in species_list]
-    conc_unit_names = []
-    flux_unit_names = []
-    for i, s in enumerate(species_settings['species_list']):
-        output_unit = species_settings[s]['output_unit']
-        if math.isclose(output_unit, 1e-12):
-            conc_unit = 'pmol mol$^{-1}$'
-            flux_unit = 'pmol m$^{-2}$ s$^{-1}$'
-        elif math.isclose(output_unit, 1e-9):
-            conc_unit = 'nmol mol$^{-1}$'
-            flux_unit = 'nmol m$^{-2}$ s$^{-1}$'
-        elif math.isclose(output_unit, 1e-6):
-            conc_unit = '$\mu$mol mol$^{-1}$'
-            flux_unit = '$\mu$mol m$^{-2}$ s$^{-1}$'
-        elif math.isclose(output_unit, 1e-3):
-            conc_unit = 'mmol mol$^{-1}$'
-            flux_unit = 'mmol m$^{-2}$ s$^{-1}$'
-        elif math.isclose(output_unit, 1e-2):
-            conc_unit = '%'
-            flux_unit = '% m$^{-2}$ s$^{-1}$'
-        elif math.isclose(output_unit, 1.):
-            conc_unit = 'mol mol$^{-1}$'
-            flux_unit = 'mol m$^{-2}$ s$^{-1}$'
-        else:
-            conc_unit = 'undefined unit'
-            flux_unit = 'undefined unit'
-        conc_unit_names.append(conc_unit)
-        flux_unit_names.append(flux_unit)
+
+    output_unit_list = [species_settings[s]['output_unit']
+                        for s in species_list]
+    conc_unit_names, flux_unit_names = convert_unit_names(output_unit_list)
 
     species_for_timelag_optmz = \
         config['run_options']['timelag_optimization_species']
