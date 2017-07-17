@@ -23,7 +23,8 @@ from matplotlib import ticker
 from chflux.common import *
 from chflux.default_config import default_config
 from chflux.datetools import extract_date_substr
-from chflux.iotools import load_config, load_tabulated_data
+from chflux.iotools import load_config, load_tabulated_data, \
+    create_output_header
 
 
 # Command-line argument parser
@@ -385,6 +386,11 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf, df_timelag,
                     if 'w_soil' in s]
     flow_ch_names = [s for s in df_flow.columns.values
                      if 'flow_ch' in s]
+
+    # a temporary helper variable
+    biomet_var_list = \
+        T_atm_names + RH_atm_names + T_ch_names + ['T_dew_ch'] + \
+        T_leaf_names + T_soil_names + w_soil_names + PAR_names + PAR_ch_names
 
     # initialize biomet variables
     # ---------------------------
@@ -1132,33 +1138,14 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf, df_timelag,
     else:
         output_fname = output_dir + 'flux_' + run_date_str + '.csv'
 
-    header = ['doy_utc', 'doy_local', 'ch_no', 'ch_label', 'A_ch', 'V_ch', ]
-    for conc_suffix in ['_atmb', '_chb', '_cha', '_atma']:
-        header += [s + conc_suffix for s in species_settings['species_list']]
-        header += ['sd_' + s + conc_suffix
-                   for s in species_settings['species_list']]
+    header = create_output_header(
+        'flux', species_settings['species_list'], biomet_var_list)
 
-    header += [s + '_chc_iqr' for s in species_settings['species_list']]
-    for flux_method in ['_lin', '_rlin', '_nonlin']:
-        header += ['f' + s + flux_method
-                   for s in species_settings['species_list']]
-        header += ['se_f' + s + flux_method
-                   for s in species_settings['species_list']]
-
-    # add quality flags to the columns
+    # quality flags for fluxes
     qc_cols = ['qc_' + s for s in species_settings['species_list']]
-    header += qc_cols
 
-    # add number of valid observations of concentrations to the columns
+    # add number of valid observations of concentrations
     n_obs_cols = ['n_obs_' + s for s in species_settings['species_list']]
-    header += n_obs_cols
-
-    # biomet variable names
-    header = header + ['flow_lpm', 't_turnover', 't_lag_nom',
-                       't_lag_optmz', 'status_tlag', 'pres',
-                       'T_log', 'T_inst'] + \
-        T_atm_names + RH_atm_names + T_ch_names + ['T_dew_ch'] + \
-        T_leaf_names + T_soil_names + w_soil_names + PAR_names + PAR_ch_names
 
     # create output dataframe for concentrations, fluxes and biomet variables
     # no need to define `dtype` since it self-adapts to the assigned columns
@@ -1278,20 +1265,8 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf, df_timelag,
             diag_fname = output_dir + '/diag/' + \
                 'diag_' + run_date_str + '.csv'
 
-        header_diag = ['doy_utc', 'doy_local', 'ch_no', ]
-        for s in species_settings['species_list']:
-            header_diag += ['k_lin_' + s, 'b_lin_' + s, 'r_lin_' + s,
-                            'p_lin_' + s, 'rmse_lin_' + s, 'delta_lin_' + s]
-
-        for s in species_settings['species_list']:
-            header_diag += ['k_rlin_' + s, 'b_rlin_' + s,
-                            'k_lolim_rlin_' + s, 'k_uplim_rlin_' + s,
-                            'rmse_rlin_' + s, 'delta_rlin_' + s]
-
-        for s in species_settings['species_list']:
-            header_diag += ['p0_nonlin_' + s, 'p1_nonlin_' + s,
-                            'se_p0_nonlin_' + s, 'se_p1_nonlin_' + s,
-                            'rmse_nonlin_' + s, 'delta_nonlin_' + s]
+        header_diag = \
+            create_output_header('diag', species_settings['species_list'])
 
         # create output dataframe for fitting diagnostics
         # `dtype` not needed since it self-adapts to the assigned columns
