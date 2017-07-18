@@ -93,9 +93,9 @@ schedule_3:
     ch_end: [13., 13., 13., 13., 13., 13., 13., 13.]
     ch_atm_a: [13., 13., 13., 13., 13., 13., 13., 13.]
     optimize_timelag: [false, false, false, false, false, false, false, false]
-    timelag_nominal: [0., 0., 0., 0., 0., 0.]
-    timelag_upper_limit: [0., 0., 0., 0., 0., 0.]
-    timelag_lower_limit: [0., 0., 0., 0., 0., 0.]
+    timelag_nominal: [0., 0., 0., 0., 0., 0., 0., 0.]
+    timelag_upper_limit: [0., 0., 0., 0., 0., 0., 0., 0.]
+    timelag_lower_limit: [0., 0., 0., 0., 0., 0., 0., 0.]
     unit_of_time: 'min'
     smpl_cycle_len: 120
     n_cycle_per_day: 12
@@ -123,9 +123,9 @@ schedule_4:
     ch_end: [13., 13., 13., 13., 13., 13., 13., 13.]
     ch_atm_a: [13., 13., 13., 13., 13., 13., 13., 13.]
     optimize_timelag: [false, false, false, false, false, false, false, false]
-    timelag_nominal: [0., 0., 0., 0., 0., 0.]
-    timelag_upper_limit: [0., 0., 0., 0., 0., 0.]
-    timelag_lower_limit: [0., 0., 0., 0., 0., 0.]
+    timelag_nominal: [0., 0., 0., 0., 0., 0., 0., 0.]
+    timelag_upper_limit: [0., 0., 0., 0., 0., 0., 0., 0.]
+    timelag_lower_limit: [0., 0., 0., 0., 0., 0., 0., 0.]
     unit_of_time: 'min'
     smpl_cycle_len: 120
     n_cycle_per_day: 12
