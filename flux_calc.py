@@ -1129,7 +1129,7 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf, df_timelag,
         # set y labels
         for j in range(n_species):
             axes_daily[j, 0].set_ylabel(
-                species_settings['species_names'][j] +
+                '$F$' + species_settings['species_names'][j] +
                 ' (%s)' % flux_unit_names[j], fontsize=dailyplot_fontsize)
 
         # set common column titles and x-axes
