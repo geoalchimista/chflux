@@ -15,22 +15,23 @@ import pandas as pd
 
 # Physical constants
 # Do not modify unless you are in a different universe.
-# - 'p_std': 1 standard atmospheric pressure in Pascal
-# - 'R_gas': The universal gas constant in J mol^-1 K^-1
+# - 'p_std': standard atmospheric pressure [Pa]
+# - 'R_gas': the universal gas constant [J mol^-1 K^-1]
 # - 'T_0': zero Celsius in Kelvin
-# - 'air_conc_std': Air concentration (mol m^-3) at STP condition
+# - 'air_conc_std': air concentration at STP condition [mol m^-3]
 phys_const = {
     'T_0': sci_const.zero_Celsius,
     'p_std': sci_const.atm,
     'R_gas': sci_const.R,
-    'air_conc_std': sci_const.atm / (sci_const.R * sci_const.zero_Celsius), }
+    'air_conc_std': sci_const.atm / (sci_const.R * sci_const.zero_Celsius)}
 T_0 = phys_const['T_0']
 
 
 def chamber_lookup_table_func(doy, chamber_config):
     """
-    Return a chamber meta information look-up table.
+    (float) -> namedtuple
 
+    Return a chamber meta information look-up table.
     """
     # define returned data template
     ChamberLookupTableResult = namedtuple(
@@ -711,7 +712,10 @@ def dew_temp(e_sat, guess=25., kelvin=False, method='gg'):
     if kelvin:
         guess += T_0
 
-    T_dew = optimize.newton(__e_sat_residual, x0=guess,
-                            args=(e_sat, kelvin, method))
+    try:
+        T_dew = optimize.newton(__e_sat_residual, x0=guess,
+                                args=(e_sat, kelvin, method))
+    except RuntimeError:
+        T_dew = np.nan
 
     return T_dew
