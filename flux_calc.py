@@ -492,7 +492,8 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf, df_timelag,
         if (df_chlut.loc[loop_num, 'optimize_timelag'] and
                 run_options['timelag_method'] == 'optimized'):
             # temporary variables
-            timelag_nominal = df_chlut.loc[loop_num, 'timelag_nominal']
+            timelag_nominal = \
+                df_chlut.loc[loop_num, 'timelag_nominal'] * 86400.
             timelag_upper_limit = \
                 df_chlut.loc[loop_num, 'timelag_upper_limit'] * 86400.
             timelag_lower_limit = \
