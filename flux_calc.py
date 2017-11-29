@@ -1250,6 +1250,7 @@ def main():
     if config['run_options']['load_data_by_day']:
         # this branch loads data by daily chunks
         biomet_data_flist = glob.glob(config['data_dir']['biomet_data'])
+        biomet_data_flist = sorted(biomet_data_flist)
         biomet_query_list, biomet_date_series = extract_date_substr(
             biomet_data_flist,
             date_format=config['data_dir']['biomet_data.date_format'])
