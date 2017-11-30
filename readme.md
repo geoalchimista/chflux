@@ -4,7 +4,7 @@ Wu Sun (wu.sun@ucla.edu)
 
 0.1.13 - 2017-11-29
 
-License: [GPL v3](https://www.gnu.org/licenses/gpl-3.0-standalone.html)
+License: BSD-3-Clause
 
 A Python software for calculating trace gas fluxes between land ecosystems and the atmosphere from flow-through chamber measurements.
 
