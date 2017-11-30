@@ -7,11 +7,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## Unreleased - 2017-11-30
 
+Refactoring the main program in progress.
+
 @TODO:
 - Simplify function arguments using OOP.
 - Replace the Theil--Sen estimator with a more efficient robust linear regression method (perhaps MM-estimator?).
 - Use `pandas.Timestamp` as the standard timestamp passed between functions.
-
 
 ## 0.1.13 - 2017-11-29
 ### Changed
