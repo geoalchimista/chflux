@@ -2,17 +2,18 @@
 
 This file documents all notable changes to this project.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). Changes are described in the past tense and the effects of changes are described in the imperative mood.
+The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). Changes are described in the past tense and the effects of changes are described in the imperative mood.
 
 
-## Unreleased - 2017-11-29
+## Unreleased - 2017-11-30
 
 @TODO:
 - Simplify function arguments using OOP.
 - Replace the Theil--Sen estimator with a more efficient robust linear regression method (perhaps MM-estimator?).
 - Use `pandas.Timestamp` as the standard timestamp passed between functions.
 
+
+## 0.1.13 - 2017-11-29
 ### Changed
 - Standardized the style of the `changelog.md` file.
 
