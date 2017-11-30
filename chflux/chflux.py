@@ -1,22 +1,24 @@
-# PyChamberFlux main script
-# A package for calculating trace gas fluxes from chamber measurements
-#
-# Copyright (c) 2017 Wu Sun <wu.sun@ucla.edu>
-# Created: 2017-11-30 18:12:33 UTC
-# Last Modified: 2017-11-30 21:12:11 UTC
+"""
+PyChamberFlux main script
 
+A package for calculating trace gas fluxes from chamber measurements
+"""
+import copy
 import argparse
 import datetime
 import timeit
 import importlib
 import pkg_resources
 
+from chflux.default_config import default_config
+from chflux.io.readers import read_yaml, update_dict
 
-class ChfluxProcess(object):
+
+class ChFluxProcess(object):
     """Start a process to run the PyChamberFlux calculations."""
     description = 'PyChamberFlux: Main program for flux calculation.'
     start_timestamp = None
-    config = None
+    config = copy.deepcopy(default_config)
 
     def __init__(self, args=None):
         """Initialize a PyChamberFlux process."""
@@ -49,6 +51,8 @@ class ChfluxProcess(object):
         check_pkgreqs()
 
         self.set_config()
+        # @TODO: load chamber descriptions with read_yaml()
+        # @TODO: add sanity check for self.config, if not pass, raise Error
         self.make_savedirs()
         self.save_config()
         self.calc()
@@ -56,11 +60,14 @@ class ChfluxProcess(object):
         t_end = timeit.default_timer()
         print('Done. Finished in %.2f seconds.' % (t_end - t_start))
 
-    def set_config(self):
+    def set_config(self, echo=True):
         """Set the configuration for the run."""
-        # self.config = load_config(self.args)
-        # --> sanity check for self.config, if not pass, raise Error
-        pass
+        if (isinstance(self.args.config, str) or
+                isinstance(self.args.config, bytes)):
+            if echo:
+                print("Config file is set as '%s'" % self.args.config)
+            user_config = read_yaml(self.args.config)
+            self.config = update_dict(self.config, user_config)
 
     def save_config(self):
         pass
@@ -91,7 +98,7 @@ def check_pkgreqs(echo=True):
 
 
 def run_instance():
-    process = ChfluxProcess()
+    process = ChFluxProcess()
     process.run()
 
 

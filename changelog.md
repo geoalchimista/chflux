@@ -7,7 +7,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) a
 
 ## Unreleased - 2017-11-30
 
-Refactoring the main program in progress.
+Refactoring the main program in progress:
+- `chflux/chflux.py`
+- `chflux/io/parsers.py`
+- `chflux/io/readers.py`
 
 @TODO:
 - Simplify function arguments using OOP.
