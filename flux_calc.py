@@ -984,8 +984,8 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf, df_timelag,
                 axes[-1].set_xlabel('Time (s)')
 
                 # figure legend
-                fig.legend(handles=axes[0].lines[-3:],
-                           labels=['linear', 'robust linear', 'nonlinear'],
+                fig.legend(axes[0].lines[-3:],
+                           ['linear', 'robust linear', 'nonlinear'],
                            loc='upper right', ncol=3, fontsize=12,
                            handlelength=3,
                            frameon=False, framealpha=0.5)
@@ -1109,8 +1109,8 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf, df_timelag,
                 axes_daily[j, k].errorbar(
                     hr_local[arr_ch_label == lb_ch],
                     df_flux.loc[arr_ch_label == lb_ch, 'f%s_rlin' % spc],
-                    #flux_rlin[arr_ch_label == lb_ch, j],
-                    #yerr=se_flux_rlin[arr_ch_label == lb_ch, spc_id] * 2.,
+                    # flux_rlin[arr_ch_label == lb_ch, j],
+                    # yerr=se_flux_rlin[arr_ch_label == lb_ch, spc_id] * 2.,
                     yerr=df_flux.loc[arr_ch_label == lb_ch,
                                      'se_f%s_rlin' % spc] * 2.,
                     c='#1f77b4', fmt='d', markeredgecolor='None', markersize=5,
@@ -1148,8 +1148,8 @@ def flux_calc(df_biomet, df_conc, df_flow, df_leaf, df_timelag,
         # figure legend
         fig_daily.suptitle(run_date_str, x=0.01, horizontalalignment='left',
                            fontsize=dailyplot_fontsize)
-        fig_daily.legend(handles=axes_daily[0, 0].lines[-3:],
-                         labels=['linear', 'robust linear', 'nonlinear'],
+        fig_daily.legend(axes_daily[0, 0].lines[-3:],
+                         ['linear', 'robust linear', 'nonlinear'],
                          loc='upper right', ncol=3, handlelength=3,
                          fontsize=dailyplot_fontsize,
                          frameon=False, framealpha=0.5)

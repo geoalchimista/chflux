@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). Changes are described in the past tense and the effects of changes are described in the imperative mood.
 
 
-## Unreleased
+## Unreleased - 2017-11-29
 
 @TODO:
 - Simplify function arguments using OOP.
@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 - Standardized the style of the `changelog.md` file.
+
+### Fixed
+- A bug concerning the figure legend. Starting from `matplotlib 2.1.0`, it seems that `handles` and `labels` must be supplied to `legend()` as arguments not keywords. Were they given as keywords, `legend()` would have default values for them, and this causes a `TypeError: __init__() got multiple values for argument 'handles'`.
 
 
 ## 0.1.12 - 2017-04-24
