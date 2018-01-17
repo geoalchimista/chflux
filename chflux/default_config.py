@@ -1,9 +1,5 @@
-"""
-PyChamberFlux default settings
+"""PyChamberFlux default settings"""
 
-(c) 2016-2017 Wu Sun <wu.sun@ucla.edu>
-
-"""
 default_config = {
     'run_options': {  # Running options
         'chamber_config_filepath': './chamber.yaml',

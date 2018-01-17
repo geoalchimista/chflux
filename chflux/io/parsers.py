@@ -18,3 +18,7 @@ timestamp_parsers = {
     # down to nanosecond
     'ymdhmsf': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M %S %f')
 }
+
+
+def parse_timestamp():
+    pass

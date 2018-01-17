@@ -5,14 +5,20 @@ This file documents all notable changes to this project.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). Changes are described in the past tense and the effects of changes are described in the imperative mood.
 
 
-## Unreleased - 2017-11-30
+## Unreleased - 2018-01-16
 
 Refactoring the main program in progress:
 - `chflux/chflux.py`
 - `chflux/io/parsers.py`
 - `chflux/io/readers.py`
+- @TODO: `iotools.load_tabulated_data` -> [X] `io.readers.read_tabulated_data`, [ ] `io.parsers.parse_timestamp`
+- @TODO: rename `iotools` to `_iotools` for deprecation.
+- @TODO: test `parsers` and `readers` in the new `chflux` main program
 
 @TODO:
+- Use double spaces at sentence ending in comments and docstrings; for better readability in a monospace typeface.
+  + [X] `io/readers.py`
+  + [ ] `io/parsers.py`
 - Simplify function arguments using OOP.
 - Replace the Theil--Sen estimator with a more efficient robust linear regression method (perhaps MM-estimator?).
 - Use `pandas.Timestamp` as the standard timestamp passed between functions.
