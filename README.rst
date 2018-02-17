@@ -1,4 +1,5 @@
-# PyChamberFlux
+PyChamberFlux
+=============
 
 Wu Sun (wu.sun@ucla.edu)
 
@@ -10,11 +11,13 @@ A Python software for calculating trace gas fluxes between land ecosystems and t
 
 In active development. Documentation will come later.
 
-## Updates
 
+Updates
+-------
 See `changelog.md`.
 
-## Dependencies
 
+Dependencies
+------------
 - Python 3.6
 - Python packages: `numpy`, `scipy`, `pandas`, `matplotlib`, PyYAML (`yaml`)
