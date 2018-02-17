@@ -10,7 +10,7 @@ Physical constants.
 ====================  =========================================================
 ``T_0``               zero Celsius in Kelvin
 ``p_std``             standard atmospheric pressure [Pa]
-``R``                 molar gas constant [J mol\ :sup:`-1`\ K\ :sup:`-1`\ ]
+``R_gas``             molar gas constant [J mol\ :sup:`-1`\  K\ :sup:`-1`\ ]
 ``air_conc_stp``      air concentration at STP condition [mol m\ :sup:`-3`\ ]
 ====================  =========================================================
 """
