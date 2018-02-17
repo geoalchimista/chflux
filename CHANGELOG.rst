@@ -3,8 +3,8 @@ Changelog
 =========
 This file documents all notable changes to the project PyChamberFlux.
 
-The format of this changelog is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
-This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+The format of this changelog is based on `Keep a Changelog <http://keepachangelog.com/en/1.0.0/>`_.
+This project adheres to the `Semantic Versioning <http://semver.org/spec/v2.0.0.html>`_.
 Changes are described in the past tense and the effects of changes are
 described in the imperative mood.
 
