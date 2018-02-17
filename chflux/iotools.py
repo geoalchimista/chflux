@@ -71,6 +71,7 @@ def load_tabulated_data(data_name, config, query=None):
                            "'biomet', 'conc', 'flow', 'leaf', 'timelag'.")
     # search file list
     data_flist = glob.glob(config['data_dir'][data_name + '_data'])
+    data_flist = sorted(data_flist)  # HOTFIX: must sort by name
     # get the data settings
     data_settings = config[data_name + '_data_settings']
 

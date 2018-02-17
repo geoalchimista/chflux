@@ -5,7 +5,7 @@ This file documents all notable changes to this project.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). Changes are described in the past tense and the effects of changes are described in the imperative mood.
 
 
-## Unreleased - 2018-01-16
+## Unreleased - 2018-02-17
 
 Refactoring the main program in progress:
 - `chflux/chflux.py`
@@ -16,12 +16,19 @@ Refactoring the main program in progress:
 - @TODO: test `parsers` and `readers` in the new `chflux` main program
 
 @TODO:
+- `DataFrame.set_value()` is deprecated; use `.at[]` instead.
 - Use double spaces at sentence ending in comments and docstrings; for better readability in a monospace typeface.
   + [X] `io/readers.py`
   + [ ] `io/parsers.py`
 - Simplify function arguments using OOP.
 - Replace the Theil--Sen estimator with a more efficient robust linear regression method (perhaps MM-estimator?).
 - Use `pandas.Timestamp` as the standard timestamp passed between functions.
+
+
+## 0.1.13.a - 2018-02-17
+### Fixed
+- The file list returned by `glob.glob()` is not ordered by name. It has been fixed with `sorted()`.
+
 
 ## 0.1.13 - 2017-11-29
 ### Changed
