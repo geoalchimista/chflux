@@ -6,7 +6,8 @@ import glob
 import yaml
 import pandas as pd
 
-from chflux.io.parsers import timestamp_parsers
+# from chflux.io.parsers import timestamp_parsers
+from chflux.tools import timestamp_parsers
 
 
 def read_yaml(filepath):
