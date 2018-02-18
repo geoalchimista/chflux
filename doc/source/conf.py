@@ -56,7 +56,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'PyChamberFlux'
-copyright = '2018, Wu Sun'
+copyright = '2016--2018, Wu Sun'
 author = 'Wu Sun'
 
 # The version info for the project you're documenting, acts as replacement for

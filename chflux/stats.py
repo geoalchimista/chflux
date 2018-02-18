@@ -82,7 +82,7 @@ def resist_mean(x, inlier_range=1.5):
         .. math::
 
             [Q_1 - \\text{inlier_range} \cdot (Q_3 - Q_1), \\
-             Q_3 - \\text{inlier_range} \cdot (Q_3 - Q_1)]
+             Q_3 + \\text{inlier_range} \cdot (Q_3 - Q_1)]
 
         Default value is 1.5.
 
@@ -128,7 +128,7 @@ def resist_std(x, inlier_range=1.5):
         .. math::
 
             [Q_1 - \\text{inlier_range} \cdot (Q_3 - Q_1), \\
-             Q_3 - \\text{inlier_range} \cdot (Q_3 - Q_1)]
+             Q_3 + \\text{inlier_range} \cdot (Q_3 - Q_1)]
 
         Default value is 1.5.
 
