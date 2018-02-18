@@ -26,6 +26,7 @@ from chflux.tools import extract_date_substr
 from chflux.iotools import *
 from chflux.helpers import *
 
+from chflux.curvefit import *
 from chflux.physchem import *
 from chflux.stats import *
 

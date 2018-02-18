@@ -26,6 +26,7 @@ API reference
    :maxdepth: 2
 
    const
+   curvefit
    physchem
    stats
    tools

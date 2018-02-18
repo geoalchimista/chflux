@@ -1,0 +1,2 @@
+.. automodule:: chflux.curvefit
+   :members:
