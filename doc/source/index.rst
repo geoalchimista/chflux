@@ -28,3 +28,4 @@ API reference
    const
    physchem
    stats
+   tools

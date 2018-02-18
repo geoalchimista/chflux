@@ -12,7 +12,7 @@ List of functions
 .. autosummary::
    :toctree: generated/
 
-   e_sat     -- Saturation vapor pressure.
+   e_sat     -- Saturation vapor pressure of water.
    dew_temp  -- Dew temperature of air.
 """
 import numpy as _np
