@@ -27,3 +27,4 @@ API reference
 
    const
    physchem
+   stats

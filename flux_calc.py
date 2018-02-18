@@ -26,6 +26,12 @@ from chflux.datetools import extract_date_substr
 from chflux.iotools import *
 from chflux.helpers import *
 
+from chflux.physchem import *
+from chflux.stats import *
+
+p_sat_h2o = e_sat
+IQR_func = interquartile
+
 
 # Command-line argument parser
 # =============================================================================
