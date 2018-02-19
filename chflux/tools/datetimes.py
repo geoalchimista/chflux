@@ -3,8 +3,8 @@ import copy
 import os
 import re
 
-import numpy as _np
-import pandas as _pd
+import numpy as np
+import pandas as pd
 
 
 __all__ = ['timestamp_parsers', 'extract_date_substr', 'parse_day_number',
@@ -16,13 +16,13 @@ __all__ = ['timestamp_parsers', 'extract_date_substr', 'parse_day_number',
 # Does not support month-first (American) or day-first (European) format.
 timestamp_parsers = {
     # date only
-    'ymd': lambda s: _pd.to_datetime(s, format='%Y %m %d'),
+    'ymd': lambda s: pd.to_datetime(s, format='%Y %m %d'),
     # down to minute
-    'ymdhm': lambda s: _pd.to_datetime(s, format='%Y %m %d %H %M'),
+    'ymdhm': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M'),
     # down to second
-    'ymdhms': lambda s: _pd.to_datetime(s, format='%Y %m %d %H %M %S'),
+    'ymdhms': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M %S'),
     # down to nanosecond
-    'ymdhmsf': lambda s: _pd.to_datetime(s, format='%Y %m %d %H %M %S %f'),
+    'ymdhmsf': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M %S %f'),
 }
 # NOTE: this module variable cannot be documented by sphinx (1.6.3); check
 # later versions
@@ -65,8 +65,8 @@ def extract_date_substr(flist, date_format='%Y%m%d'):
 
     date_substr_list = [re.search(re_date_pattern, os.path.basename(f)).group()
                         for f in flist]
-    ts_series = _pd.to_datetime(date_substr_list, format=date_format,
-                                errors='coerce')
+    ts_series = pd.to_datetime(date_substr_list, format=date_format,
+                               errors='coerce')
     return date_substr_list, ts_series
 
 
@@ -111,14 +111,14 @@ def parse_day_number(doy, year):
     2   2019-04-01
     dtype: datetime64[ns]
     """
-    if _np.isscalar(year):
-        year_start = _pd.Timestamp(str(year))
+    if np.isscalar(year):
+        year_start = pd.Timestamp(str(year))
     else:
-        year_start = _pd.to_datetime({'year': year, 'month': 1, 'day': 1})
-    ts = year_start + _pd.to_timedelta(doy, unit='D', errors='coerce')
-    if isinstance(ts, _pd.DatetimeIndex):
+        year_start = pd.to_datetime({'year': year, 'month': 1, 'day': 1})
+    ts = year_start + pd.to_timedelta(doy, unit='D', errors='coerce')
+    if isinstance(ts, pd.DatetimeIndex):
         # for array inputs, ensure that a series of Timestamp is returned
-        ts = _pd.Series(ts.values)
+        ts = pd.Series(ts.values)
     return ts
 
 
@@ -156,9 +156,9 @@ def parse_unix_time(sec, epoch_year=None):
     """
     if epoch_year is None:
         epoch_year = '1970'
-    ts = _pd.Timestamp(str(epoch_year)) + \
-        _pd.to_timedelta(sec, unit='s', errors='coerce')
-    if isinstance(ts, _pd.DatetimeIndex):
+    ts = pd.Timestamp(str(epoch_year)) + \
+        pd.to_timedelta(sec, unit='s', errors='coerce')
+    if isinstance(ts, pd.DatetimeIndex):
         # for array inputs, ensure that a series of Timestamp is returned
-        ts = _pd.Series(ts.values)
+        ts = pd.Series(ts.values)
     return ts

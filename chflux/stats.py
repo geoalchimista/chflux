@@ -14,7 +14,7 @@ This module contains several functions for basic statistical calculations.
    resist_mean    -- Outlier-resistant mean of the sample.
    resist_std     -- Outlier-resistant standard deviation of the sample.
 """
-import numpy as _np
+import numpy as np
 
 
 __all__ = ['interquartile', 'resist_mean', 'resist_std']
@@ -53,15 +53,15 @@ def interquartile(x, axis=None, retqrt=False):
     >>> interquartile(range(20), retqrt=True)
     (9.5, 4.75, 14.25)
     """
-    if _np.sum(_np.isfinite(x)) > 0:
-        q1, q3 = _np.nanpercentile(x, [25., 75.], axis=axis)
+    if np.sum(np.isfinite(x)) > 0:
+        q1, q3 = np.nanpercentile(x, [25., 75.], axis=axis)
         iqr = q3 - q1
         if retqrt:
             return iqr, q1, q3
         else:
             return q3 - q1
     else:
-        return _np.nan, _np.nan, _np.nan
+        return np.nan, np.nan, np.nan
 
 
 def resist_mean(x, inlier_range=1.5):
@@ -98,14 +98,14 @@ def resist_mean(x, inlier_range=1.5):
     ----------
     .. [T77] John W. Tukey (1977). Exploratory Data Analysis. Addison-Wesley.
     """
-    x = _np.array(x)
-    if _np.sum(_np.isfinite(x)) <= 1:
-        return _np.nanmean(x)
+    x = np.array(x)
+    if np.sum(np.isfinite(x)) <= 1:
+        return np.nanmean(x)
     else:
         iqr, q1, q3 = interquartile(x, retqrt=True)
         inlier_uplim = q3 + inlier_range * iqr
         inlier_lolim = q1 - inlier_range * iqr
-        rmean = _np.nanmean(x[(x >= inlier_lolim) & (x <= inlier_uplim)])
+        rmean = np.nanmean(x[(x >= inlier_lolim) & (x <= inlier_uplim)])
         return rmean
 
 
@@ -148,13 +148,13 @@ def resist_std(x, inlier_range=1.5):
     ----------
     .. [T77] John W. Tukey (1977). Exploratory Data Analysis. Addison-Wesley.
     """
-    x = _np.array(x)
-    if _np.sum(_np.isfinite(x)) <= 1:
-        return(_np.nanstd(x, ddof=1))
+    x = np.array(x)
+    if np.sum(np.isfinite(x)) <= 1:
+        return(np.nanstd(x, ddof=1))
     else:
         iqr, q1, q3 = interquartile(x, retqrt=True)
         inlier_uplim = q3 + inlier_range * iqr
         inlier_lolim = q1 - inlier_range * iqr
-        rstd = _np.nanstd(x[(x >= inlier_lolim) & (x <= inlier_uplim)],
-                          ddof=1)
+        rstd = np.nanstd(x[(x >= inlier_lolim) & (x <= inlier_uplim)],
+                         ddof=1)
         return rstd

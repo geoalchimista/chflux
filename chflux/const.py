@@ -14,20 +14,20 @@ Physical constants.
 ``air_conc_stp``      air concentration at STP condition [mol m\ :sup:`-3`\ ]
 ====================  =========================================================
 """
-from scipy.constants import constants as _constants
+from scipy.constants import constants
 
 
 __all__ = ['T_0', 'p_std', 'R_gas', 'air_conc_stp']
 
 
 # zero Celsius in Kelvin
-T_0 = _constants.zero_Celsius
+T_0 = constants.zero_Celsius
 
 # standard atmospheric pressure [Pa]
-p_std = _constants.atm
+p_std = constants.atm
 
 # molar gas constant [J mol^-1 K^-1]
-R_gas = _constants.R
+R_gas = constants.R
 
 # air concentration at STP condition [mol m^-3]
-air_conc_stp = _constants.atm / (_constants.R * _constants.zero_Celsius)
+air_conc_stp = constants.atm / (constants.R * constants.zero_Celsius)

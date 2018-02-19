@@ -13,8 +13,8 @@ This module contains several functions for basic physics and chemistry.
    e_sat     -- Saturation vapor pressure of water.
    dew_temp  -- Dew temperature of air.
 """
-import numpy as _np
-from scipy import optimize as _optimize
+import numpy as np
+from scipy import optimize as optimize
 
 from chflux import const
 
@@ -85,44 +85,44 @@ def e_sat(temp, ice=False, kelvin=False, method='gg'):
     >>> print(e_sat(258.15, kelvin=True, ice=True, method='cimo'))
     165.287132017
     """
-    T_k = _np.array(temp, dtype='d') + (not kelvin) * const.T_0
+    T_k = np.array(temp, dtype='d') + (not kelvin) * const.T_0
     # force temperature to be in Kelvin
 
-    if (_np.sum(T_k > 273.16) and ice):
+    if (np.sum(T_k > 273.16) and ice):
         # The triple point of water is 273.16 K
         raise ValueError('Temperature error; no ice exists.')
 
     if not ice:
         if method == 'buck':
             T_c = T_k - const.T_0  # temperature in Celsius degree
-            e_sat = 6.1121 * _np.exp((18.678 - T_c / 234.5) *
-                                     T_c / (257.14 + T_c)) * 100.
+            e_sat = 6.1121 * np.exp((18.678 - T_c / 234.5) *
+                                    T_c / (257.14 + T_c)) * 100.
         elif method == 'cimo':
             T_c = T_k - const.T_0  # temperature in Celsius degree
-            e_sat = 6.112 * _np.exp(17.62 * T_c / (243.12 + T_c)) * 100.
+            e_sat = 6.112 * np.exp(17.62 * T_c / (243.12 + T_c)) * 100.
         else:
             # Goff-Gratch equation by default
             u_T = 373.16 / T_k
             v_T = T_k / 373.16
-            e_sat = (- 7.90298 * (u_T - 1.) + 5.02808 * _np.log10(u_T) -
+            e_sat = (- 7.90298 * (u_T - 1.) + 5.02808 * np.log10(u_T) -
                      1.3816e-7 * (10. ** (11.344 * (1. - v_T)) - 1.) +
                      8.1328e-3 * (10. ** (- 3.49149 * (u_T - 1.)) - 1.) +
-                     _np.log10(1013.246))
+                     np.log10(1013.246))
             e_sat = 10. ** e_sat * 100.
     else:
         if method == 'buck':
             T_c = T_k - const.T_0  # temperature in Celsius degree
-            e_sat = 6.1115 * _np.exp((23.036 - T_c / 333.7) *
-                                     T_c / (279.82 + T_c)) * 100.
+            e_sat = 6.1115 * np.exp((23.036 - T_c / 333.7) *
+                                    T_c / (279.82 + T_c)) * 100.
         elif method == 'cimo':
             T_c = T_k - const.T_0  # temperature in Celsius degree
-            e_sat = 6.112 * _np.exp(22.46 * T_c / (272.62 + T_c)) * 100.
+            e_sat = 6.112 * np.exp(22.46 * T_c / (272.62 + T_c)) * 100.
         else:
             # Goff-Gratch equation by default
             u_T = 273.16 / T_k
             v_T = T_k / 273.16
-            e_sat = (- 9.09718 * (u_T - 1.) - 3.56654 * _np.log10(u_T) +
-                     0.876793 * (1. - v_T) + _np.log10(6.1071))
+            e_sat = (- 9.09718 * (u_T - 1.) - 3.56654 * np.log10(u_T) +
+                     0.876793 * (1. - v_T) + np.log10(6.1071))
             e_sat = 10. ** e_sat * 100.
 
     return e_sat
@@ -170,9 +170,9 @@ def dew_temp(e_air, guess=25., kelvin=False, method='gg'):
         guess += const.T_0
 
     try:
-        T_dew = _optimize.newton(__e_sat_residual, x0=guess,
-                                 args=(e_air, kelvin, method))
+        T_dew = optimize.newton(__e_sat_residual, x0=guess,
+                                args=(e_air, kelvin, method))
     except RuntimeError:
-        T_dew = _np.nan
+        T_dew = np.nan
 
     return T_dew
