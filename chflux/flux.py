@@ -1,20 +1,24 @@
 """
-================================================
-Curve-fitting functions (:mod:`chflux.curvefit`)
-================================================
+=====================================================
+Functions for calculating fluxes (:mod:`chflux.flux`)
+=====================================================
 
-.. module:: chflux.curvefit
+.. module:: chflux.flux
 
-This module contains functions used for the curve-fitting of concentrations.
+This module contains functions used for calculating fluxes.
 
-List of functions
-=================
+Curve-fitting functions
+=======================
 .. autosummary::
    :toctree: generated/
 
    conc_func
    jacobian_conc_func
    resid_conc_func
+
+
+Flux calculators
+================
 """
 import numpy as _np
 

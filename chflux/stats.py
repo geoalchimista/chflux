@@ -7,8 +7,6 @@ Basic statistical functions (:mod:`chflux.stats`)
 
 This module contains several functions for basic statistical calculations.
 
-List of functions
-=================
 .. autosummary::
    :toctree: generated/
 

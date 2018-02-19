@@ -7,8 +7,6 @@ Basic physics and chemistry (:mod:`chflux.physchem`)
 
 This module contains several functions for basic physics and chemistry.
 
-List of functions
-=================
 .. autosummary::
    :toctree: generated/
 

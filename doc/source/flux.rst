@@ -1,0 +1,2 @@
+.. automodule:: chflux.flux
+   :members:

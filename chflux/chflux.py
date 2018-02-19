@@ -79,6 +79,14 @@ class ChFluxProcess(object):
         # a wrapper around more complicated functions in `flux_calc.py`
         pass
 
+    def save_data(self):
+        """Save processed data to CSV files."""
+        # if no data attached to this 'run'; raise warning and pass
+        pass
+
+    def filter_warnings(self):
+        pass
+
 
 def check_pkgreqs(echo=True):
     """Check package requirements."""
