@@ -24,8 +24,10 @@ Refactoring the main program in progress:
 
 * ``DataFrame.set_value()`` is deprecated; use ``.at[]`` instead.
 * Use double spaces at sentence ending in comments and docstrings; for better readability in a monospace typeface.
-    - [X] ``io/readers.py``
-    - [ ] ``io/parsers.py``
+
+  - [X] ``io/readers.py``
+  - [ ] ``io/parsers.py``
+
 * Simplify function arguments using OOP.
 * Replace the Theil--Sen estimator with a more efficient robust linear
   regression method (perhaps an MM-estimator?).
@@ -34,14 +36,17 @@ Refactoring the main program in progress:
 Added
 -----
 * Physical chemistry module (``chflux.physchem``)
+
   - Added ``convert_flowrate`` function to convert flow rate from STP to
     ambient conditions.
 
 Changed
 -------
 * Physical chemistry module (``chflux.physchem``)
+
   - Simplified the saturation vapor pressure (``e_sat``) and the dew
     temperature (``dew_temp``) functions.
+
 * Documentation files reformatted to reStructuredText.
 
 
@@ -242,9 +247,11 @@ Changed
 -------
 * Refined the saturation vapor pressure and the dew temperature functions.
 * Refined summary statistics functions in ``common_func.py``:
-    - ``resist_mean()``: outlier-resistant mean
-    - ``resist_std()``: outlier-resistant standard deviation
-    - ``IQR_func()``: interquartile range
+
+  - ``resist_mean()``: outlier-resistant mean
+  - ``resist_std()``: outlier-resistant standard deviation
+  - ``IQR_func()``: interquartile range
+
 * List of physical constants moved from ``config.yaml`` to ``common_func.py``.
 
 
