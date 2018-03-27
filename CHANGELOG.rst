@@ -9,7 +9,7 @@ Changes are described in the past tense and the effects of changes are
 described in the imperative mood.
 
 
-Unreleased - 2018-02-17
+Unreleased - 2018-03-27
 =======================
 Refactoring the main program in progress:
 
@@ -31,8 +31,17 @@ Refactoring the main program in progress:
   regression method (perhaps an MM-estimator?).
 * Use ``pandas.Timestamp`` as the standard timestamp passed between functions.
 
+Added
+-----
+* Physical chemistry module (``chflux.physchem``)
+  - Added ``convert_flowrate`` function to convert flow rate from STP to
+    ambient conditions.
+
 Changed
 -------
+* Physical chemistry module (``chflux.physchem``)
+  - Simplified the saturation vapor pressure (``e_sat``) and the dew
+    temperature (``dew_temp``) functions.
 * Documentation files reformatted to reStructuredText.
 
 
