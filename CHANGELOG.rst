@@ -47,6 +47,7 @@ Changed
   - Simplified the saturation vapor pressure (``e_sat``) and the dew
     temperature (``dew_temp``) functions.
 
+* Statistics module (``chflux.stats``): Refactored.
 * Documentation files reformatted to reStructuredText.
 
 
