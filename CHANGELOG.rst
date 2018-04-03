@@ -9,7 +9,7 @@ Changes are described in the past tense and the effects of changes are
 described in the imperative mood.
 
 
-Unreleased - 2018-03-27
+Unreleased - 2018-04-03
 =======================
 Refactoring the main program in progress:
 
@@ -35,6 +35,7 @@ Refactoring the main program in progress:
 
 Added
 -----
+* Main module (``chflux.chflux``)
 * Physical chemistry module (``chflux.physchem``)
 
   - Added ``convert_flowrate`` function to convert flow rate from STP to
