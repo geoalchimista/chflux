@@ -6,9 +6,10 @@ A package for calculating trace gas fluxes from chamber measurements
 import argparse
 import copy
 import datetime
+import os
 
 from chflux.default_config import default_config
-from chflux.io.readers import read_yaml, update_dict
+from chflux.io import *
 from chflux.tools import check_pkgreqs
 
 
@@ -22,7 +23,6 @@ class ChFluxProcess(object):
 
     def __init__(self, args=None):
         """Initialize a PyChamberFlux process."""
-
         self._init_argparser()
         self._add_arguments()
         self._args = self._argparser.parse_args(args)
@@ -82,13 +82,27 @@ class ChFluxProcess(object):
         """Update the configuration of the run using an updater dict."""
         self._config = update_dict(self._config, updater)
 
-    def _save_config(self, f):
+    def _save_config(self, dir=None):
         pass
+        # output_dir = self._config['data_dir']['output_dir']
+        # f_usercfg = output_dir + '/config/user_config.yaml'
+        # f_chcfg = output_dir + '/config/chamber.yaml'
+        # with open(usercfg_filename, 'w') as f:
+        #     yaml.dump(config, f, default_flow_style=False,
+        #               allow_unicode=True, indent=4)
+        #     print('Configuration file saved to %s' % usercfg_filename)
+        # with open(run_options['chamber_config_filepath'], 'r') as fsrc, \
+        #         open(chcfg_filename, 'w') as fdest:
+        #     fdest.write(fsrc.read())
+        #     print('Chamber setting file saved to %s' % chcfg_filename)
 
     def _check_config(self):
-        pass
+        """Sanity-check the configuration."""
+        if len(self._config['species.list']) < 1:
+            raise ConfigException('No gas species is defined in the config.')
+        # @TODO: more rules need to be added
 
-    # clients are allowed to access config, update it by keys, save it to files
+    # clients are allowed to access the config, update it by keys, save it,
     # and do a sanity check on it
     config = property(_get_config, doc="Configuration of the run")
     update_config = _update_config
@@ -106,6 +120,28 @@ class ChFluxProcess(object):
     chamber_schedule = property(_get_chamber_schedule,
                                 doc="Chamber schedule")
 
+    # == methods for I/O ==
+    def _make_output_dirs(self):
+        output_dir = self._config['run.output.path']
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        if (self._config['run.save_curvefit_diagnostics'] and
+                not os.path.exists(output_dir + '/diag')):
+            os.makedirs(output_dir + '/diag')
+        if (self._config['run.save_config'] and
+                not os.path.exists(output_dir + '/config')):
+            os.makedirs(output_dir + '/config')
+
+    def _save_data(self):
+        """Save processed data to CSV files."""
+        # if no data attached to this 'run'; raise warning and pass
+        pass
+
+    save_data = _save_data
+
+    def filter_warnings(self):
+        pass
+
     def run(self):
         """Run the process."""
         # Note: this function is a wrapper around a series actions on the data.
@@ -117,29 +153,20 @@ class ChFluxProcess(object):
               datetime.datetime.strftime(self.time_start, '%Y-%m-%d %X UTC'))
         self._check_pkgreqs()  # check versions of required python packages
 
-        self._set_config()
+        self._set_config()  # read config file and set config property
+        self._check_config()  # sanity check
+
         # @TODO: load chamber descriptions with read_yaml()
         # @TODO: add sanity check for self._config, if not pass, raise Error
-        self.make_savedirs()
+        self._make_output_dirs()
         self._save_config('filepath to save')
         self.calc()
 
         self._set_time_end()  # record the end time of the current session
         print('Done. Finished in %.2f seconds.' % self.time_lapsed)
 
-    def make_savedirs(self):
-        pass
-
     def calc(self):
         # a wrapper around more complicated functions in `flux_calc.py`
-        pass
-
-    def save_data(self):
-        """Save processed data to CSV files."""
-        # if no data attached to this 'run'; raise warning and pass
-        pass
-
-    def filter_warnings(self):
         pass
 
 
@@ -149,10 +176,10 @@ def run_instance():
 
     # @TODO: move to a tester script
     # TEST if the user configuration file is set properly
-    print(process.config['biomet_data_settings']['usecols'])
+    print(process.config['biomet.csv.usecols'])
     print('try update the config')
-    process.update_config({'biomet_data_settings': {'usecols': [0, 2]}})
-    print(process.config['biomet_data_settings']['usecols'])
+    process.update_config({'biomet.csv.usecols': [0, 2]})
+    print(process.config['biomet.csv.usecols'])
 
 
 if __name__ == '__main__':

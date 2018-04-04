@@ -42,6 +42,7 @@ Added
 
 Changed
 -------
+* Configuration file reformatted.
 * Physical chemistry module (``chflux.physchem``)
 
   - Simplified the saturation vapor pressure (``e_sat``) and the dew

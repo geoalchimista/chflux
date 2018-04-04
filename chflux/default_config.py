@@ -1,552 +1,362 @@
 """PyChamberFlux default settings"""
 
 default_config = {
-    'run_options': {  # Running options
-        'chamber_config_filepath': './chamber.yaml',
-        # Configuration file that describes chamber settings.
+    # == General options for the run ===
 
-        'curve_fitting_method': 'all',
-        # NOT IMPLEMENTED YET
-        # Curve fitting method: 'nonlinear', 'linear', 'robust_linear', 'all'.
+    # Configuration file that describes chamber schedules.
+    'run.chamber_schedule': './chamber.yaml',
 
-        'load_data_by_day': False,
-        # Load and process raw data by daily chunks if `True`. Default is
-        # `False` to load all data at once and then process daily chunks.
-        # Note: If the total size of the raw data files are larger than
-        # the size of computer memory, this should be enabled. Otherwise it
-        # may take for ever in reading the data.
+    # If True, perform realtime processing of the incoming data. Data files to
+    # be processed will be limited to a recent period, with the number of days
+    # to be traced back determined by 'run.latency'.
+    'run.realtime': False,
 
-        'process_recent_period': False,
-        # If True, process only recent few days' data. This will be useful for
-        # online daily processing. If False, process all available data.
+    # Number of days to be traced back from the current day when performing
+    # realtime processing. Must be a positive integer. Will not have effect if
+    # 'run.realtime' is set False.
+    'run.latency': 1,
 
-        'traceback_in_days': 1,
-        # Number of days to trace back when processing recent periods
-        # only used when 'process_recent_period' is True; must be int type
+    # Output directory for the processed flux data.
+    'run.output.path': './output/',
 
-        'timelag_method': 'none',
-        # NOT FULLY IMPLEMENTED YET
-        # Timelag detection methods: 'none', 'optimized', 'prescribed'
-        # For the 'optimized' method, timelag will be optimized based on
-        # a nonlinear fitting of the concentration changes.
-        # For the 'prescribed' method, fixed timelag values are assigned from
-        # input data table (must enable 'use_timelag_data').
+    # A prefix string to prepend filenames of output data.
+    'run.output.prefix': '',
 
-        'timelag_optimization_species': 'co2',
-        # The gas species used for timelag optimization. 'co2' is recommended.
-        # This option is only effective for timelag method 'optimized'.
-        # If the designated species is not found, default to the first one in
-        # the species list.
+    # If True, save curve fitting diagnostics to files in subfolder './diag'
+    # in the output directory.
+    'run.save_curvefit_diagnostics': True,
 
-        'volume_correction': False,
-        # NOT IMPLEMENTED YET
-        # If True, optimize the effective volume (V_eff) to fit the curvature.
+    # If True, save the configuration files in subfolder './config' in the
+    # output directory.
+    'run.save_config': True,
 
-        'save_fitting_diagnostics': True,
-        # If True, save fitting diagnostics to files.
+    # == Plotting settings ==
 
-        'save_config': False,
-        # If True, save the configuration files in a subfolder 'config' in the
-        # output directory.
+    # Plot style for matplotlib; default is 'seaborn-darkgrid'.
+    # Available styles: 'bmh', 'classic', 'ggplot', 'fivethirtyeight',
+    # 'dark_background', 'presentation', seaborn series, etc. See matplotlib
+    # guide on styles:
+    # <https://matplotlib.org/gallery/style_sheets/style_sheets_reference.html>
+    'plot.style': 'seaborn-darkgrid',
 
-        'save_fitting_plots': False,
-        # If True, save the curve fitting plots for every chamber sampling
-        # period.
+    # Directory to save plots to.
+    'plot.path': './plots/',
 
-        'save_daily_plots': False,
-        # If True, save daily plots of chamber fluxes.
+    # If True, save the curve fitting plots for each chamber sampling period.
+    'plot.save_curvefit': False,
 
-        'plot_style': 'ggplot',
-        # plot style for matplotlib; default is 'ggplot'
-        # allowed parameters are:
-        # 'bmh', 'classic', 'ggplot', 'fivethirtyeight', 'dark_background',
-        # 'presentation', seaborn series, etc.
-        # see matplotlib guide on plotting style:
-        # <http://matplotlib.org/users/style_sheets.html#style-sheets>
+    # If True, save daily summary of calculated fluxes.
+    'plot.save_daily': False,
+
+    # == Biometeorological data settings ==
+
+    # Absolute or relative directory of biomet data files.
+    'biomet.files': './biomet/*.csv',
+
+    # Date format in biomet data filenames.
+    'biomet.date_format': '%Y%m%d',
+
+    # Options for reading biomet data CSV files with `pandas.read_csv`.
+    'biomet.csv.delimiter': ',',
+    'biomet.csv.header': 'infer',
+    'biomet.csv.names': None,
+    'biomet.csv.usecols': None,
+    'biomet.csv.dtype': None,
+    'biomet.csv.na_values': None,
+    'biomet.csv.parse_dates': False,
+
+    # Timestamp parser for converting date strings stored in multiple columns.
+    # (Note: no need to use the parser if the timestamp is in one column.)
+    # * 'ymd', YYYY MM DD, date only
+    # * 'ymdhm', YYYY MM DD HH MM, down to minute
+    # * 'ymdhms', YYYY MM DD HH MM SS, down to second
+    # * 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
+    'biomet.timestamp.parser': None,
+
+    # Epoch year for UNIX timestamps (in seconds). Default (None) is 1970.
+    # However, some computer system may use a different epoch year, for
+    # example, 1904 for LabVIEW.
+    'biomet.timestamp.epoch_year': None,
+
+    # Reference year for day-of-year timestamps.
+    'biomet.timestamp.day_of_year_ref': None,
+
+    # If True, the timestamp is treated as in UTC.
+    'biomet.timestamp.is_UTC': True,
+
+    # == Concentration data settings ==
+
+    # Absolute or relative directory of concentration data files. If None, find
+    # concentration data in the biomet datatable.
+    'concentration.files': './conc/*.csv',
+
+    # Date format in concentration data filenames.
+    'concentration.date_format': '%Y%m%d',
+
+    # Options for reading concentration data CSV files with `pandas.read_csv`.
+    'concentration.csv.delimiter': ',',
+    'concentration.csv.header': 'infer',
+    'concentration.csv.names': None,
+    'concentration.csv.usecols': None,
+    'concentration.csv.dtype': None,
+    'concentration.csv.na_values': None,
+    'concentration.csv.parse_dates': False,
+
+    # Timestamp parser for converting date strings stored in multiple columns.
+    # (Note: no need to use the parser if the timestamp is in one column.)
+    # * 'ymd', YYYY MM DD, date only
+    # * 'ymdhm', YYYY MM DD HH MM, down to minute
+    # * 'ymdhms', YYYY MM DD HH MM SS, down to second
+    # * 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
+    'concentration.timestamp.parser': None,
+
+    # Epoch year for UNIX timestamps (in seconds). Default (None) is 1970.
+    # However, some computer system may use a different epoch year, for
+    # example, 1904 for LabVIEW.
+    'concentration.timestamp.epoch_year': None,
+
+    # Reference year for day-of-year timestamps.
+    'concentration.timestamp.day_of_year_ref': None,
+
+    # If True, the timestamp is treated as in UTC.
+    'concentration.timestamp.is_UTC': True,
+
+    # == Chamber flowrate data settings ==
+
+    # Absolute or relative directory of flowrate data files. If None, find
+    # flowrate data in the biomet datatable.
+    'flow.files': None,
+
+    # Date format in flowrate data filenames.
+    'flow.date_format': '%Y%m%d',
+
+    # If True (default), flowrate is referenced to the STP condition, as is the
+    # convention used by many commercially available flow sensors. This means
+    # that measured flowrates need to be corrected for ambient temperature and
+    # pressure conditions. If False, no correction on flow rates is applied.
+    'flow.is_STP': True,
+
+    # Options for reading flowrate data CSV files with `pandas.read_csv`.
+    'flow.csv.delimiter': ',',
+    'flow.csv.header': 'infer',
+    'flow.csv.names': None,
+    'flow.csv.usecols': None,
+    'flow.csv.dtype': None,
+    'flow.csv.na_values': None,
+    'flow.csv.parse_dates': False,
+
+    # Timestamp parser for converting date strings stored in multiple columns.
+    # (Note: no need to use the parser if the timestamp is in one column.)
+    # * 'ymd', YYYY MM DD, date only
+    # * 'ymdhm', YYYY MM DD HH MM, down to minute
+    # * 'ymdhms', YYYY MM DD HH MM SS, down to second
+    # * 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
+    'flow.timestamp.parser': None,
+
+    # Epoch year for UNIX timestamps (in seconds). Default (None) is 1970.
+    # However, some computer system may use a different epoch year, for
+    # example, 1904 for LabVIEW.
+    'flow.timestamp.epoch_year': None,
+
+    # Reference year for day-of-year timestamps.
+    'flow.timestamp.day_of_year_ref': None,
+
+    # If True, the timestamp is treated as in UTC.
+    'flow.timestamp.is_UTC': True,
+
+    # == Leaf data settings ==
+
+    # Absolute or relative directory of leaf data files. If None, use leaf area
+    # values supplied in the chamber schedule files.
+    'leaf.files': None,
+
+    # Date format in leaf data filenames.
+    'leaf.date_format': '%Y%m%d',
+
+    # Options for reading leaf data CSV files with `pandas.read_csv`.
+    'leaf.csv.delimiter': ',',
+    'leaf.csv.header': 'infer',
+    'leaf.csv.names': None,
+    'leaf.csv.usecols': None,
+    'leaf.csv.dtype': None,
+    'leaf.csv.na_values': None,
+    'leaf.csv.parse_dates': False,
+
+    # Timestamp parser for converting date strings stored in multiple columns.
+    # (Note: no need to use the parser if the timestamp is in one column.)
+    # * 'ymd', YYYY MM DD, date only
+    # * 'ymdhm', YYYY MM DD HH MM, down to minute
+    # * 'ymdhms', YYYY MM DD HH MM SS, down to second
+    # * 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
+    'leaf.timestamp.parser': None,
+
+    # Epoch year for UNIX timestamps (in seconds). Default (None) is 1970.
+    # However, some computer system may use a different epoch year, for
+    # example, 1904 for LabVIEW.
+    'leaf.timestamp.epoch_year': None,
+
+    # Reference year for day-of-year timestamps.
+    'leaf.timestamp.day_of_year_ref': None,
+
+    # If True, the timestamp is treated as in UTC.
+    'leaf.timestamp.is_utc': True,
+
+    # == Timelag data settings ==
+
+    # Absolute or relative directory of timelag data files.
+    'timelag.files': None,
+
+    # Date format in timelag data filenames.
+    'timelag.date_format': '%Y%m%d',
+
+    # Options for reading timelag data CSV files with `pandas.read_csv`.
+    'timelag.csv.delimiter': ',',
+    'timelag.csv.header': 'infer',
+    'timelag.csv.names': None,
+    'timelag.csv.usecols': None,
+    'timelag.csv.dtype': None,
+    'timelag.csv.na_values': None,
+    'timelag.csv.parse_dates': False,
+
+    # Timestamp parser for converting date strings stored in multiple columns.
+    # (Note: no need to use the parser if the timestamp is in one column.)
+    # * 'ymd', YYYY MM DD, date only
+    # * 'ymdhm', YYYY MM DD HH MM, down to minute
+    # * 'ymdhms', YYYY MM DD HH MM SS, down to second
+    # * 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
+    'timelag.timestamp.parser': None,
+
+    # Epoch year for UNIX timestamps (in seconds). Default (None) is 1970.
+    # However, some computer system may use a different epoch year, for
+    # example, 1904 for LabVIEW.
+    'timelag.timestamp.epoch_year': None,
+
+    # Reference year for day-of-year timestamps.
+    'timelag.timestamp.day_of_year_ref': None,
+
+    # If True, the timestamp is treated as in UTC.
+    'timelag.timestamp.is_utc': True,
+
+    # == Flux calculator settings ==
+
+    # Enable linear curve fitting method for flux calculation.
+    'flux.curvefit.linear': True,
+
+    # Enable robust linear curve fitting method for flux calculation.
+    'flux.curvefit.robust_linear': True,
+
+    # Enable nonlinear curve fitting method for flux calculation.
+    'flux.curvefit.nonlinear': True,
+    # Note: at least one of the curve fitting methods must be enabled.
+
+    # Timelag optimization methods
+    # * 'none': No timelag optimization.
+    # * 'optimized': Timelags are optimized based on a nonlinear fitting of the
+    #   concentration changes.
+    # * 'prescribed': Fixed values of timelag are assigned from input data.
+    #   Must supply timelag data files in 'timelag.files'.
+    'flux.timelag_method': 'none',
+
+    # Gas species used for timelag optimization (only effective for timelag
+    # method 'optimized'). 'co2' is recommended. If the designated species is
+    # not found, use the first one in 'species.list' by default.
+    'flux.timelag_species': 'co2',
+
+    # == Field site parameters ==
+
+    # Surface pressure (Pa) at the site. Default (`None`) is to use the
+    # standard atmospheric pressure (101,325 Pa).
+    'site.pressure': None,
+
+    # Time zone with respect to UTC. For example, -8 means UTC-8 (aka PST).
+    # Warning: does not support daylight saving transition. You may use the
+    # standard time consistently, or process separately data files before and
+    # after the daylight saving change.
+    'site.timezone': 0,
+
+    # == Gas species settings ==
+
+    # Measured gas species -- only those listed here will be calculated from
+    # the concentration data. Do not use special characters, for these names
+    # will be in the header of the output datatables.
+    'species.list': ['co2', 'h2o'],
+
+    # Names of gas species shown in the plot labels. May use LaTeX format.
+    'species.names': ['CO$_2$', 'H$_2$O'],
+
+    # Options for individual species
+    #
+    # `unit`: the unit of mixing ratio in the concentration data `output_unit`:
+    # the unit of mixing ratio in the output file
+    #
+    # Some commonly used units:
+    # * 1.0 = mole fraction [0 to 1]
+    # * 1.0e-3 = ppthv (parts per thousand) or mmol mol^-1
+    # * 1.0e-6 = ppmv or mumol mol^-1
+    # * 1.0e-9 = ppbv or nmol mol^-1
+    # * 1.0e-12 = pptv (parts per trillion) or pmol mol^-1
+    # * Note: percentage (% or 1.0e-2) is not allowed in the output unit
+    #
+    # `multiplier`: the number to multiply to the input values for conversion
+    # to the output unit; must equal to `unit / output_unit`. For example, if
+    # H2O in the input data file is in percentage (1.0e-2), and the output H2O
+    # concentration needs to be in parts per thousand (1.0e-3), then the
+    # multiplier is 10.
+    #
+    # `baseline_correction`: str, baseline correction method
+    # * 'median': use medians as the baseline (default)
+    # * 'mean': use means as the baseline
+    # * 'none': do not apply baseline correction
+    #
+    # Note: 'median' baseline setting is generally recommended, except for
+    # water and other adsorptive molecules. Depending on the ambient condition,
+    # sometimes 'none' works better for water flux calculation.
+
+    'species.h2o': {
+        'unit': 1.0e-3,
+        'output_unit': 1.0e-3,
+        'multiplier': 1.0,
+        'baseline_correction': 'median',
     },
-    'data_dir': {  # Input and output directories, and other related settings
-        'biomet_data': './biomet/*.csv',
-        # Absolute or relative directory to search for biomet data files.
 
-        'biomet_data.date_format': '%Y%m%d',
-        # date format string in the file name (not that in the data table)
-
-        'conc_data': './conc/*.csv',
-        # Absolute or relative directory to search for concentration data
-        # files.
-
-        'conc_data.date_format': '%Y%m%d',
-        # date format string in the file name (not that in the data table)
-
-        'flow_data': None,
-        # Absolute or relative directory to search for flow rate data files.
-
-        'flow_data.date_format': '%Y%m%d',
-        # date format string in the file name (not that in the data table)
-
-        'leaf_data': None,
-        # Absolute or relative directory to search for leaf area data files.
-
-        'timelag_data': None,
-        # NOT IMPLEMENTED YET
-        # Absolute or relative directory to search for timelag data files.
-
-        'output_dir': './output/',
-        # Output directory for the processed flux data.
-
-        'output_filename_prefix': '',
-        # A prefix string to append before timestamp for output datafile names.
-
-        'plot_dir': './plots/',
-        # Directory for saved plots.
-
-        'separate_conc_data': True,
-        # If `True`, concentration measurements are stored on their own, not in
-        # the biomet data files.
-        # If `False`, search concentration measurements in the biomet data.
-
-        'separate_flow_data': False,
-        # If `False` (default), search flow rate variables in the biomet data.
-        # If `True`, flow rate measurements are stored on their own, not in
-        # the biomet data files (possibly relevant for some MFC instruments).
-
-        'separate_leaf_data': False,
-        # If `False` (default), leaf area values are defined with `A_ch` in
-        # the chamber schedule configuration.
-        # If `True`, leaf area measurements are stored on their own, not in
-        # the chamber schedule configuration file.
-
-        'use_timelag_data': False,
-        # NOT IMPLEMENTED YET
-        # Read external data for prescribed timelag values.
+    'species.co2': {
+        'unit': 1.0e-6,
+        'output_unit': 1.0e-6,
+        'multiplier': 1.0,
+        'baseline_correction': 'median',
     },
-    'biomet_data_settings': {  # Settings for reading the biomet data
-        'delimiter': ',',
-        # Supported table delimiters:
-        #   - singe space: ' '
-        #   - indefinite number of spaces: '\\s+' (works also for single space)
-        #   - comma: ','
-        #   - tab: '\\t'
 
-        'header': 'infer',
-        # Row number of the last line of the header (starting from 0)
-        # Default behavior is to infer it with `pandas.read_csv()`.
-
-        'names': None,
-        # Define the data table column names.
-        # Default is `None`, i.e., to infer with `pandas.read_csv()`.
-        # Tip: copy the column names from the data file, and then change names
-        # of the variables of interest to the standardized names.
-
-        'usecols': None,
-        # Specify a sequence of indices for columns to read into the data
-        # structure. Column index starts from 0 in Python.
-        # Default behavior (`None`) is to read all columns.
-
-        'dtype': None,
-        # If `None`, falls back to the default setting of `pandas.read_csv()`.
-        # Its default settings handle data types pretty well without
-        # specification. You can also modify the line above to customize column
-        # data types. For example, dtype: 'f8, f8, f8, i8' indicates that the
-        # first 3 columns are (double) floating numbers and the last column is
-        # of integer type.
-
-        'na_values': None,
-        # Modify this if you need specify the missing values.
-        # Default is `None` that uses the default options of
-        # `pandas.read_csv()`.
-
-        'parse_dates': False,
-        # if False, do not attempt to parse dates with `pandas.read_csv()`
-        # if given a list of column indices or names, parse those columns as
-        # dates when parse multiple columns to form a datetime variable, must
-        # specify a column name for the parsed result
-
-        'date_parser': None,
-        # a date parser for converting date strings stored in multiple columns
-        # - 'ymd', YYYY MM DD, date only
-        # - 'ymdhm', YYYY MM DD HH MM, down to minute
-        # - 'ymdhms', YYYY MM DD HH MM SS, down to second
-        # - 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
-        # note: no need to use this if the date string is in a single column
-
-        'time_sec_start': None,
-        # If None, the starting year of the time_sec format is 1904 (LabVIEW).
-        # This option only takes the year number in four digits (integer).
-        # For example, an instrument working on Unix system may give time in
-        # seconds since 1 Jan 1970 00:00, then this option must be set to 1970.
-        # Check your instrument manual for its specific time format, if it
-        # records time in seconds since a date.
-
-        'year_ref': None,
-        # must specify a reference year if the time variable is day of year
-        # number
-
-        'time_in_UTC': True,
-        # Default is `True` to treat the time variable in UTC time.
+    'species.cos': {
+        'unit': 1.0e-9,
+        'output_unit': 1.0e-12,
+        'multiplier': 1.0e+3,
+        'baseline_correction': 'median',
     },
-    'conc_data_settings': {  # Settings for reading the concentration data
-        'delimiter': ',',
-        # Supported table delimiters:
-        #   - singe space: ' '
-        #   - indefinite number of spaces: '\\s+' (works also for single space)
-        #   - comma: ','
-        #   - tab: '\\t'
 
-        'header': 'infer',
-        # Row number of the last line of the header (starting from 0)
-        # Default behavior is to infer it with `pandas.read_csv()`.
-
-        'names': None,
-        # Define the data table column names.
-        # Default is `None`, i.e., to infer with `pandas.read_csv()`.
-        # Note that for concentration data table, gas species that are not
-        # defined in the species settings will be ignored.
-
-        'usecols': None,
-        # Specify a sequence of indices for columns to read into the data
-        # structure. Column index starts from 0 in Python.
-        # Default behavior (`None`) is to read all columns.
-
-        'dtype': None,
-        # If `None`, falls back to the default setting of `pandas.read_csv()`.
-        # Its default settings handle data types pretty well without
-        # specification. You can also modify the line above to customize column
-        # data types. For example, dtype: 'f8, f8, f8, i8' indicates that the
-        # first 3 columns are (double) floating numbers and the last column is
-        # of integer type.
-
-        'na_values': None,
-        # Modify this if you need specify the missing values.
-
-        'parse_dates': False,
-        # if False, do not attempt to parse dates with `pandas.read_csv()`
-        # if given a list of column indices or names, parse those columns as
-        # dates when parse multiple columns to form a datetime variable, must
-        # specify a column name for the parsed result
-
-        'date_parser': None,
-        # a date parser for converting date strings stored in multiple columns
-        # - 'ymd', YYYY MM DD, date only
-        # - 'ymdhm', YYYY MM DD HH MM, down to minute
-        # - 'ymdhms', YYYY MM DD HH MM SS, down to second
-        # - 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
-        # note: no need to use this if the date string is in a single column
-
-        'time_sec_start': None,
-        # If None, the starting year of the time_sec format is 1904 (LabVIEW).
-        # This option only takes the year number in four digits (integer).
-        # For example, an instrument working on Unix system may give time in
-        # seconds since 1 Jan 1970 00:00, then this option must be set to 1970.
-        # Check your instrument manual for its specific time format, if it
-        # records time in seconds since a date.
-
-        'year_ref': None,
-        # must specify a reference year if the time variable is day of year
-        # number
-
-        'time_in_UTC': True,
-        # Default is `True` to treat the time variable in UTC time.
+    'species.co': {
+        'unit': 1.0e-9,
+        'output_unit': 1.0e-9,
+        'multiplier': 1.0,
+        'baseline_correction': 'median',
     },
-    'flow_data_settings': {  # Settings for reading the flow rate data
-        'delimiter': ',',
-        # Supported table delimiters:
-        #   - singe space: ' '
-        #   - indefinite number of spaces: '\\s+' (works also for single space)
-        #   - comma: ','
-        #   - tab: '\\t'
 
-        'header': 'infer',
-        # Row number of the last line of the header (starting from 0)
-        # Default behavior is to infer it with `pandas.read_csv()`.
-
-        'names': None,
-        # Define the data table column names.
-        # Default is `None`, i.e., to infer with `pandas.read_csv()`.
-        # Tip: copy the column names from the data file, and then change names
-        # of the variables of interest to the standardized names.
-
-        'usecols': None,
-        # Specify a sequence of indices for columns to read into the data
-        # structure. Column index starts from 0 in Python.
-        # Default behavior (`None`) is to read all columns.
-
-        'dtype': None,
-        # If `None`, falls back to the default setting of `pandas.read_csv()`.
-        # Its default settings handle data types pretty well without
-        # specification. You can also modify the line above to customize column
-        # data types. For example, dtype: 'f8, f8, f8, i8' indicates that the
-        # first 3 columns are (double) floating numbers and the last column is
-        # of integer type.
-
-        'na_values': None,
-        # Modify this if you need specify the missing values.
-
-        'parse_dates': False,
-        # if False, do not attempt to parse dates with `pandas.read_csv()`
-        # if given a list of column indices or names, parse those columns as
-        # dates when parse multiple columns to form a datetime variable, must
-        # specify a column name for the parsed result
-
-        'date_parser': None,
-        # a date parser for converting date strings stored in multiple columns
-        # - 'ymd', YYYY MM DD, date only
-        # - 'ymdhm', YYYY MM DD HH MM, down to minute
-        # - 'ymdhms', YYYY MM DD HH MM SS, down to second
-        # - 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
-        # note: no need to use this if the date string is in a single column
-
-        'time_sec_start': None,
-        # If None, the starting year of the time_sec format is 1904 (LabVIEW).
-        # This option only takes the year number in four digits (integer).
-        # For example, an instrument working on Unix system may give time in
-        # seconds since 1 Jan 1970 00:00, then this option must be set to 1970.
-        # Check your instrument manual for its specific time format, if it
-        # records time in seconds since a date.
-
-        'year_ref': None,
-        # must specify a reference year if the time variable is day of year
-        # number
-
-        'time_in_UTC': True,
-        # Default is `True` to treat the time variable in UTC time.
-
-        'flow_rate_in_STP': True,
-        # Default is `True`. The flow rate is referenced to STP condition,
-        # as for many commonly available flow sensors. This means that the
-        # flow rates need to be corrected for ambient temperature and pressure.
-        # If set to False, no such correction on flow rates is applied.
+    'species.ch4': {
+        'unit': 1.0e-9,
+        'output_unit': 1.0e-9,
+        'multiplier': 1.0,
+        'baseline_correction': 'median',
     },
-    'leaf_data_settings': {  # Settings for reading the leaf area data
-        # must contain a timestamp variable;
-        # leaf area variables must be labeled with chamber labels that
-        # correspond to those defined in `ch_label` in the chamber schedule
-        # configuration
 
-        'delimiter': ',',
-        # Supported table delimiters:
-        #   - singe space: ' '
-        #   - indefinite number of spaces: '\\s+' (works also for single space)
-        #   - comma: ','
-        #   - tab: '\\t'
-
-        'header': 'infer',
-        # Row number of the last line of the header (starting from 0)
-        # Default behavior is to infer it with `pandas.read_csv()`.
-
-        'names': None,
-        # Define the data table column names.
-        # Default is `None`, i.e., to infer with `pandas.read_csv()`.
-        # Tip: copy the column names from the data file, and then change names
-        # of the variables of interest to the standardized names.
-
-        'usecols': None,
-        # Specify a sequence of indices for columns to read into the data
-        # structure. Column index starts from 0 in Python.
-        # Default behavior (`None`) is to read all columns.
-
-        'dtype': None,
-        # If `None`, falls back to the default setting of `pandas.read_csv()`.
-        # Its default settings handle data types pretty well without
-        # specification. You can also modify the line above to customize column
-        # data types. For example, dtype: 'f8, f8, f8, i8' indicates that the
-        # first 3 columns are (double) floating numbers and the last column is
-        # of integer type.
-
-        'na_values': None,
-        # Modify this if you need specify the missing values.
-
-        'parse_dates': False,
-        # if False, do not attempt to parse dates with `pandas.read_csv()`
-        # if given a list of column indices or names, parse those columns as
-        # dates when parse multiple columns to form a datetime variable, must
-        # specify a column name for the parsed result
-
-        'date_parser': None,
-        # a date parser for converting date strings stored in multiple columns
-        # - 'ymd', YYYY MM DD, date only
-        # - 'ymdhm', YYYY MM DD HH MM, down to minute
-        # - 'ymdhms', YYYY MM DD HH MM SS, down to second
-        # - 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
-        # note: no need to use this if the date string is in a single column
-
-        'time_sec_start': None,
-        # If None, the starting year of the time_sec format is 1904 (LabVIEW).
-        # This option only takes the year number in four digits (integer).
-        # For example, an instrument working on Unix system may give time in
-        # seconds since 1 Jan 1970 00:00, then this option must be set to 1970.
-        # Check your instrument manual for its specific time format, if it
-        # records time in seconds since a date.
-
-        'year_ref': None,
-        # must specify a reference year if the time variable is day of year
-        # number
-
-        'time_in_UTC': True,
-        # Default is `True` to treat the time variable in UTC time.
+    'species.n2o': {
+        'unit': 1.0e-9,
+        'output_unit': 1.0e-9,
+        'multiplier': 1.0,
+        'baseline_correction': 'median',
     },
-    'timelag_data_settings': {  # Settings for timelag data
-        # must contain a timestamp variable;
-        # must have a chamber label variable that correspond to those defined
-        # in `ch_label` in the chamber schedule configuration;
-        # timelag values must be given in seconds
 
-        'delimiter': ',',
-        # Supported table delimiters:
-        #   - singe space: ' '
-        #   - indefinite number of spaces: '\\s+' (works also for single space)
-        #   - comma: ','
-        #   - tab: '\\t'
-
-        'header': 'infer',
-        # Row number of the last line of the header (starting from 0)
-        # Default behavior is to infer it with `pandas.read_csv()`.
-
-        'names': None,
-        # Define the data table column names.
-        # Default is `None`, i.e., to infer with `pandas.read_csv()`.
-        # Tip: copy the column names from the data file, and then change names
-        # of the variables of interest to the standardized names.
-
-        'usecols': None,
-        # Specify a sequence of indices for columns to read into the data
-        # structure. Column index starts from 0 in Python.
-        # Default behavior (`None`) is to read all columns.
-
-        'dtype': None,
-        # If `None`, falls back to the default setting of `pandas.read_csv()`.
-        # Its default settings handle data types pretty well without
-        # specification. You can also modify the line above to customize column
-        # data types. For example, dtype: 'f8, f8, f8, i8' indicates that the
-        # first 3 columns are (double) floating numbers and the last column is
-        # of integer type.
-
-        'na_values': None,
-        # Modify this if you need specify the missing values.
-
-        'parse_dates': False,
-        # if False, do not attempt to parse dates with `pandas.read_csv()`
-        # if given a list of column indices or names, parse those columns as
-        # dates when parse multiple columns to form a datetime variable, must
-        # specify a column name for the parsed result
-
-        'date_parser': None,
-        # a date parser for converting date strings stored in multiple columns
-        # - 'ymd', YYYY MM DD, date only
-        # - 'ymdhm', YYYY MM DD HH MM, down to minute
-        # - 'ymdhms', YYYY MM DD HH MM SS, down to second
-        # - 'ymdhmsf', YYYY MM DD HH MM SS %f, down to nanosecond
-        # note: no need to use this if the date string is in a single column
-
-        'time_sec_start': None,
-        # If None, the starting year of the time_sec format is 1904 (LabVIEW).
-        # This option only takes the year number in four digits (integer).
-        # For example, an instrument working on Unix system may give time in
-        # seconds since 1 Jan 1970 00:00, then this option must be set to 1970.
-        # Check your instrument manual for its specific time format, if it
-        # records time in seconds since a date.
-
-        'year_ref': None,
-        # must specify a reference year if the time variable is day of year
-        # number
-
-        'time_in_UTC': True,
-        # Default is `True` to treat the time variable in UTC time.
-    },
-    'site_parameters': {  # Site-specific parameters
-        'site_pressure': None,
-        # In Pascal. Default behavior (`None`) is to use the standard pressure.
-
-        'time_zone': 0,
-        # Time zone with respect to UTC. For example, -8 means UTC-8.
-        # Warning: does not support daylight saving transition. Use standard
-        # non daylight saving time, or process separately the data before
-        # and after daylight saving.
-    },
-    'species_settings': {
-        'species_list': ['co2', 'h2o'],
-        # Measured gas species in the concentration data.
-        # Note: the order of gas species in the output file will follow
-        # the order defined in this sequence
-
-        'species_names': ['CO$_2$', 'H$_2$O'],
-        # names of gas species shown in the plot axis labels.
-        # LaTeX format is supported by matplotlib.
-
-        # Options for individual species
-        #
-        # `unit`: the unit of mixing ratio in the concentration data file
-        # Some commonly used units:
-        #     1.0 = mole fraction [0 to 1]
-        #     1.0e-2 = percent (%)
-        #     1.0e-3 = ppthv (parts per thousand) or mmol mol^-1
-        #     1.0e-6 = ppmv or mumol mol^-1
-        #     1.0e-9 = ppbv or nmol mol^-1
-        #     1.0e-12 = pptv (parts per trillion) or pmol mol^-1
-        #
-        # `output_unit`: the unit of mixing ratio in the output file
-        #
-        # `multiplier`: the number to multiply to the input values for
-        #     conversion to the output unit, must equal to
-        #     `unit / output_unit`. For example, if H2O in the input data file
-        #     was recorded in percentage (1.0e-2), and the output unit of H2O
-        #     concentration needs to be parts per thousand (1.0e-3), then the
-        #     multiplier would be 10.
-        #
-        # `baseline_correction`: str, baseline correction method
-        #     'median': use medians as the baseline (default)
-        #     'mean': use means as the baseline
-        #     'none': do not apply baseline correction
-        # Note: 'median' baseline setting is generally recommended, except for
-        # water and other adsorptive molecules. Depending on the ambient
-        # condition, sometimes 'none' works better for water flux calculation.
-
-        'h2o': {
-            'unit': 1.0e-3,
-            'output_unit': 1.0e-3,
-            'multiplier': 1.0,
-            'baseline_correction': 'median',
-        },
-
-        'co2': {
-            'unit': 1.0e-6,
-            'output_unit': 1.0e-6,
-            'multiplier': 1.0,
-            'baseline_correction': 'median',
-        },
-
-        'cos': {
-            'unit': 1.0e-9,
-            'output_unit': 1.0e-12,
-            'multiplier': 1.0e+3,
-            'baseline_correction': 'median',
-        },
-
-        'co': {
-            'unit': 1.0e-9,
-            'output_unit': 1.0e-9,
-            'multiplier': 1.0,
-            'baseline_correction': 'median',
-        },
-
-        'ch4': {
-            'unit': 1.0e-9,
-            'output_unit': 1.0e-9,
-            'multiplier': 1.0,
-            'baseline_correction': 'median',
-        },
-
-        'n2o': {
-            'unit': 1.0e-9,
-            'output_unit': 1.0e-9,
-            'multiplier': 1.0,
-            'baseline_correction': 'median',
-        },
-
-        # Customize your own gas species following the same format.
-        # The name that represents the added gas species is not so important
-        # as long as it is used *consistently*. For example, if the species
-        # name for CO2 is defined as `CO_2`, the same name `CO_2` must be used
-        # in the `species_list` key and in the following unit definition.
-    },
+    # You may customize a gas species following the same format. The name
+    # representing the added gas species is not so important as long as it is
+    # used *consistently*. For example, if the species name for CO2 is defined
+    # as 'CO_2', the same name 'CO_2' must be used in the 'species.list' key
+    # and in the species definition.
 }
