@@ -3,32 +3,13 @@ PyChamberFlux main script
 
 A package for calculating trace gas fluxes from chamber measurements
 """
-import copy
 import argparse
+import copy
 import datetime
-# import timeit
-import importlib
-import pkg_resources
 
 from chflux.default_config import default_config
 from chflux.io.readers import read_yaml, update_dict
-
-
-def check_pkgreqs(echo=True):
-    """Check package requirements."""
-    # required packages
-    pkg_list = ['numpy', 'pandas', 'scipy', 'matplotlib', 'yaml']
-    # check existence and print versions (if echo is enabled)
-    pkg_specs = {pkg: importlib.util.find_spec(pkg) for pkg in pkg_list}
-    if echo:
-        print('Checking specifications of required packages:')
-    for pkg in pkg_specs:
-        if pkg_specs[pkg] is None:
-            raise ModuleNotFoundError("Required package '%s' not found" % pkg)
-        elif echo and pkg != 'yaml':
-            # do not check version on 'yaml'
-            print('  %s = %s' %
-                  (pkg, pkg_resources.get_distribution(pkg).version))
+from chflux.tools import check_pkgreqs
 
 
 class ChFluxProcess(object):
@@ -166,6 +147,7 @@ def run_instance():
     process = ChFluxProcess()
     process.run()
 
+    # @TODO: move to a tester script
     # TEST if the user configuration file is set properly
     print(process.config['biomet_data_settings']['usecols'])
     print('try update the config')

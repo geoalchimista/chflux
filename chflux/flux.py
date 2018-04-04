@@ -21,9 +21,9 @@ Flux calculators
 .. autosummary::
    :toctree: generated/
 
-   calc_flux_lin
-   calc_flux_nonlin
-   calc_flux_rlin
+   fit_flux_lin
+   fit_flux_rlin
+   fit_flux_nonlin
 """
 import math
 from collections import namedtuple
@@ -34,7 +34,7 @@ from scipy import stats
 
 
 __all__ = ['conc_func', 'jacobian_conc_func', 'resid_conc_func',
-           'calc_flux_lin', 'calc_flux_rlin', 'calc_flux_nonlin']
+           'fit_flux_lin', 'fit_flux_rlin', 'fit_flux_nonlin']
 
 
 FluxLinFitResults = namedtuple(
@@ -126,11 +126,7 @@ def resid_conc_func(p, t, y):
     return conc_func(p, t) - y
 
 
-def correct_baseline():
-    pass
-
-
-def calc_flux_lin(conc, t, t_turnover, area, flow):
+def fit_flux_lin(conc, t, t_turnover, area, flow):
     r"""
     Calculate flux from concentration changes and other chamber parameters,
     using linear regression.
@@ -209,7 +205,7 @@ def calc_flux_lin(conc, t, t_turnover, area, flow):
                              rvalue, pvalue, stderr)
 
 
-def calc_flux_rlin(conc, t, t_turnover, area, flow):
+def fit_flux_rlin(conc, t, t_turnover, area, flow):
     r"""
     Calculate flux from concentration changes and other chamber parameters,
     using robust linear regression.
@@ -266,7 +262,7 @@ def calc_flux_rlin(conc, t, t_turnover, area, flow):
     pass
 
 
-def calc_flux_nonlin(conc, t, t_turnover, area, flow):
+def fit_flux_nonlin(conc, t, t_turnover, area, flow):
     r"""
     Calculate flux from concentration changes and other chamber parameters,
     using nonlinear regression.
@@ -318,4 +314,46 @@ def calc_flux_nonlin(conc, t, t_turnover, area, flow):
     se_p1 : float
         Standard error of the fitted parameter ``p[1]``.
     """
+    pass
+
+
+def label_chamber_period():
+    pass
+
+
+def extract_chamber_period():
+    pass
+
+
+def correct_baseline():
+    pass
+
+
+def average_metvar(df_orig, df_dest, id, vars, std=False, iqr=False):
+    """
+    id : str
+        The column name for subsetting segments for averaging.
+    vars : list or dict
+        List or dict of variables to be averaged. If list, names do not change
+        in ``df_dest``; if dict, name in df_dest will be specified by key
+        values.
+    std : bool, optional
+        Return standard deviations if True. Variable names will be `sd_*`.
+    iqr : bool, optional
+        Return interquartile ranges if True. Variable names will be `iqr_*`.
+    """
+    pass
+
+
+def calculate_flux(df, method='all'):
+    pass
+
+
+def predict_conc(df, flux):
+    """Predict the fitted concentrations."""
+    pass
+
+
+# @NOTE: maybe this is not needed; I'll see
+def dixon_test_flux(fluxes):
     pass

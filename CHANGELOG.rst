@@ -23,7 +23,6 @@ Refactoring the main program in progress:
 @TODO:
 
 * ``DataFrame.set_value()`` is deprecated; use ``.at[]`` instead.
-* Use double spaces at sentence ending in comments and docstrings; for better readability in a monospace typeface.
 
   - [X] ``io/readers.py``
   - [ ] ``io/parsers.py``
@@ -49,6 +48,8 @@ Changed
     temperature (``dew_temp``) functions.
 
 * Statistics module (``chflux.stats``): Refactored.
+* I/O tools module (``chflux.iotools``) has been moved to ``chflux.io``.
+* Helper functions (``chflux.helpers``) has been moved to ``chflux.tools``.
 * Documentation files reformatted to reStructuredText.
 
 

@@ -22,8 +22,8 @@ from matplotlib import ticker
 
 from chflux.common import *
 from chflux.default_config import default_config
-from chflux.iotools import *
-from chflux.helpers import *
+from chflux._dep_iotools import *
+from chflux._dep_helpers import *
 
 from chflux.tools import extract_date_substr
 from chflux.flux import *

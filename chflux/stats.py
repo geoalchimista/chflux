@@ -13,7 +13,7 @@ This module contains several functions for basic statistical calculations.
    interquartile -- Interquartile range of the sample.
    resist_mean   -- Outlier-resistant mean of the sample.
    resist_std    -- Outlier-resistant standard deviation of the sample.
-   dixon_test    -- Use Dixon's Q test to identify low and high outliers.
+   dixon_test    -- Dixon's Q test to identify low and high outliers.
 """
 import numpy as np
 

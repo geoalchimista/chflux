@@ -7,6 +7,7 @@ A collection of various helper tools for PyChamberFlux
 import math
 
 
+# @TODO: deprecated; use `chflux.tools.parse_unit_names``
 def convert_unit_names(output_unit_list):
     """
     A helper function to convert units to text representation.
@@ -54,6 +55,7 @@ def convert_unit_names(output_unit_list):
     return conc_unit_names, flux_unit_names
 
 
+# @TODO: to deprecate
 def create_output_header(data_type, species_list, biomet_var_list=[]):
     """
     A helper function to create the header for output data frame.

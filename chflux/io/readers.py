@@ -6,12 +6,11 @@ import glob
 import yaml
 import pandas as pd
 
-# from chflux.io.parsers import timestamp_parsers
 from chflux.tools import timestamp_parsers
 
 
 def read_yaml(filepath):
-    """Read a YAML file as a dict.  Return an empty dict if fail to read."""
+    """Read a YAML file as a dict. Return an empty dict if fail to read."""
     with open(filepath, 'r') as f:
         try:
             ydict = yaml.load(f)
@@ -33,7 +32,7 @@ def update_dict(dct, updater):
     """
     def _update_dict_altered(dct, updater):
         """
-        This inner function performs the updating by recursion.  It will alter
+        This inner function performs the updating by recursion. It will alter
         the input `dct`.
         """
         for k, v in updater.items():
@@ -48,6 +47,7 @@ def update_dict(dct, updater):
     return dct_copy
 
 
+# @TODO: need refactoring
 def read_tabulated_data(data_name, config, query=None):
     """
     A generalized function to read tabulated data specified in the config.
@@ -74,7 +74,7 @@ def read_tabulated_data(data_name, config, query=None):
     """
     # check the validity of `data_name` parameter
     if data_name not in ['biomet', 'conc', 'flow', 'leaf', 'timelag']:
-        raise RuntimeError('Wrong data name.  Allowed values are ' +
+        raise RuntimeError('Wrong data name. Allowed values are ' +
                            "'biomet', 'conc', 'flow', 'leaf', 'timelag'.")
     # get file list
     data_flist = glob.glob(config['data_dir'][data_name + '_data'])

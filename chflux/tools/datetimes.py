@@ -1,4 +1,4 @@
-"""A collection of tools dealing with datetime data."""
+"""A collection of tools dealing with datetime types."""
 import copy
 import os
 import re
@@ -24,7 +24,7 @@ timestamp_parsers = {
     # down to nanosecond
     'ymdhmsf': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M %S %f'),
 }
-# NOTE: this module variable cannot be documented by sphinx (1.6.3); check
+# NOTE: this module variable cannot be documented by sphinx (1.7.2); check
 # later versions
 
 
