@@ -4,16 +4,19 @@ PyChamberFlux
 Wu Sun (wu.sun@ucla.edu)
 
 PyChamberFlux (``chflux``) is a Python package to calculate trace gas fluxes
-between land ecosystems and the atmosphere from chamber enclosure measurements.
+from chamber enclosure measurements, which are routinely used in
+biosphere--atmosphere gas exchange studies.
 
 
 Dependencies
 ------------
 * Python >= 3.6
-* NumPy >= 1.13.0
-* SciPy >= 1.0.0
-* matplotlib >= 2.1.0
+* NumPy >= 1.13.3
+* SciPy >= 1.0.1
+* pandas >= 0.22.0
+* matplotlib >= 2.2.2
 * PyYAML >= 3.12
+* pytest >= 3.5.1
 
 
 Installation
@@ -22,14 +25,18 @@ Installation
 
 .. code-block:: bash
 
-    git clone https://github.com/geoalchimista/chflux.git
+   git clone https://github.com/geoalchimista/chflux.git
 
 2. Install the dependencies.
-3. In the root directory of this repository, execute
+3. In the root directory of this repository, run
 
 .. code-block:: bash
 
-    python setup.py install
+   make develop
+
+.. end
+
+Note: Currently only the development version is available.
 
 
 License
@@ -39,7 +46,7 @@ License
 
 Updates
 -------
-See `CHANGELOG.rst <./CHANGELOG.rst>`_.
+See the `CHANGELOG <./CHANGELOG.rst>`_.
 
 
 Documentation

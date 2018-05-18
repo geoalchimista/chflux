@@ -7,9 +7,8 @@ from setuptools import find_packages, setup
 
 # package metadata
 NAME = 'chflux'
-DESCRIPTION = 'A software package to calculate trace gas fluxes' + \
-    'from chamber enclosure measurements'
-URL = 'https://github.com/wusunlab/chflux'
+DESCRIPTION = 'Calculate trace gas fluxes from chamber enclosure measurements'
+URL = 'https://github.com/geoalchimista/chflux'
 AUTHOR = 'Wu Sun'
 EMAIL = 'wu.sun@ucla.edu'
 LICENSE = 'BSD'
@@ -17,17 +16,16 @@ REQUIRES_PYTHON = '>=3.6.0'
 VERSION = None
 
 # requirements
-REQUIRED = ['numpy', 'scipy', 'matplotlib', 'pyyaml']
+REQUIRED = ['numpy', 'scipy', 'pandas', 'matplotlib', 'pyyaml']
 
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-# import README.rst for the long-description
-# must include README.rst in the MANIFEST.in file!
+# import README.rst for the long-description; must include it in MANIFEST.in!
 with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = '\n' + f.read()
 
-# load the package's __version__.py module as a dictionary.
+# add version info from _version.py
 about = {}
 if not VERSION:
     with open(os.path.join(here, NAME, '_version.py')) as f:
@@ -54,11 +52,12 @@ setup(
         'Development Status :: 2 - Pre-Alpha',
         'Environment :: Console',
         'Intended Audience :: Science/Research',
-        'Natural Language :: English',
         'License :: OSI Approved :: BSD License',
+        'Natural Language :: English',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: Implementation :: CPython',
         'Topic :: Scientific/Engineering :: Atmospheric Science'
     ],

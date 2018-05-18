@@ -1,37 +1,25 @@
 =========
 Changelog
 =========
-This file documents all notable changes to the project PyChamberFlux.
 
-The format of this changelog is based on `Keep a Changelog <http://keepachangelog.com/en/1.0.0/>`_.
-This project adheres to the `Semantic Versioning <http://semver.org/spec/v2.0.0.html>`_.
-Changes are described in the past tense and the effects of changes are
-described in the imperative mood.
+This file documents all notable changes to the project PyChamberFlux. The
+format of this changelog is based on `Keep a Changelog
+<http://keepachangelog.com/en/1.0.0/>`_. Versioning of the project adheres to
+the `Semantic Versioning <http://semver.org/spec/v2.0.0.html>`_.
 
 
-Unreleased - 2018-04-03
+Unreleased - 2018-05-18
 =======================
-Refactoring the main program in progress:
+Refactoring the main program in progress . . .
 
-* ``chflux/chflux.py``
-* ``chflux/io/parsers.py``
-* ``chflux/io/readers.py``
-* @TODO: ``iotools.load_tabulated_data`` -> [X] ``io.readers.read_tabulated_data``, [ ] ``io.parsers.parse_timestamp``
-* @TODO: rename ``iotools`` to ``_iotools`` for deprecation.
-* @TODO: test ``parsers`` and ``readers`` in the new ``chflux`` main program
+Added
+-----
+* Top-level documentation
+* ``setup.py``
 
-@TODO:
 
-* ``DataFrame.set_value()`` is deprecated; use ``.at[]`` instead.
-
-  - [X] ``io/readers.py``
-  - [ ] ``io/parsers.py``
-
-* Simplify function arguments using OOP.
-* Replace the Theil--Sen estimator with a more efficient robust linear
-  regression method (perhaps an MM-estimator?).
-* Use ``pandas.Timestamp`` as the standard timestamp passed between functions.
-
+0.2.0.nightly-20180403
+======================
 Added
 -----
 * Main module (``chflux.chflux``)
@@ -70,11 +58,7 @@ Changed
 
 Fixed
 -----
-* A bug concerning the figure legend. Starting from ``matplotlib`` 2.1.0, it
-  seems that ``handles`` and ``labels`` must be supplied to ``legend()`` as
-  positional arguments not keywords. If they were given as keywords,
-  ``legend()`` would have default values for them, and this causes a
-  ``TypeError: __init__() got multiple values for argument 'handles'``.
+* A bug concerning the figure legend.
 
 
 0.1.12 - 2017-04-24
@@ -118,7 +102,7 @@ Added
 Changed
 -------
 * Default units for predefined species (``h2o``, ``co2``, ``cos``, ``co``,
-  ``ch4``, ``n2o``). The user must now define the units explicitly in the
+  ``ch4``, ``n2o``). User must now define the units explicitly in the
   configuration file, if units in the input data differ from the default.
 * Improved the filtering mechanism for warning messages.
 
@@ -218,7 +202,7 @@ Added
 
 Removed
 -------
-* Functions to load each type of tabulated data input.
+* Separate functions to load tabulated data.
 
 Fixed
 -----
@@ -230,8 +214,8 @@ Fixed
 ==================
 Added
 -----
-* An ``is_leaf_chamber`` identifier in the chamber description file.
-* Support for leaf area auxiliary data files. Now the program can takes leaf
+* An identifier ``is_leaf_chamber`` in the chamber description file.
+* Support for leaf area auxiliary data files. Now the program can take leaf
   area time series in the calculation rather than using fixed values over the
   whole period. If the ``separate_leaf_data`` option is enable, leaf chambers
   specified with ``is_leaf_chamber == True`` will use external leaf area data.
@@ -250,7 +234,7 @@ Added
 Changed
 -------
 * Refined the saturation vapor pressure and the dew temperature functions.
-* Refined summary statistics functions in ``common_func.py``:
+* Refined summary statistics functions:
 
   - ``resist_mean()``: outlier-resistant mean
   - ``resist_std()``: outlier-resistant standard deviation
@@ -263,14 +247,14 @@ Changed
 ==================
 Added
 -----
-* A chamber description file ``chamber.yaml``.
+* A chamber specifications file ``chamber.yaml``.
 * A chamber lookup function that generates a lookup table from the
-  configuration file.
+  specifications.
 * Flow data settings in the configuration file.
 
 Changed
 -------
-* Now use the ``dict.update()`` method for user customized configuration file.
+* Now use the ``dict.update()`` method for user configuration file.
 * Change variable names of the standard errors of fluxes from ``sd_flux_*`` to
   ``se_flux_*``.
 
@@ -289,7 +273,8 @@ Added
 Changed
 -------
 * The main script was reorganized into functions.
-* Reformatted the code to comply with the PEP8 standard.
+* Code reformatted to the `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_
+  style.
 
 Fixed
 -----
@@ -300,4 +285,4 @@ Fixed
 ==================
 Added
 -----
-* The project was created by Wu Sun (wu.sun@ucla.edu).
+* The project was initiated by Wu Sun.

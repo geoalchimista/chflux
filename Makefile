@@ -18,8 +18,8 @@ develop: build
 uninstall_develop: clean
 	-python setup.py develop --uninstall
 
-docs:
-	cd docs; \
+doc:
+	cd doc; \
 	make clean; \
 	make html
 
