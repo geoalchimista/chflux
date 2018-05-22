@@ -11,6 +11,19 @@ int_list = {
     "items": {"type": "integer"}
 }
 
+species_schema = {
+    "type": "object",
+    "properties": {
+        "unit": {"type": "number"},
+        "output_unit": {"type": "number"},
+        "multiplier": {"type": "number"},
+        "baseline_correction": {
+            "type": "string",
+            "enum": ["mean", "median"]
+        }
+    }
+}
+
 
 config_schema = {
     "type": "object",
@@ -450,77 +463,11 @@ config_schema = {
             "type": "array",
             "items": {"type": "string"}
         },
-        "species.h2o": {
-            "type": "object",
-            "properties": {
-                "unit": {"type": "number"},
-                "output_unit": {"type": "number"},
-                "multiplier": {"type": "number"},
-                "baseline_correction": {
-                    "type": "string",
-                    "enum": ["mean", "median"]
-                }
-            }
-        },
-        "species.co2": {
-            "type": "object",
-            "properties": {
-                "unit": {"type": "number"},
-                "output_unit": {"type": "number"},
-                "multiplier": {"type": "number"},
-                "baseline_correction": {
-                    "type": "string",
-                    "enum": ["mean", "median"]
-                }
-            }
-        },
-        "species.cos": {
-            "type": "object",
-            "properties": {
-                "unit": {"type": "number"},
-                "output_unit": {"type": "number"},
-                "multiplier": {"type": "number"},
-                "baseline_correction": {
-                    "type": "string",
-                    "enum": ["mean", "median"]
-                }
-            }
-        },
-        "species.co": {
-            "type": "object",
-            "properties": {
-                "unit": {"type": "number"},
-                "output_unit": {"type": "number"},
-                "multiplier": {"type": "number"},
-                "baseline_correction": {
-                    "type": "string",
-                    "enum": ["mean", "median"]
-                }
-            }
-        },
-        "species.ch4": {
-            "type": "object",
-            "properties": {
-                "unit": {"type": "number"},
-                "output_unit": {"type": "number"},
-                "multiplier": {"type": "number"},
-                "baseline_correction": {
-                    "type": "string",
-                    "enum": ["mean", "median"]
-                }
-            }
-        },
-        "species.n2o": {
-            "type": "object",
-            "properties": {
-                "unit": {"type": "number"},
-                "output_unit": {"type": "number"},
-                "multiplier": {"type": "number"},
-                "baseline_correction": {
-                    "type": "string",
-                    "enum": ["mean", "median"]
-                }
-            }
-        }
+        "species.h2o": species_schema,
+        "species.co2": species_schema,
+        "species.cos": species_schema,
+        "species.co": species_schema,
+        "species.ch4": species_schema,
+        "species.n2o": species_schema
     }
 }
