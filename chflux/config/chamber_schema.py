@@ -1,10 +1,11 @@
 """PyChamberFlux JSON Schema for chamber specifications."""
 
 chamber_schema = {
+    "$schema": "http://json-schema.org/draft-06/schema#",
     "type": "object",
     "properties": {
         # Chamber ID number.
-        "id": {"type": "number"},
+        "id": {"type": ["integer", "string"]},
 
         # Chamber name.
         "name": {"type": "string"},
@@ -31,13 +32,13 @@ chamber_schema = {
             "type": "object",
             "properties": {
                 # Temperature sensor ID
-                "temperature": {"type": "number"},
+                "temperature": {"type": ["integer", "string"]},
 
                 # PAR sensor ID
-                "PAR": {"type": "number"},
+                "PAR": {"type": ["integer", "string"]},
 
                 # Flowmeter ID
-                "flowmeter": {"type": "number"}
+                "flowmeter": {"type": ["integer", "string"]}
             }
         },
 
@@ -127,14 +128,20 @@ experiment_schema = {
         "end": {"type": "string"},
 
         # The unit of time in chamber schedule definitions.
-        "unit_of_time": {"type": "string"},
+        "unit_of_time": {
+            "type": "string",
+            "enum": ["s", "sec", "second", "seconds",
+                     "m", "min", "minute", "minutes",
+                     "h", "hr", "hour", "hours",
+                     "d", "day", "days"]
+        },
 
         # The duration of a chamber measurement cycle (which may include
         # multiple chambers). The unit is defined by the "unit_of_time" key.
         "cycle_length": {"type": "number"},
 
         # The number of chambers in a chamber measurement cycle.
-        "n_chambers": {"type": "number"},
+        "n_chambers": {"type": "integer"},
 
         # The number of chamber measurement cycles per day.
         "n_cycles_per_day": {"type": "number"},

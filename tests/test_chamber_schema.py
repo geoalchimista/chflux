@@ -1,5 +1,6 @@
 import pytest
 import jsonschema
+from jsonschema.exceptions import ValidationError
 from chflux.config import chamber_schema
 
 
@@ -66,9 +67,9 @@ chamber_2 = {
 
 
 chamber_3 = {
-    "id": "3",  # <- this should raise an exception
+    "id": "3",  # <- this should NOT raise an exception
     "name": "SC3",
-    "is_leaf_chamber": False,
+    "is_leaf_chamber": "false",  # <- this should raise an exception
     "area": 0.04,
     "volume": 0.015,
     "sensors_id": {
@@ -76,7 +77,7 @@ chamber_3 = {
         "PAR": 1,
         "flowmeter": 2
     },
-    # "schedule": {  # <- the lack of "schedule" should raise an exception
+    # "schedule": {  # <- the lack of "schedule" may raise an exception
     #     "start": 13.,
     #     "bypass_before.start": 0.5,
     #     "bypass_before.end": 2.5,
@@ -117,14 +118,26 @@ experiment_2 = {
 }
 
 
+experiment_3 = {
+    "start": "2018-05-17",
+    "end": "2018-05-18",
+    "unit_of_time": "week",  # <- a deliberate mistake to raise an exception
+    "cycle_length": 30.,
+    "n_chambers": 2,
+    "n_cycles_per_day": 48,
+    "chambers": [chamber_1, chamber_2]
+}
+
+
 def test_chamber_schema():
     jsonschema.validate(chamber_1, chamber_schema.chamber_schema)
     jsonschema.validate(chamber_2, chamber_schema.chamber_schema)
-    with pytest.raises(jsonschema.exceptions.ValidationError):
+    with pytest.raises(ValidationError):
         jsonschema.validate(chamber_3, chamber_schema.chamber_schema)
 
 
 def test_experiment_schema():
     jsonschema.validate(experiment_1, chamber_schema.experiment_schema)
-    with pytest.raises(jsonschema.exceptions.ValidationError):
+    with pytest.raises(ValidationError):
         jsonschema.validate(experiment_2, chamber_schema.experiment_schema)
+        jsonschema.validate(experiment_3, chamber_schema.experiment_schema)
