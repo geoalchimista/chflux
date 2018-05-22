@@ -41,9 +41,10 @@ chamber_schema = {
             }
         },
 
-        # Chamber measurement schedule. Times are with respect to the start of
-        # a _measurement cycle_. A measurement cycle may include more than one
-        # chamber.
+        # Chamber measurement schedule. The key "start" is the start time of
+        # the current _chamber line_ with respect to a _measurement cycle_,
+        # which may include more than one chamber. All other keys are offsets
+        # with respect to the "start".
         #
         # For example, a 60-minute measurement cycle with three chambers may
         # look like:
@@ -56,8 +57,13 @@ chamber_schema = {
         "schedule": {
             "type": "object",
             "properties": {
-                # The start time of the current chamber line.
+                # The start time of the current chamber line, referenced to the
+                # start time of a measurement cycle.
                 "start": {"type": "number"},
+
+                # Note: All timestamps below are offsets with respect to the
+                # start of the current chamber line, i.e., the "start" key
+                # above.
 
                 # The start and end times of ambient concentration
                 # measurements.
