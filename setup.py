@@ -8,7 +8,7 @@ from setuptools import find_packages, setup
 # package metadata
 NAME = 'chflux'
 DESCRIPTION = 'Calculate trace gas fluxes from chamber enclosure measurements'
-URL = 'https://github.com/geoalchimista/chflux'
+URL = 'https://github.com/wusunlab/chflux'
 AUTHOR = 'Wu Sun'
 EMAIL = 'wu.sun@ucla.edu'
 LICENSE = 'BSD'
@@ -16,7 +16,7 @@ REQUIRES_PYTHON = '>=3.6.0'
 VERSION = None
 
 # requirements
-REQUIRED = ['numpy', 'scipy', 'pandas', 'matplotlib', 'pyyaml']
+REQUIRED = ['numpy', 'scipy', 'pandas', 'matplotlib', 'pyyaml', 'jsonschema']
 
 
 here = os.path.abspath(os.path.dirname(__file__))

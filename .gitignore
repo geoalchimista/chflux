@@ -1,5 +1,5 @@
-# 1. Python.gitignore
-# ===================
+# Python.gitignore
+# ================
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -55,9 +55,8 @@ coverage.xml
 
 # Django stuff:
 *.log
-.static_storage/
-.media/
 local_settings.py
+db.sqlite3
 
 # Flask stuff:
 instance/
@@ -107,64 +106,8 @@ venv.bak/
 .mypy_cache/
 
 
-# 2. C.gitignore
-# ==============
-# Prerequisites
-*.d
-
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
-
-# Linker output
-*.ilk
-*.map
-*.exp
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
-
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
-
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
-
-
-# 3. macOS.gitignore
-# ==================
+# macOS.gitignore
+# ===============
 # General
 .DS_Store
 .AppleDouble
@@ -194,26 +137,8 @@ Temporary Items
 .apdisk
 
 
-# 4. Vim.gitignore
-# ================
-# Swap
-[._]*.s[a-v][a-z]
-[._]*.sw[a-p]
-[._]s[a-v][a-z]
-[._]sw[a-p]
-
-# Session
-Session.vim
-
-# Temporary
-.netrwhist
-*~
-# Auto-generated tag files
-tags
-
-
-# 5. VisualStudioCode.gitignore
-# =============================
+# VisualStudioCode.gitignore
+# ==========================
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json

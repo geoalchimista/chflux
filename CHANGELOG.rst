@@ -8,9 +8,9 @@ format of this changelog is based on `Keep a Changelog
 the `Semantic Versioning <http://semver.org/spec/v2.0.0.html>`_.
 
 
-Unreleased - 2018-05-18
+Unreleased - 2018-06-05
 =======================
-Refactoring the main program in progress . . .
+Refactoring the project in progress . . .
 
 Added
 -----

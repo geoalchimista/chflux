@@ -24,7 +24,7 @@ doc:
 	make html
 
 test:
-	pytest ./psify/tests
+	pytest ./chflux/tests
 
 help:
 	@echo "init       initialize development environment"

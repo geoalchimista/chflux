@@ -4,8 +4,9 @@ PyChamberFlux
 Wu Sun (wu.sun@ucla.edu)
 
 PyChamberFlux (``chflux``) is a Python package to calculate trace gas fluxes
-from chamber enclosure measurements, which are routinely used in
-biosphere--atmosphere gas exchange studies.
+from chamber enclosure measurements. Chamber enclosure is a technique routinely
+used in biosphere--atmosphere gas exchange studies, for example, measuring leaf
+photosynthetic carbon uptake or soil respiration.
 
 
 Dependencies
@@ -15,8 +16,8 @@ Dependencies
 * SciPy >= 1.0.1
 * pandas >= 0.22.0
 * matplotlib >= 2.2.2
-* PyYAML >= 3.12
-* pytest >= 3.5.1
+* jsonschema >= 2.5.0
+* pyyaml >= 3.12
 
 
 Installation
@@ -36,7 +37,7 @@ Installation
 
 .. end
 
-Note: Currently only the development version is available.
+Note: Currently only available in a development version due to refactoring.
 
 
 License
@@ -58,5 +59,6 @@ Contributing to PyChamberFlux
 -----------------------------
 [CONTRIBUTING.rst TO BE ADDED]
 
-Please navigate to the `GitHub "issues" tab <https://github.com/geoalchimista/chflux/issues>`_
-for reporting issues and pull requests.
+Please navigate to the `GitHub "issues" tab
+<https://github.com/geoalchimista/chflux/issues>`_ for reporting issues and
+pull requests.
