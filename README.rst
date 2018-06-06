@@ -8,6 +8,30 @@ from chamber enclosure measurements. Chamber enclosure is a technique routinely
 used in biosphere--atmosphere gas exchange studies, for example, measuring leaf
 photosynthetic carbon uptake or soil respiration.
 
+**WARNING: Refactoring in progress.** Please use the ``master`` branch!
+
+
+Refactoring tracking
+--------------------
+1. [ ] Command-line interface . . . [Refactoring]
+2. [ ] Configuration . . . [Refactoring]
+
+   * [X] Schema for chamber specifications
+   * [X] Schema for configuration
+   * [ ] Validation for configuration
+   * [ ] Validation for chamber specifications
+
+3. [ ] I/O functions . . . [Refactoring]
+4. [ ] Core calculation functions . . . [Refactoring]
+
+   * [X] Physical chemistry functions
+   * [X] Stats functions
+   * [ ] Flux calculators . . . [Refactoring] [Enhancement]
+   * [ ] Cython optimization . . . [Enhancement]
+
+5. [ ] Plotting functions . . . [Refactoring]
+6. [ ] Timelag optimization . . . [Refactoring] [Enhancement]
+
 
 Dependencies
 ------------
