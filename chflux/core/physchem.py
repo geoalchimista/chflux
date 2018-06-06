@@ -1,9 +1,9 @@
 """
-====================================================
-Basic physics and chemistry (:mod:`chflux.physchem`)
-====================================================
+=========================================================
+Basic physics and chemistry (:mod:`chflux.core.physchem`)
+=========================================================
 
-.. module:: chflux.physchem
+.. module:: chflux.core.physchem
 
 This module contains several functions for basic physics and chemistry.
 
@@ -19,7 +19,7 @@ import warnings
 import numpy as np
 from scipy import optimize
 
-from chflux import const
+from chflux.lib import const
 
 
 __all__ = ['e_sat', 'dew_temp', 'convert_flowrate']

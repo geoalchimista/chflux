@@ -1,9 +1,9 @@
-"""
-===============================
-Constants (:mod:`chflux.const`)
-===============================
+r"""
+====================================
+Constants (:mod:`chflux.core.const`)
+====================================
 
-.. currentmodule:: chflux.const
+.. currentmodule:: chflux.core.const
 
 Physical constants.
 

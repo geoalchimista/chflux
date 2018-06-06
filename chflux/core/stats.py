@@ -1,9 +1,9 @@
 """
-=================================================
-Basic statistical functions (:mod:`chflux.stats`)
-=================================================
+======================================================
+Basic statistical functions (:mod:`chflux.core.stats`)
+======================================================
 
-.. module:: chflux.stats
+.. module:: chflux.core.stats
 
 This module contains several functions for basic statistical calculations.
 

@@ -1,9 +1,9 @@
 """
-=====================================================
-Functions for calculating fluxes (:mod:`chflux.flux`)
-=====================================================
+==========================================================
+Functions for calculating fluxes (:mod:`chflux.core.flux`)
+==========================================================
 
-.. module:: chflux.flux
+.. module:: chflux.core.flux
 
 This module contains functions used for calculating fluxes.
 
