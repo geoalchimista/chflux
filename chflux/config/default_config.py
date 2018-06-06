@@ -22,11 +22,11 @@ default_config = {
     # A prefix string to prepend filenames of output data.
     "run.output.prefix": "",
 
-    # If True, save curve-fitting diagnostics to files in subfolder "./diag"
+    # If True, save curve-fitting diagnostics to files in subfolder "/curvefit"
     # in the output directory.
     "run.save.curvefit": True,
 
-    # If True, save the configuration files in subfolder "./config" in the
+    # If True, save the configuration files in subfolder "/config" in the
     # output directory.
     "run.save.config": True,
 

@@ -1,7 +1,7 @@
 """PyChamberFlux JSON Schema for chamber specifications."""
 
 chamber_schema = {
-    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
     "properties": {
         # Chamber ID number.
