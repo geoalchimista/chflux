@@ -1,2 +1,0 @@
-.. automodule:: chflux.physchem
-   :members:

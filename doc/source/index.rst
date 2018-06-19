@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to PyChamberFlux's documentation!
-=========================================
+PyChamberFlux Documentation
+===========================
 
 .. toctree::
    :maxdepth: 2
@@ -12,7 +12,7 @@ Welcome to PyChamberFlux's documentation!
 
 
 
-Indices and tables
+Indices and Tables
 ==================
 
 * :ref:`genindex`
@@ -20,13 +20,14 @@ Indices and tables
 * :ref:`search`
 
 
-API reference
+API Reference
 =============
 .. toctree::
    :maxdepth: 2
 
-   const
-   flux
-   physchem
-   stats
+   base
+   config
+   core
+   io
+   plot
    tools

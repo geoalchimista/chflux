@@ -1,2 +1,0 @@
-.. automodule:: chflux.stats
-   :members:
