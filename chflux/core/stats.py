@@ -3,9 +3,9 @@
 Basic statistical functions (:mod:`chflux.core.stats`)
 ======================================================
 
-.. module:: chflux.core.stats
+.. currentmodule:: chflux.core.stats
 
-This module contains several functions for basic statistical calculations.
+This module contains functions for basic summary statistics.
 
 .. autosummary::
    :toctree: generated/
@@ -21,7 +21,7 @@ import numpy as np
 __all__ = ['interquartile', 'resist_mean', 'resist_std', 'dixon_test']
 
 
-def interquartile(x, axis=None, retqrt=False):
+def interquartile(x, axis=None, ret_qrt=False):
     """
     Calculate the interquartile range of a sample.
 
@@ -32,9 +32,9 @@ def interquartile(x, axis=None, retqrt=False):
     axis : int, optional
         Axis along which the percentiles are computed. Default is to ignore
         and compute the flattened array. (Same as the ``axis`` argument in
-        ``numpy.nanpercentile()``.)
-    retqrt : bool, optional
-        Return quartiles. If True, return (``iqr``, ``q1``, ``q3``), where
+        ``numpy.nanpercentile``.)
+    ret_qrt : bool, optional
+        Return quartiles. If ``True``, return (``iqr``, ``q1``, ``q3``), where
         ``q1`` is the first quartile and ``q3`` is the third quartile.
 
     Returns
@@ -42,7 +42,7 @@ def interquartile(x, axis=None, retqrt=False):
     iqr : float or array_like
         The interquartile range of a sample.
     q1, q3 : float or array_like, optional
-        Only returned if ``retqrt`` is True.
+        Only returned when ``ret_qrt`` is ``True``.
 
         The first and the third quartiles of a sample.
 
@@ -51,23 +51,21 @@ def interquartile(x, axis=None, retqrt=False):
     >>> interquartile(range(20))
     9.5
 
-    >>> interquartile(range(20), retqrt=True)
+    >>> interquartile(range(20), ret_qrt=True)
     (9.5, 4.75, 14.25)
     """
-    if np.sum(np.isfinite(x)) > 0:
-        q1, q3 = np.nanpercentile(x, [25., 75.], axis=axis)
-        iqr = q3 - q1
-        if retqrt:
-            return iqr, q1, q3
-        else:
-            return q3 - q1
+    q1, q3 = np.nanpercentile(x, [25., 75.], axis=axis)
+    iqr = q3 - q1
+    if ret_qrt:
+        return iqr, q1, q3
     else:
-        return np.nan, np.nan, np.nan
+        return q3 - q1
 
 
-def resist_mean(x, inlier_range=1.5):
+def resist_mean(x, inlier_range=1.5) -> float:
     r"""
-    Calculate outlier-resistant mean of a sample using Tukey's outlier test.
+    Calculate the outlier-resistant mean of a sample using Tukey's outlier
+    test.
 
     Note: If the sample size is too small for outlier filtering (i.e., *n* <
     4), the outlier-resistant mean is equal to the mean.
@@ -98,23 +96,23 @@ def resist_mean(x, inlier_range=1.5):
 
     References
     ----------
-    .. [T77] John W. Tukey (1977). Exploratory Data Analysis. Addison-Wesley.
+    .. [T77] Tukey, J. W. (1977). *Exploratory Data Analysis*. Addison-Wesley.
     """
     x = np.array(x)
     if np.sum(np.isfinite(x)) <= 3:
         return np.nanmean(x)
     else:
-        iqr, q1, q3 = interquartile(x, retqrt=True)
+        iqr, q1, q3 = interquartile(x, ret_qrt=True)
         inlier_uplim = q3 + inlier_range * iqr
         inlier_lolim = q1 - inlier_range * iqr
         rmean = np.nanmean(x[(x >= inlier_lolim) & (x <= inlier_uplim)])
         return rmean
 
 
-def resist_std(x, inlier_range=1.5):
+def resist_std(x, inlier_range=1.5) -> float:
     r"""
-    Calculate outlier-resistant standard deviation of a sample using Tukey's
-    outlier test.
+    Calculate the outlier-resistant standard deviation of a sample using
+    Tukey's outlier test.
 
     Note: If the sample size is too small for outlier filtering (i.e., *n* <
     4), the outlier-resistant standard deviation is equal to the standard
@@ -150,13 +148,13 @@ def resist_std(x, inlier_range=1.5):
 
     References
     ----------
-    .. [T77] John W. Tukey (1977). Exploratory Data Analysis. Addison-Wesley.
+    .. [T77] Tukey, J. W. (1977). *Exploratory Data Analysis*. Addison-Wesley.
     """
     x = np.array(x)
     if np.sum(np.isfinite(x)) <= 3:
         return(np.nanstd(x, ddof=1))
     else:
-        iqr, q1, q3 = interquartile(x, retqrt=True)
+        iqr, q1, q3 = interquartile(x, ret_qrt=True)
         inlier_uplim = q3 + inlier_range * iqr
         inlier_lolim = q1 - inlier_range * iqr
         rstd = np.nanstd(x[(x >= inlier_lolim) & (x <= inlier_uplim)],
@@ -164,24 +162,24 @@ def resist_std(x, inlier_range=1.5):
         return rstd
 
 
-def dixon_test(x, left=True, right=True, q_conf='q95'):
+def dixon_test(x, left=True, right=True, q_conf='q95') -> list:
     """
     Use Dixon's Q test to identify low and high outliers. The test is based
     upon two assumptions: (1) data must be normally distributed; (2) the test
     may only be used once to a dataset and not repeated.
 
-    Adapted from: <http://sebastianraschka.com/Articles/2014_dixon_test.html>
-    (Retrieved 23 Apr 2017).
+    Adapted from: http://sebastianraschka.com/Articles/2014_dixon_test.html
+    (Retrieved on 23 Apr 2017).
 
     Parameters
     ----------
     x : array_like
         Data points. Must be a list or a one dimensional array.
     left : bool, optional
-        If True, test the minimum value.
+        If ``True``, test the minimum value.
     right : bool, optional
-        If True, test the maximum value.
-        (At least one of the two, ``left`` or ``right``, must be True.)
+        If ``True``, test the maximum value.
+        (At least one of the two, ``left`` or ``right``, must be ``True``.)
     q_conf : str, optional
         Confidence level: ``'q95'`` -- 95% confidence interval (default).
         Others options are ``'q90'`` (90% C.I.) and ``'q99'`` (99% C.I.).
@@ -197,13 +195,13 @@ def dixon_test(x, left=True, right=True, q_conf='q95'):
     References
     ----------
     .. [1] Dean, R. B. and Dixon, W. J. (1951). Simplified Statistics for Small
-       Numbers of Observations. Anal. Chem., 23(4), 636—638.
+       Numbers of Observations. *Anal. Chem.*, 23(4), 636--638.
     .. [2] Dixon, W. J. (1953). Processing data for outliers Reference.
-       J. Biometrics, 9, 74–89.
+       *J. Biometrics*, 9, 74--89.
     .. [3] Rorabacher, D. B. (1991). Statistical Treatment for Rejection of
        Deviant Values: Critical Values of Dixon Q Parameter and Related
-       Subrange Ratios at the 95 percent Confidence Level. Anal. Chem., 63(2),
-       139–146.
+       Subrange Ratios at the 95 percent Confidence Level. *Anal. Chem.*,
+       63(2), 139--146.
 
     Examples
     --------
@@ -241,7 +239,7 @@ def dixon_test(x, left=True, right=True, q_conf='q95'):
 
     q_crit = q_dicts[q_conf][len(x_arr) - 3]
 
-    # for small dataset, the built-in `sorted()` is faster than `np.sort()`
+    # for small dataset, the built-in `sorted` is faster than `np.sort`
     x_sorted = sorted(x_arr)
 
     x_range = x_sorted[-1] - x_sorted[0]
