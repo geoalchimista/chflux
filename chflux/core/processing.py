@@ -1,3 +1,5 @@
+"""Data processing module."""
+
 from typing import Dict, List
 
 import pandas as pd
@@ -55,6 +57,18 @@ def find_biomet_vars(df_bm: pd.DataFrame) -> Dict[str, List[str]]:
     return names
 
 
-def reduce_dataframe(df: pd.DataFrame, by: str) -> pd.DataFrame:
-    """This is a just temporary reminder; will be deprecated."""
-    return df.groupby(by, as_index=False).mean()
+def reduce_dataframe(df: pd.DataFrame, by: str,
+                     upper_bound=None, lower_bound=None) -> pd.DataFrame:
+    """Reduce a dataframe by averaging according to a specified label."""
+    if upper_bound is None and lower_bound is None:
+        df_filtered = df
+    elif upper_bound is None:
+        df_filtered = df[(df[by] > lower_bound)]
+    elif lower_bound is None:
+        df_filtered = df[(df[by] < upper_bound)]
+    else:
+        df_filtered = df[(df[by] < upper_bound) & (df[by] > lower_bound)]
+
+    df_reduced = df_filtered.groupby(by, as_index=False).mean()
+    df_reduced = df_reduced.reset_index(drop=True)
+    return df_reduced
