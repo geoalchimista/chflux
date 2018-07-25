@@ -1,4 +1,9 @@
-from typing import Dict
+from typing import List, Dict
+
+
+def filter_substr(strlst: List[str], substr: str) -> List[str]:
+    """Filter a list of string by a substring."""
+    return list(filter(lambda s: substr in s, strlst))
 
 
 def flatten_dict(d: Dict) -> Dict:

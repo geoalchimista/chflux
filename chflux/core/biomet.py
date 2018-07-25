@@ -1,14 +1,8 @@
-from typing import List, Dict
+from typing import Dict, List
+
 import pandas as pd
 
-
-df = pd.read_csv("./chflux/tests/_assets/test-input-biomet.csv",
-                 parse_dates=[0, ])
-
-
-def filter_substr(strlst: List[str], substr: str) -> List[str]:
-    """Filter a list of string by a substring."""
-    return list(filter(lambda s: substr in s, strlst))
+from chflux.tools.helpers import filter_substr
 
 
 def find_timestamp(df: pd.DataFrame, utc: bool = True) -> str:
@@ -48,6 +42,7 @@ def find_timestamp(df: pd.DataFrame, utc: bool = True) -> str:
 
 def find_biomet_vars(df_bm: pd.DataFrame) -> Dict[str, List[str]]:
     names = {
+        "pressure": [s for s in df_bm.columns if "pressure" in s],
         "T_atm": [s for s in df_bm.columns if "T_atm" in s],
         "RH_atm": [s for s in df_bm.columns if "RH_atm" in s],
         "T_ch": [s for s in df_bm.columns if "T_ch" in s],
@@ -57,8 +52,6 @@ def find_biomet_vars(df_bm: pd.DataFrame) -> Dict[str, List[str]]:
         "T_soil": [s for s in df_bm.columns if "T_soil" in s],
         "w_soil": [s for s in df_bm.columns if "w_soil" in s],
     }
-    # NOTE: T_dew_ch should go to the post-processing
-    # names["T_dew_ch"] = [s.replace("T_ch", "T_dew_ch") for s in names["T_ch"]]
     return names
 
 
