@@ -6,8 +6,8 @@
         "cycle_length": 30.0,
         "n_chambers": 2,
         "n_cycles_per_day": 48,
-        "chambers": {
-            "chamber_1": {
+        "chambers": [
+            {
                 "id": 1,
                 "name": "LC1",
                 "is_leaf_chamber": true,
@@ -35,7 +35,7 @@
                     "lower_limit": 0.0
                 }
             },
-            "chamber_2": {
+            {
                 "id": 2,
                 "name": "LC2",
                 "is_leaf_chamber": true,
@@ -63,6 +63,6 @@
                     "lower_limit": 0.0
                 }
             }
-        }
+        ]
     }
 }

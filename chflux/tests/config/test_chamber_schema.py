@@ -1,10 +1,12 @@
-import pytest
+import json
+
 import jsonschema
+import pytest
 from jsonschema.exceptions import ValidationError
+
 from chflux.config import chamber_schema
 
-
-# setting up the test data
+# set up the test data
 
 chamber_1 = {
     "id": 1,
@@ -67,9 +69,9 @@ chamber_2 = {
 
 
 chamber_3 = {
-    "id": "3",  # <- this should NOT raise an exception
+    "id": "3",  # this should NOT raise an exception
     "name": "SC3",
-    "is_leaf_chamber": "false",  # <- this should raise an exception
+    "is_leaf_chamber": "false",  # this should raise an exception
     "area": 0.04,
     "volume": 0.015,
     "sensors_id": {
@@ -114,14 +116,14 @@ experiment_2 = {
     "cycle_length": 30.,
     "n_chambers": 2,
     "n_cycles_per_day": 48,
-    "chambers": [chamber_1, chamber_3]  # <- this should raise an exception
+    "chambers": [chamber_1, chamber_3]  # this should raise an exception
 }
 
 
 experiment_3 = {
     "start": "2018-05-17",
     "end": "2018-05-18",
-    "unit_of_time": "week",  # <- a deliberate mistake to raise an exception
+    "unit_of_time": "week",  # a deliberate mistake to raise an exception
     "cycle_length": 30.,
     "n_chambers": 2,
     "n_cycles_per_day": 48,
@@ -141,3 +143,14 @@ def test_experiment_schema():
     with pytest.raises(ValidationError):
         jsonschema.validate(experiment_2, chamber_schema.experiment_schema)
         jsonschema.validate(experiment_3, chamber_schema.experiment_schema)
+
+
+def test_chamber_schema_json():
+    with open("./chflux/tests/_assets/test-chamber.json") as f:
+        chamber_spec_json = json.load(f)
+
+    for key in chamber_spec_json:
+        jsonschema.validate(chamber_spec_json[key],
+                            chamber_schema.experiment_schema)
+        for item in chamber_spec_json[key]["chambers"]:
+            jsonschema.validate(item, chamber_schema.chamber_schema)
