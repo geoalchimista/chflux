@@ -1,4 +1,4 @@
-"""Utilities to create experimental schedules from chamber specifications."""
+"""Utilities to obtain experimental schedules from chamber specifications."""
 import sys
 import warnings
 from typing import Dict
@@ -6,10 +6,11 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 
-from helpers import flatten_dict
+from chflux.tools.helpers import flatten_dict
 
 
 def time_unit_conversion_factor(unitname: str) -> float:
+    """Return a multiplier that converts a given unit of time to day(s)."""
     if unitname in ["seconds", "second", "sec", "s"]:
         conv_fac = 1. / (60. * 60. * 24.)
     elif unitname in ["minutes", "minute", "min", "m"]:
@@ -67,6 +68,8 @@ def make_daily_schedule(date: pd.Timestamp, experiments: Dict) -> pd.DataFrame:
 
     # unpack current experimental schedule
     sch = get_schedule(date, experiments)
+    if sch == {}:
+        raise RuntimeError("Cannot find a valid schedule on the date given!")
     cycle_length = sch["cycle_length"]
     experiment_end_delta = (sch["experiment_end"] - date) / td_day
 
