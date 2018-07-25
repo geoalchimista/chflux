@@ -21,11 +21,10 @@ from scipy import optimize
 
 from chflux.core import const
 
-
 __all__ = ['e_sat', 'dew_temp', 'convert_flowrate']
 
 
-def e_sat(temp, kelvin=False):
+def e_sat(temp, kelvin: bool = False):
     """
     Calculate saturation vapor pressure of water at a certain temperature.
 
@@ -66,16 +65,16 @@ def e_sat(temp, kelvin=False):
     # Goff-Gratch equation by default
     u_T = 373.16 / T_k
     v_T = T_k / 373.16
-    log10_esat = -7.90298 * (u_T - 1.) + 5.02808 * np.log10(u_T) - \
+    log10_e_sat = -7.90298 * (u_T - 1.) + 5.02808 * np.log10(u_T) - \
         1.3816e-7 * (10. ** (11.344 * (1. - v_T)) - 1.) + \
         8.1328e-3 * (10. ** (- 3.49149 * (u_T - 1.)) - 1.) + \
         np.log10(1013.246) + 2.  # add 2 to convert from hPa to Pa
-    e_sat = 10. ** log10_esat
+    e_sat = 10. ** log10_e_sat
 
     return e_sat
 
 
-def dew_temp(e_air, guess=25., kelvin=False) -> float:
+def dew_temp(e_air: float, guess: float = 25., kelvin: bool = False) -> float:
     """
     Calculate dew temperature of air from water vapor partial pressure.
 
@@ -106,7 +105,7 @@ def dew_temp(e_air, guess=25., kelvin=False) -> float:
     >>> dew_temp(3165.2, kelvin=True)
     298.15002314219754
     """
-    def __e_sat_residual(T, e_air, kelvin):
+    def __e_sat_residual(T: float, e_air: float, kelvin: bool):
         return e_sat(T, kelvin=kelvin) - e_air
 
     if kelvin:
@@ -122,7 +121,7 @@ def dew_temp(e_air, guess=25., kelvin=False) -> float:
     return T_dew
 
 
-def convert_flowrate(flow_slm, temp, pressure=const.atm, kelvin=False):
+def convert_flowrate(flow_slm, temp, pressure=const.atm, kelvin: bool = False):
     """
     Convert flow rate from STP to the ambient condition of temperature and
     pressure.

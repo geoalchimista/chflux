@@ -4,7 +4,6 @@ import sys
 
 from setuptools import find_packages, setup
 
-
 # package metadata
 NAME = 'chflux'
 DESCRIPTION = 'Calculate trace gas fluxes from chamber enclosure measurements'
@@ -17,7 +16,6 @@ VERSION = None
 
 # requirements
 REQUIRED = ['numpy', 'scipy', 'pandas', 'matplotlib', 'pyyaml', 'jsonschema']
-
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -32,7 +30,6 @@ if not VERSION:
         exec(f.read(), about)
 else:
     about['__version__'] = VERSION
-
 
 setup(
     name=NAME,

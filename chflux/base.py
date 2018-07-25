@@ -1,8 +1,4 @@
-"""
-PyChamberFlux main script
-
-A package for calculating trace gas fluxes from chamber measurements
-"""
+"""Base classes for PyChamberFlux."""
 import argparse
 import copy
 import datetime
@@ -10,19 +6,23 @@ import os
 
 from chflux.config.default_config import default_config
 from chflux.io import *
+from chflux.exceptions import *
 from chflux.tools import check_pkgreqs
 
 
 class ChFluxProcess(object):
-    """Start a process to run the PyChamberFlux calculations."""
-    # == private properties ==
-    _description = 'PyChamberFlux: Main module for flux calculation.'
+    """
+    PyChamberFlux Process class that interacts with the client and executes
+    calculations.
+    """
+    _description = 'PyChamberFlux: A command-line tool for dynamic chamber' + \
+        ' flux calculations.'
 
-    # == bind external functions ==
+    # check package requirements
     _check_pkgreqs = staticmethod(check_pkgreqs)
 
     def __init__(self, args=None):
-        """Initialize a PyChamberFlux process."""
+        """Initialize a PyChamberFlux Process."""
         self._init_argparser()
         self._add_arguments()
         self._args = self._argparser.parse_args(args)
@@ -38,7 +38,7 @@ class ChFluxProcess(object):
             '-c', '--config', dest='config', action='store',
             help='set the configuration file for the run')
 
-    # == methods and properties for timing the session ==
+    # == timing the session ==
 
     def _set_time_start(self):
         self._time_start = datetime.datetime.utcnow()
@@ -53,16 +53,16 @@ class ChFluxProcess(object):
         return self._time_end
 
     time_start = property(_get_time_start, _set_time_start,
-                          doc="Start time of the current session.")
+                          doc="Start time of the latest session.")
     time_end = property(_get_time_end, _set_time_end,
-                        doc="End time of the current session.")
+                        doc="End time of the latest session.")
 
     @property
     def time_lapsed(self):
-        """Time spent on the data processing."""
+        """Time spent in executing the latest session."""
         return (self._time_end - self._time_start).total_seconds()
 
-    # == methods and properties for the configuration of the run ==
+    # == configuration of the run ==
 
     def _set_config(self, echo=True):
         """Set the configuration of the run."""
@@ -101,7 +101,8 @@ class ChFluxProcess(object):
     def _check_config(self):
         """Sanity-check the configuration."""
         if len(self._config['species.list']) < 1:
-            raise ConfigException('No gas species is defined in the config.')
+            raise ConfigValidationException(
+                'No gas species is defined in the config.')
         # @TODO: more rules need to be added
 
     # clients are allowed to access the config, update it by keys, save it,
@@ -171,9 +172,6 @@ class ChFluxProcess(object):
 
     def run(self):
         """Run the process."""
-        # Note: this function is a wrapper around a series actions on the data.
-        # The function itself does not manipulate the data. This is intended
-        # for keeping the main program on top of all actions.
 
         self._set_time_start()  # set the start time of the current session
         print('PyChamberFlux\nStarting data processing at %s ...' %

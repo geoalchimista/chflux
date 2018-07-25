@@ -17,11 +17,10 @@ This module contains functions for basic summary statistics.
 """
 import numpy as np
 
-
 __all__ = ['interquartile', 'resist_mean', 'resist_std', 'dixon_test']
 
 
-def interquartile(x, axis=None, ret_qrt=False):
+def interquartile(x, axis=None, ret_qrt: bool = False):
     """
     Calculate the interquartile range of a sample.
 
@@ -59,7 +58,7 @@ def interquartile(x, axis=None, ret_qrt=False):
     if ret_qrt:
         return iqr, q1, q3
     else:
-        return q3 - q1
+        return iqr
 
 
 def resist_mean(x, inlier_range=1.5) -> float:
@@ -162,7 +161,8 @@ def resist_std(x, inlier_range=1.5) -> float:
         return rstd
 
 
-def dixon_test(x, left=True, right=True, q_conf='q95') -> list:
+def dixon_test(x, left: bool = True, right: bool = True,
+               q_conf: str = 'q95') -> list:
     """
     Use Dixon's Q test to identify low and high outliers. The test is based
     upon two assumptions: (1) data must be normally distributed; (2) the test
@@ -239,9 +239,7 @@ def dixon_test(x, left=True, right=True, q_conf='q95') -> list:
 
     q_crit = q_dicts[q_conf][len(x_arr) - 3]
 
-    # for small dataset, the built-in `sorted` is faster than `np.sort`
-    x_sorted = sorted(x_arr)
-
+    x_sorted = sorted(x_arr)  # sorted is faster than np.sort for small dataset
     x_range = x_sorted[-1] - x_sorted[0]
     if x_range == 0:
         outliers = [None, None]

@@ -4,10 +4,11 @@ init:
 	pip install -r requirements.txt
 
 clean:
-	-python setup.py clean
+	-python setup.py clean; \
 
 clean_pyc:
 	-find . -name '*.py[co]' -exec rm {} \;
+	-find . | grep -E "(__pycache__|.mypy_cache|.pytest_cache|.hypothesis|chflux.egg-info)" | xargs rm -rf \;
 
 build: clean_pyc
 	python setup.py build_ext --inplace
@@ -15,16 +16,17 @@ build: clean_pyc
 develop: build
 	-python setup.py develop
 
-uninstall_develop: clean
+uninstall: clean
 	-python setup.py develop --uninstall
 
-doc:
-	cd doc; \
+docs:
+	cd docs; \
 	make clean; \
 	make html
 
 test:
-	pytest ./chflux/tests
+	pytest ./chflux/tests; \
+	mypy --ignore-missing-imports ./chflux
 
 help:
 	@echo "init       initialize development environment"
