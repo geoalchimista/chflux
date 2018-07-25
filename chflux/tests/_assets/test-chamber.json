@@ -22,8 +22,8 @@
                     "start": 2.0,
                     "bypass_before.start": 1.0,
                     "bypass_before.end": 3.0,
-                    "measurement.start": 3.0,
-                    "measurement.end": 11.0,
+                    "chamber.start": 3.0,
+                    "chamber.end": 11.0,
                     "bypass_after.start": 11.0,
                     "bypass_after.end": 13.0,
                     "end": 13.0
@@ -50,8 +50,8 @@
                     "start": 17.0,
                     "bypass_before.start": 1.0,
                     "bypass_before.end": 3.0,
-                    "measurement.start": 3.0,
-                    "measurement.end": 11.0,
+                    "chamber.start": 3.0,
+                    "chamber.end": 11.0,
                     "bypass_after.start": 11.0,
                     "bypass_after.end": 13.0,
                     "end": 13.0

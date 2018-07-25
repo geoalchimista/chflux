@@ -23,8 +23,8 @@ chamber_1 = {
         "start": 0.,
         "bypass_before.start": 0.5,
         "bypass_before.end": 2.5,
-        "measurement.start": 3.,
-        "measurement.end": 9.,
+        "chamber.start": 3.,
+        "chamber.end": 9.,
         "bypass_after.start": 9.5,
         "bypass_after.end": 12.5,
         "end": 12.5
@@ -53,8 +53,8 @@ chamber_2 = {
         "start": 13.,
         "bypass_before.start": 0.5,
         "bypass_before.end": 2.5,
-        "measurement.start": 3.,
-        "measurement.end": 9.,
+        "chamber.start": 3.,
+        "chamber.end": 9.,
         "bypass_after.start": 9.5,
         "bypass_after.end": 12.5,
         "end": 12.5
@@ -83,8 +83,8 @@ chamber_3 = {
     #     "start": 13.,
     #     "bypass_before.start": 0.5,
     #     "bypass_before.end": 2.5,
-    #     "measurement.start": 3.,
-    #     "measurement.end": 9.,
+    #     "chamber.start": 3.,
+    #     "chamber.end": 9.,
     #     "bypass_after.start": 9.5,
     #     "bypass_after.end": 12.5,
     #     "end": 12.5
