@@ -20,8 +20,8 @@ Indices and Tables
 * :ref:`search`
 
 
-API Reference
-=============
+API Documentation
+=================
 .. toctree::
    :maxdepth: 2
 
