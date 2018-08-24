@@ -52,9 +52,11 @@ class ChFluxProcess(object):
     def _get_time_end(self):
         return self._time_end
 
-    time_start = property(_get_time_start, _set_time_start,
+    time_start = property(_get_time_start,  # type: ignore
+                          _set_time_start,
                           doc="Start time of the latest session.")
-    time_end = property(_get_time_end, _set_time_end,
+    time_end = property(_get_time_end,  # type: ignore
+                        _set_time_end,
                         doc="End time of the latest session.")
 
     @property

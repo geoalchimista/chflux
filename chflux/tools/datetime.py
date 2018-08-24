@@ -2,10 +2,10 @@
 import copy
 import os
 import re
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
-
 
 __all__ = ['timestamp_parsers', 'extract_date_substr', 'parse_day_number',
            'parse_unix_time']
@@ -15,20 +15,20 @@ __all__ = ['timestamp_parsers', 'extract_date_substr', 'parse_day_number',
 # Supports only the ISO 8601 format (year-month-day).
 # Does not support month-first (American) or day-first (European) format.
 timestamp_parsers = {
-    # date only
+    # parse date-only string
     'ymd': lambda s: pd.to_datetime(s, format='%Y %m %d'),
-    # down to minute
+    # parse datetime string that is accurate to minutes
     'ymdhm': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M'),
-    # down to second
+    # parse datetime string that is accurate to seconds
     'ymdhms': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M %S'),
-    # down to nanosecond
+    # parse datetime string that is accurate to nanoseconds
     'ymdhmsf': lambda s: pd.to_datetime(s, format='%Y %m %d %H %M %S %f'),
 }
-# NOTE: this module variable cannot be documented by sphinx (1.7.2); check
-# later versions
 
 
-def extract_date_substr(flist, date_format='%Y%m%d'):
+def extract_date_substr(flist: List[str],
+                        date_format: str = '%Y%m%d') -> Tuple[
+                            List[str], pd.DatetimeIndex]:
     """
     Extract date substring from a list of file paths and parse to timestamps.
 
@@ -50,7 +50,7 @@ def extract_date_substr(flist, date_format='%Y%m%d'):
     ts_series : pandas.DatetimeIndex
         A series of pandas timestamps converted from ``date_substr_list``.
     """
-    # replace date_format string to get regex pattern
+    # replace date_format string to make a regex pattern
     re_replace_dict = {
         '-': '\\-',        # dash separators
         '%Y': '[0-9]{4}',  # 4-digit year
@@ -58,13 +58,15 @@ def extract_date_substr(flist, date_format='%Y%m%d'):
         '%m': '[0-9]{2}',
         '%d': '[0-9]{2}',
     }
-    # get regex date pattern
     re_date_pattern = copy.copy(date_format)
     for k in list(re_replace_dict.keys()):
         re_date_pattern = re_date_pattern.replace(k, re_replace_dict.pop(k))
-
-    date_substr_list = [re.search(re_date_pattern, os.path.basename(f)).group()
-                        for f in flist]
+    # match regex
+    re_match_list = [re.search(re_date_pattern, os.path.basename(f))
+                     for f in flist]
+    # note: re.search(...) -> Optional[Match[str]]; must remove None
+    # get substring list
+    date_substr_list = [m.group() for m in re_match_list if m is not None]
     ts_series = pd.to_datetime(date_substr_list, format=date_format,
                                errors='coerce')
     return date_substr_list, ts_series

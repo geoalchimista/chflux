@@ -22,15 +22,26 @@ Refactoring tracking
    * [ ] Validation for chamber specifications
 
 3. [ ] I/O functions . . . [Refactoring]
+
+   * [ ] YAML Reader
+   * [ ] CSV Reader
+
 4. [ ] Core calculation functions . . . [Refactoring]
 
    * [X] Physical chemistry functions
    * [X] Stats functions
-   * [ ] Flux calculators . . . [Refactoring] [Enhancement]
+   * [X] Flux calculators . . . [Refactoring] [Enhancement]
    * [ ] Cython optimization . . . [Enhancement]
 
 5. [ ] Plotting functions . . . [Refactoring]
-6. [ ] Timelag optimization . . . [Refactoring] [Enhancement]
+6. [ ] Miscellaneous helper functions [Implementing]
+
+    * [X] Datetime parsers
+    * [X] Helpers to manipulate collection types
+    * [X] Package requirement checker (is this really a helper?)
+    * [X] Concentration and flux units parser
+
+7. [ ] Timelag optimization . . . [Refactoring] [Enhancement]
 
 
 Dependencies

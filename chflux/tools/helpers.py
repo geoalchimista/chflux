@@ -1,4 +1,6 @@
-from typing import List, Dict
+import collections
+import copy
+from typing import Dict, List
 
 
 def filter_substr(strlst: List[str], substr: str) -> List[str]:
@@ -19,3 +21,26 @@ def flatten_dict(d: Dict) -> Dict:
                 yield key, value
 
     return dict(items())
+
+
+def update_dict(dct: Dict, updater: Dict) -> Dict:
+    """
+    Return a dict from updating the keys of `dct` with the `updater` dict.
+    Both can be nested dicts of arbitrary depth. The original dict is kept
+    unchanged.
+    """
+    def _update_dict_altered(dct, updater):
+        """
+        This inner function performs the updating by recursion. It will alter
+        the input `dct`.
+        """
+        for k, v in updater.items():
+            if (k in dct and isinstance(dct[k], dict) and
+                    isinstance(updater[k], collections.Mapping)):
+                _update_dict_altered(dct[k], updater[k])
+            else:
+                dct[k] = updater[k]
+
+    dct_copy = copy.deepcopy(dct)
+    _update_dict_altered(dct_copy, updater)
+    return dct_copy

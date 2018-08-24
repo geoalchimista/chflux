@@ -15,7 +15,9 @@ Variables
 ---------
 .. data:: chflux.tools.timestamp_parsers
 
-   A dictionary of timestamp parsers for ``pandas.read_csv()``.
+   A dictionary of timestamp parsers supporting multiple ISO 8601
+   (year-month-day) date and datetime formats, for use with
+   ``pandas.read_csv`` only.
 
 Functions
 ---------
@@ -40,10 +42,8 @@ Miscellaneous tools
 
    check_pkgreqs -- Check package requirements.
 """
-
-from .datetimes import *
+from .datetime import *
 from .units import *
 from .misc import *
-
 
 __all__ = [s for s in dir() if not s.startswith('_')]
