@@ -1,11 +1,9 @@
 """
-======================================================
-Basic statistical functions (:mod:`chflux.core.stats`)
-======================================================
+===================================================
+Basic summary statistics (:mod:`chflux.core.stats`)
+===================================================
 
 .. currentmodule:: chflux.core.stats
-
-This module contains functions for basic summary statistics.
 
 .. autosummary::
    :toctree: generated/

@@ -5,8 +5,6 @@ Basic physics and chemistry (:mod:`chflux.core.physchem`)
 
 .. currentmodule:: chflux.core.physchem
 
-This module contains several functions for basic physics and chemistry.
-
 .. autosummary::
    :toctree: generated/
 

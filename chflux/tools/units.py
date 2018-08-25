@@ -1,10 +1,11 @@
 """A collection of tools for unit conversions and representations."""
 import math
+from typing import List
 
 __all__ = ['parse_units']
 
 
-def parse_units(unit_values):
+def parse_units(unit_values: List[float]) -> List[str]:
     """
     Parse concentration and flux units from numerical values.
 

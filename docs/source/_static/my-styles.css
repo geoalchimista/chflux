@@ -1,0 +1,29 @@
+.btn,
+input[type="submit"],
+input[type="color"],
+textarea,
+body,
+.rst-versions {
+    font-family: "Open Sans", "Lato", "proxima-nova", "Helvetica Neue", Arial, sans-serif;
+}
+
+
+code,
+.rst-content tt,
+.rst-content code,
+footer span.commit code,
+footer span.commit .rst-content tt,
+.rst-content footer span.commit tt,
+.rst-content pre.literal-block,
+.rst-content .linenodiv pre,
+.rst-content pre.literal-block,
+.rst-content div[class^='highlight'] pre,
+.rst-content .linenodiv pre,
+.rst-content tt,
+.rst-content tt,
+.rst-content code,
+.rst-content pre,
+.rst-content kbd,
+.rst-content samp {
+    font-family: "Inconsolata", Monaco, Menlo, Consolas, "Liberation Mono", SFMono-Regular, "Courier New", Courier, monospace;
+}

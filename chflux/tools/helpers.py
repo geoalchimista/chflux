@@ -2,6 +2,8 @@ import collections
 import copy
 from typing import Dict, List
 
+__all__ = ['filter_substr', 'flatten_dict', 'update_dict']
+
 
 def filter_substr(strlst: List[str], substr: str) -> List[str]:
     """Filter a list of string by a substring."""
@@ -34,7 +36,7 @@ def update_dict(dct: Dict, updater: Dict) -> Dict:
         This inner function performs the updating by recursion. It will alter
         the input `dct`.
         """
-        for k, v in updater.items():
+        for k, _ in updater.items():
             if (k in dct and isinstance(dct[k], dict) and
                     isinstance(updater[k], collections.Mapping)):
                 _update_dict_altered(dct[k], updater[k])

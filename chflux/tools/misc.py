@@ -6,7 +6,7 @@ import pkg_resources
 __all__ = ['check_pkgreqs']
 
 
-def check_pkgreqs(echo=True):
+def check_pkgreqs(echo: bool = True) -> None:
     """Check package requirements."""
     # required packages
     pkg_list = ['numpy', 'pandas', 'scipy', 'matplotlib', 'yaml', 'jsonschema']

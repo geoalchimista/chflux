@@ -5,8 +5,6 @@ Constants (:mod:`chflux.core.const`)
 
 .. currentmodule:: chflux.core.const
 
-Physical constants.
-
 ====================  =========================================================
 ``T_0``               zero Celsius in Kelvin
 ``atm``               standard atmospheric pressure [Pa]

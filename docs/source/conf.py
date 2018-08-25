@@ -19,6 +19,7 @@
 #
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath('./../../'))
 
 
@@ -182,3 +183,7 @@ texinfo_documents = [
 # -- Custom settings ------------------------------------------------------
 # to solve a problem with the `autosummary` warnings
 numpydoc_show_class_members = False
+
+
+def setup(app):
+    app.add_stylesheet("my-styles.css")  # also can be a full URL

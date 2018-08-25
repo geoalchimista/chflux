@@ -1,48 +1,66 @@
-"""PyChamberFlux I/O module for reading config and data files."""
 import copy
 import glob
+import json
+from typing import Dict, List, Optional, Tuple, Union
 
-import yaml
 import pandas as pd
+import yaml
 
 from chflux.tools import timestamp_parsers
 
+__all__ = ['read_yaml', 'read_json', 'read_csv_data', 'read_tabulated_data']
 
-def read_yaml(filepath):
-    """Read a YAML file as a dict. Return an empty dict if fail to read."""
-    with open(filepath, 'r') as f:
+
+def read_yaml(path: str) -> Optional[Dict]:
+    """Read a YAML file into a Python dict. If fails, return ``None``."""
+    with open(path, 'r') as fp:
         try:
-            ydict = yaml.load(f)
-        except yaml.YAMLError as exc_yaml:
-            print(exc_yaml)
-            ydict = {}  # fall back to an empty dict if fail to read
-
+            ydict = yaml.load(fp)
+        except yaml.YAMLError as exception_yaml:
+            print(exception_yaml)
+            ydict = None
     return ydict
 
 
-# @TODO: need refactoring
+def read_json(path: str) -> Optional[Dict]:
+    """Read a JSON file into a Python dict. If fails, return ``None``."""
+    with open(path, 'r') as fp:
+        try:
+            jdict = json.load(fp)
+        except json.JSONDecodeError as exception_json:
+            print(exception_json)
+            jdict = None
+    return jdict
+
+
+# TODO: refactor read_tabulated_data -> read_csv_data
+def read_csv_data(names: Union[List[str], Tuple[str], str], config: Dict,
+                  query: Optional[str] = None):
+    pass
+
+
 def read_tabulated_data(data_name, config, query=None):
     """
     A generalized function to read tabulated data specified in the config.
 
     Parameters
     ----------
-    data_name : str
+    data_name: str
         Data name, allowed values are
         - 'biomet': biometeorological data
         - 'conc': concentration data
         - 'flow': flow rate data
         - 'leaf': leaf area data
         - 'timelag': timelag data
-    config : dict
-        Configuration dictionary parsed from the YAML config file.
-    query : list
+    config: dict
+        Configuration dictionary parsed from the config file.
+    query: list
         A list of query strings used to search in all available data files.
         If `None` (default), read all data files.
 
     Return
     ------
-    df : pandas.DataFrame
+    df: pandas.DataFrame
         The loaded tabulated data.
     """
     # check the validity of `data_name` parameter

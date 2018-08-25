@@ -1,11 +1,9 @@
 r"""
-=================================================
-Flux calculation module (:mod:`chflux.core.flux`)
-=================================================
+==========================================
+Flux calculation (:mod:`chflux.core.flux`)
+==========================================
 
-.. module:: chflux.core.flux
-
-This module contains flux calculation functions.
+.. currentmodule:: chflux.core.flux
 
 Curve-fitting functions
 =======================

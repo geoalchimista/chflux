@@ -10,15 +10,9 @@ PyChamberFlux Documentation
    :maxdepth: 2
    :caption: Contents:
 
-
-
-Indices and Tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+Tutorials
+=========
+[TO BE ADDED]
 
 API Documentation
 =================
@@ -31,3 +25,9 @@ API Documentation
    io
    plot
    tools
+
+Indices and Tables
+==================
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

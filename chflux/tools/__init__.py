@@ -3,21 +3,22 @@
 Tools (:mod:`chflux.tools`)
 ===========================
 
-.. module:: chflux.tools
+.. currentmodule:: chflux.tools
 
-This module contains miscellaneous tools to deal with data types and
-dependencies.
+Miscellaneous tools to deal with datetime and collection types and the package
+environment.
 
 Datetime tools
 ==============
 
-Variables
----------
+Tools to deal with datetime parsing and conversion.
+
+Parsers
+-------
 .. data:: chflux.tools.timestamp_parsers
 
-   A dictionary of timestamp parsers supporting multiple ISO 8601
-   (year-month-day) date and datetime formats, for use with
-   ``pandas.read_csv`` only.
+   A dictionary of timestamp parsers for multiple ISO 8601 (year-month-day)
+   date and datetime formats; for use with ``pandas.read_csv`` only.
 
 Functions
 ---------
@@ -30,6 +31,9 @@ Functions
 
 Unit tools
 ==========
+
+Tools for unit conversion.
+
 .. autosummary::
    :toctree: generated/
 
@@ -45,5 +49,6 @@ Miscellaneous tools
 from .datetime import *
 from .units import *
 from .misc import *
+from .helpers import *
 
 __all__ = [s for s in dir() if not s.startswith('_')]

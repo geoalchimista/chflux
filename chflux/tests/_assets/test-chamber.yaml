@@ -1,0 +1,54 @@
+experiment_1:
+  chambers:
+  - area: 0.07047
+    id: 1
+    is_leaf_chamber: true
+    name: LC1
+    schedule:
+      bypass_after.end: 13.0
+      bypass_after.start: 11.0
+      bypass_before.end: 3.0
+      bypass_before.start: 1.0
+      chamber.end: 11.0
+      chamber.start: 3.0
+      end: 13.0
+      start: 2.0
+    sensors_id:
+      PAR: 1
+      flowmeter: 1
+      temperature: 1
+    timelag:
+      lower_limit: 0.0
+      nominal: 0.0
+      optimize: false
+      upper_limit: 0.0
+    volume: 0.01605982
+  - area: 0.05427
+    id: 2
+    is_leaf_chamber: true
+    name: LC2
+    schedule:
+      bypass_after.end: 13.0
+      bypass_after.start: 11.0
+      bypass_before.end: 3.0
+      bypass_before.start: 1.0
+      chamber.end: 11.0
+      chamber.start: 3.0
+      end: 13.0
+      start: 17.0
+    sensors_id:
+      PAR: 2
+      flowmeter: 2
+      temperature: 2
+    timelag:
+      lower_limit: 0.0
+      nominal: 0.0
+      optimize: false
+      upper_limit: 0.0
+    volume: 0.01492885
+  cycle_length: 30.0
+  end: '2013-04-03T00:00:00'
+  n_chambers: 2
+  n_cycles_per_day: 48
+  start: '2013-04-01T00:00:00'
+  unit_of_time: minute

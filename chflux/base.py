@@ -5,9 +5,9 @@ import datetime
 import os
 
 from chflux.config.default_config import default_config
-from chflux.io import *
+from chflux.io import read_yaml, read_tabulated_data
 from chflux.exceptions import *
-from chflux.tools import check_pkgreqs
+from chflux.tools import check_pkgreqs, update_dict, timestamp_parsers
 
 
 class ChFluxProcess(object):
@@ -75,6 +75,7 @@ class ChFluxProcess(object):
             user_config = read_yaml(self._args.config)
             self._config = update_dict(default_config, user_config)
         else:
+            # TODO: add warning: "No config file is specified!"
             self._config = copy.deepcopy(default_config)
 
     def _get_config(self):
@@ -176,9 +177,15 @@ class ChFluxProcess(object):
         """Run the process."""
 
         self._set_time_start()  # set the start time of the current session
-        print('PyChamberFlux\nStarting data processing at %s ...' %
+        print('PyChamberFlux started.\nStarting data processing at %s' %
               datetime.datetime.strftime(self.time_start, '%Y-%m-%d %X UTC'))
-        self._check_pkgreqs()  # check versions of required python packages
+
+        # check versions of required python packages
+        try:
+            self._check_pkgreqs()
+        except ModuleNotFoundError:
+            print("Missing required packages. Aborted.")
+            exit(1)
 
         self._set_config()  # read config file and set config property
         self._check_config()  # sanity check
