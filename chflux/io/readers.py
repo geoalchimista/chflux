@@ -35,6 +35,7 @@ def read_json(path: str) -> Optional[Dict]:
 
 
 def read_tabulated(name: str, config: Dict,
+                   path: Optional[Union[str, List[str]]] = None,
                    query: Optional[Union[str, List[str]]] = None) -> Optional[
                        pd.DataFrame]:
     """
@@ -52,7 +53,10 @@ def read_tabulated(name: str, config: Dict,
             - ``'timelag'``: timelag data
     config : dict
         Configuration dictionary parsed from the config file.
-    query : str or list
+    path : str or list of str, optional
+        File path(s) to override the path setting in ``config``. No wildcard
+        pattern matching is allowed if ``path`` is a list of strings.
+    query : str or list of str, optional
         A query string or list of query strings used to filter the data file
         list. If ``None`` (default), no filtering is performed.
 
@@ -74,7 +78,12 @@ def read_tabulated(name: str, config: Dict,
     reader_config = {k.replace(f'{name}.', ''): v for k, v in config.items()
                      if f'{name}.' in k}
     # get the data file list
-    files = sorted(glob.glob(reader_config['files']))
+    if isinstance(path, str):
+        files = sorted(glob.glob(path))
+    elif isinstance(path, list) and all(isinstance(p, str) for p in path):
+        files = path.copy()
+    else:
+        files = sorted(glob.glob(reader_config['files']))
     # filter the list of data files with query string(s)
     if isinstance(query, str):
         files_filtered = sorted([f for f in files if query in f])

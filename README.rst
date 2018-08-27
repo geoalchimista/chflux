@@ -37,10 +37,10 @@ Refactoring tracking
 5. [ ] Plotting functions . . . [Refactoring]
 6. [ ] Miscellaneous helper functions [Implementing]
 
-    * [X] Datetime parsers
-    * [X] Helpers to manipulate collection types
-    * [X] Package requirement checker (is this really a helper?)
-    * [X] Concentration and flux units parser
+   * [X] Datetime parsers
+   * [X] Helpers to manipulate collection types
+   * [X] Package requirement checker (is this really a helper?)
+   * [X] Concentration and flux units parser
 
 7. [ ] Timelag optimization . . . [Refactoring] [Enhancement]
 
