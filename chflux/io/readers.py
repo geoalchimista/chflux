@@ -44,11 +44,12 @@ def read_tabulated(name: str, config: Dict,
     ---------
     name : str
         Data type name. Allowed values are
-        - ``'biomet'``: biometeorological data
-        - ``'concentration'``: concentration data
-        - ``'flow'``: flow rate data
-        - ``'leaf'``: leaf area data
-        - ``'timelag'``: timelag data
+
+            - ``'biomet'``: biometeorological data
+            - ``'concentration'``: concentration data
+            - ``'flow'``: flow rate data
+            - ``'leaf'``: leaf area data
+            - ``'timelag'``: timelag data
     config : dict
         Configuration dictionary parsed from the config file.
     query : str or list

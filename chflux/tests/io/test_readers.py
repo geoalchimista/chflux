@@ -1,8 +1,6 @@
-# import pandas as pd
-
-# import json
 import random
 
+import numpy as np
 import pytest
 
 from chflux.io import readers
@@ -44,3 +42,25 @@ def test_read_json():
     chamber_spec_noerror = readers.read_json(
         "./chflux/tests/_assets/test-chamber.yaml")
     assert chamber_spec_noerror is None
+
+
+def test_read_tabulated():
+    # make a segment of the config file
+    config_segment = {
+        "biomet.files": "./chflux/tests/_assets/test-*.csv",
+        "biomet.date_format": "%Y%m%d",
+        "biomet.csv.delimiter": ",",
+        "biomet.csv.header": "infer",
+        "biomet.csv.names": None,
+        "biomet.csv.usecols": None,
+        "biomet.csv.dtype": None,
+        "biomet.csv.na_values": None,
+        "biomet.csv.parse_dates": [0, ],
+        "biomet.timestamp.parser": None,
+        "biomet.timestamp.epoch_year": None,
+        "biomet.timestamp.day_of_year_ref": None,
+        "biomet.timestamp.is_UTC": True,
+    }
+    df_biomet = readers.read_tabulated('biomet', config_segment)
+    assert df_biomet.shape[0] > 0
+    assert df_biomet['timestamp'].dtype.type == np.datetime64

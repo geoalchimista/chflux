@@ -9,6 +9,12 @@ Input/output module to read and write config and data files.
 
 Readers
 =======
+.. autosummary::
+   :toctree: generated/
+
+   read_json      -- Read JSON file.
+   read_yaml      -- Read YAML file.
+   read_tabulated -- Read tabulated data files.
 
 Writers
 =======
