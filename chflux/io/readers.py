@@ -1,6 +1,7 @@
 import copy
 import glob
 import json
+import warnings
 from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
@@ -8,7 +9,7 @@ import yaml
 
 from chflux.tools import timestamp_parsers
 
-__all__ = ['read_yaml', 'read_json', 'read_csv_data', 'read_tabulated_data']
+__all__ = ['read_yaml', 'read_json', 'read_tabulated']
 
 
 def read_yaml(path: str) -> Optional[Dict]:
@@ -33,97 +34,85 @@ def read_json(path: str) -> Optional[Dict]:
     return jdict
 
 
-# TODO: refactor read_tabulated_data -> read_csv_data
-def read_csv_data(names: Union[List[str], Tuple[str], str], config: Dict,
-                  query: Optional[str] = None):
-    pass
-
-
-def read_tabulated_data(data_name, config, query=None):
+def read_tabulated(name: str, config: Dict,
+                   query: Optional[Union[str, List[str]]] = None) -> Optional[
+                       pd.DataFrame]:
     """
-    A generalized function to read tabulated data specified in the config.
+    Read tabulated data files.
 
     Parameters
-    ----------
-    data_name: str
-        Data name, allowed values are
-        - 'biomet': biometeorological data
-        - 'conc': concentration data
-        - 'flow': flow rate data
-        - 'leaf': leaf area data
-        - 'timelag': timelag data
-    config: dict
+    ---------
+    name : str
+        Data type name. Allowed values are
+        - ``'biomet'``: biometeorological data
+        - ``'concentration'``: concentration data
+        - ``'flow'``: flow rate data
+        - ``'leaf'``: leaf area data
+        - ``'timelag'``: timelag data
+    config : dict
         Configuration dictionary parsed from the config file.
-    query: list
-        A list of query strings used to search in all available data files.
-        If `None` (default), read all data files.
+    query : str or list
+        A query string or list of query strings used to filter the data file
+        list. If ``None`` (default), no filtering is performed.
 
     Return
     ------
     df: pandas.DataFrame
         The loaded tabulated data.
+
+    Raises
+    -----
+    RuntimeError
+        If ``name`` is wrong.
     """
-    # check the validity of `data_name` parameter
-    if data_name not in ['biomet', 'conc', 'flow', 'leaf', 'timelag']:
-        raise RuntimeError('Wrong data name. Allowed values are ' +
-                           "'biomet', 'conc', 'flow', 'leaf', 'timelag'.")
-    # get file list
-    data_flist = glob.glob(config['data_dir'][data_name + '_data'])
-    # get the data settings
-    data_settings = config[data_name + '_data_settings']
-
-    # ensure that `query` is a list
-    if type(query) is str:
-        query = [query]
-
-    # filter the list of data files with query strings
-    if query is not None:
-        data_flist = [f for f in data_flist if any(q in f for q in query)]
-        data_flist = sorted(data_flist)  # ensure the list is sorted by name
-
+    data_names = ['biomet', 'concentration', 'flow', 'leaf', 'timelag']
+    if name not in data_names:
+        raise RuntimeError(
+            f'Wrong data type name! Allowed name is one of {data_names}.')
+    # extract relevant config for the data reader
+    reader_config = {k.replace(f'{name}.', ''): v for k, v in config.items()
+                     if f'{name}.' in k}
+    # get the data file list
+    files = sorted(glob.glob(reader_config['files']))
+    # filter the list of data files with query string(s)
+    if isinstance(query, str):
+        files_filtered = sorted([f for f in files if query in f])
+    elif isinstance(query, list) and all(isinstance(q, str) for q in query):
+        files_filtered = sorted([f for f in files
+                                 if any(q in f for q in query)])
+    else:
+        files_filtered = files  # no filtering if query is None or illegal
     # check data file existence
-    if not len(data_flist):
-        print('Cannot find the %s data file!' % data_name)
+    if len(files_filtered) == 0:
+        warnings.warn(f'Cannot find a valid {name} data file!', RuntimeWarning)
         return None
     else:
-        print('%d %s data files are found. ' % (len(data_flist), data_name) +
-              'Loading...')
-
-    # check date parser: if legit, use it; if not, set it to `None`
-    if data_settings['date_parser'] in timestamp_parsers:
-        date_parser = timestamp_parsers[data_settings['date_parser']]
-    else:
-        date_parser = None
-
+        print(f'Found {len(files_filtered)} {name} data file(s). Loading...')
+    # read csv data
+    date_parser = timestamp_parsers.get(reader_config['timestamp.parser'])
     read_csv_options = {
-        'sep': data_settings['delimiter'],
-        'header': data_settings['header'],
-        'names': data_settings['names'],
-        'usecols': data_settings['usecols'],
-        'dtype': data_settings['dtype'],
-        'na_values': data_settings['na_values'],
-        'parse_dates': data_settings['parse_dates'],
+        'sep': reader_config['csv.delimiter'],
+        'header': reader_config['csv.header'],
+        'names': reader_config['csv.names'],
+        'usecols': reader_config['csv.usecols'],
+        'dtype': reader_config['csv.dtype'],
+        'na_values': reader_config['csv.na_values'],
+        'parse_dates': reader_config['csv.parse_dates'],
         'date_parser': date_parser,
         'infer_datetime_format': True,
         'engine': 'c',
-        'encoding': 'utf-8'}
-    df_loaded = \
-        [pd.read_csv(entry, **read_csv_options) for entry in data_flist]
-
-    # echo the list of data files
-    for entry in data_flist:
-        print(entry)
-
+        'encoding': 'utf-8',
+    }
+    df_loaded = [pd.read_csv(f, **read_csv_options) for f in files_filtered]
+    for f in files_filtered:
+        print(f)
+    # return the concatenated dataframe
     try:
         df = pd.concat(df_loaded, ignore_index=True)
-    except ValueError:
-        print('Cannot concatenate data tables!')
-        # if the list to concatenate is empty
+    except ValueError as pderr:
+        warnings.warn('Cannot concatenate data frames!', RuntimeWarning)
+        print(pderr)
         return None
 
-    del df_loaded
-
-    # echo data status
-    print('%d lines read from %s data.' % (df.shape[0], data_name))
-
+    print(f'{df.shape[0]} lines read from {name} data.')
     return df

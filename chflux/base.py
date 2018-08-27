@@ -5,7 +5,7 @@ import datetime
 import os
 
 from chflux.config.default_config import default_config
-from chflux.io import read_yaml, read_tabulated_data
+from chflux.io import read_yaml, read_tabulated
 from chflux.exceptions import *
 from chflux.tools import check_pkgreqs, update_dict, timestamp_parsers
 

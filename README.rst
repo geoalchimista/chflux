@@ -21,10 +21,11 @@ Refactoring tracking
    * [ ] Validation for configuration
    * [ ] Validation for chamber specifications
 
-3. [ ] I/O functions . . . [Refactoring]
+3. [ ] I/O functions . . . [Refactoring] [Enhancement]
 
-   * [ ] YAML Reader
-   * [ ] CSV Reader
+   * [X] JSON Reader
+   * [X] YAML Reader
+   * [X] CSV (or tabulated ASCII data) Reader
 
 4. [ ] Core calculation functions . . . [Refactoring]
 
