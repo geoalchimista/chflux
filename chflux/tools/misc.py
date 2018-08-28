@@ -7,7 +7,14 @@ __all__ = ['check_pkgreqs']
 
 
 def check_pkgreqs(echo: bool = True) -> None:
-    """Check package requirements."""
+    """
+    Check package requirements.
+
+    Raises
+    ------
+    ModuleNotFoundError
+        If one or more required packages are missing.
+    """
     # required packages
     pkg_list = ['numpy', 'pandas', 'scipy', 'matplotlib', 'yaml', 'jsonschema']
     # check existence and print versions (if echo is enabled)

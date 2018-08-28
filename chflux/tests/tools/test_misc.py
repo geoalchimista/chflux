@@ -1,6 +1,6 @@
+import contextlib
 import sys
 from io import StringIO
-import contextlib
 
 
 @contextlib.contextmanager
@@ -20,7 +20,7 @@ def test_check_pkgreqs():
     with stdoutIO() as s1:
         try:
             exec(test1)
-        except:
+        except ModuleNotFoundError:
             print("Test failed: check_pkgreqs")
 
     assert len(s1.getvalue()) > 0
@@ -28,7 +28,7 @@ def test_check_pkgreqs():
     with stdoutIO() as s2:
         try:
             exec(test2)
-        except:
+        except ModuleNotFoundError:
             print("Test failed: check_pkgreqs")
 
     assert len(s2.getvalue()) == 0

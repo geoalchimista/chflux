@@ -184,6 +184,8 @@ texinfo_documents = [
 # to solve a problem with the `autosummary` warnings
 numpydoc_show_class_members = False
 
+autodoc_member_order = 'bysource'
+
 
 def setup(app):
     app.add_stylesheet("my-styles.css")  # also can be a full URL

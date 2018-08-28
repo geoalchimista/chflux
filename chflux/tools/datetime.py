@@ -6,8 +6,8 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-__all__ = ['timestamp_parsers', 'extract_date_substr', 'parse_day_number',
-           'parse_unix_time']
+__all__ = ['timestamp_parsers', 'extract_date_str', 'parse_day_number',
+           'parse_unix_time', 'timedelta_days']
 
 
 # A dictionary of parser functions for timestamps stored in multiple columns.
@@ -25,15 +25,15 @@ timestamp_parsers = {
 }
 
 
-def extract_date_substr(flist: List[str],
-                        date_format: str = '%Y%m%d') -> Tuple[
-                            List[str], pd.DatetimeIndex]:
+def extract_date_str(paths: List[str],
+                     date_format: str = '%Y%m%d') -> Tuple[List[str],
+                                                           pd.DatetimeIndex]:
     """
     Extract date substrings from a list of file paths and parse to timestamps.
 
     Parameters
     ----------
-    flist : list
+    paths : list
         A list of file paths.
     date_format : str, optional
         Date format for the substring in file names. Supported date formats
@@ -44,10 +44,10 @@ def extract_date_substr(flist: List[str],
 
     Returns
     -------
-    date_substr_list : list
-        A list of date substrings extracted from file names in ``flist``.
+    date_strs : list
+        A list of date substrings extracted from file names in ``paths``.
     ts_series : pandas.DatetimeIndex
-        A series of pandas timestamps converted from ``date_substr_list``.
+        A series of pandas timestamps converted from ``date_strs``.
     """
     # replace date_format string to make a regex pattern
     re_replace_dict = {
@@ -62,30 +62,30 @@ def extract_date_substr(flist: List[str],
         re_date_pattern = re_date_pattern.replace(k, re_replace_dict.pop(k))
     # match regex
     re_match_list = [re.search(re_date_pattern, os.path.basename(f))
-                     for f in flist]
+                     for f in paths]
     # note: re.search(...) -> Optional[Match[str]]; must remove None
     # get substring list
-    date_substr_list = [m.group() for m in re_match_list if m is not None]
-    ts_series = pd.to_datetime(date_substr_list, format=date_format,
+    date_strs = [m.group() for m in re_match_list if m is not None]
+    ts_series = pd.to_datetime(date_strs, format=date_format,
                                errors='coerce')
-    return date_substr_list, ts_series
+    return date_strs, ts_series
 
 
-def parse_day_number(doy, year):
+def parse_day_number(day, year):
     """
     Parse day-of-year numbers and convert to ``pandas.Timestamp``.
 
     Parameters
     ----------
-    doy : float or array_like
-        Zero-based day of year numbers.
+    day : float or array_like
+        Zero-based day-of-year number(s).
     year : int or str or array_like
-        Four-digit year numbers.
+        Four-digit year number(s) to specify the reference year(s).
 
     Returns
     -------
     ts : pandas.Timestamp or pandas.Series
-        Converted timestamp or series of timestamps. If both ``doy`` and
+        Converted timestamp or series of timestamps. If both ``day`` and
         ``year`` are scalars, the returned value is an instance of
         ``pandas.Timestamp``.
 
@@ -116,10 +116,9 @@ def parse_day_number(doy, year):
         year_start = pd.Timestamp(str(year))
     else:
         year_start = pd.to_datetime({'year': year, 'month': 1, 'day': 1})
-    ts = year_start + pd.to_timedelta(doy, unit='D', errors='coerce')
+    ts = year_start + pd.to_timedelta(day, unit='D', errors='coerce')
     if isinstance(ts, pd.DatetimeIndex):
-        # for array inputs, ensure that a series of Timestamp is returned
-        ts = pd.Series(ts.values)
+        ts = pd.Series(ts.values)  # for array input
     return ts
 
 
@@ -132,15 +131,16 @@ def parse_unix_time(seconds, epoch_year: Optional[Union[int, str]] = None):
     seconds : float or array_like
         Unix seconds.
     epoch_year : int or str
-        The epoch year that is referenced to. Default is 1970 for the POSIX
-        standard. However, beware that many softwares may have used different
-        epoch years in their time systems.
+        The epoch year to reference to. Default is 1970 (POSIX standard).
+        However, other applications or operating systems may use a different
+        epoch year as the reference.
 
     Returns
     -------
     ts : pandas.Timestamp or pandas.Series
-        Converted timestamp or series of timestamps. If ``sec`` is an array,
-        the returned value is an instance of ``pandas.Series``.
+        Converted timestamp or series of timestamps. If both ``seconds`` and
+        ``year`` are scalars, the returned value is an instance of
+        ``pandas.Timestamp``.
 
     Examples
     --------
@@ -157,9 +157,14 @@ def parse_unix_time(seconds, epoch_year: Optional[Union[int, str]] = None):
     """
     if epoch_year is None:
         epoch_year = '1970'
-    ts = pd.Timestamp(str(epoch_year)) + \
-        pd.to_timedelta(seconds, unit='s', errors='coerce')
+    ts = pd.Timestamp(str(epoch_year)) + pd.to_timedelta(
+        seconds, unit='s', errors='coerce')
     if isinstance(ts, pd.DatetimeIndex):
-        # for array inputs, ensure that a series of Timestamp is returned
-        ts = pd.Series(ts.values)
+        ts = pd.Series(ts.values)  # for array input
     return ts
+
+
+def timedelta_days(ts: Union[pd.Timestamp, pd.Series, pd.DatetimeIndex],
+                   ref: pd.Timestamp):
+    """Calculate timedelta [in days] with respect to a reference timestamp."""
+    return (ts - ref) / pd.Timedelta(1, 'D')

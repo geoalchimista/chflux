@@ -1,24 +1,24 @@
-"""A collection of tools for unit conversions and representations."""
 import math
-from typing import List
+from typing import List, Tuple
 
-__all__ = ['parse_units']
+__all__ = ['parse_concentration_units', 'time_conversion_factor']
 
 
-def parse_units(unit_values: List[float]) -> List[str]:
+def parse_concentration_units(unit_values: List[float]) -> List[
+        Tuple[str, str]]:
     """
-    Parse concentration and flux units from numerical values.
+    Parse concentration and flux units from numerical values of unit prefixes.
 
     Parameters
     ----------
-    unit_values : list of float
-        A list of numerical representation of units.
+    unit_values : list of floats
+        A list of numerical representation of unit prefixes.
 
     Returns
     -------
-    units : list of tuple pairs
-        For each tuple pair in the list, the first element is the concentration
-        unit name and the second element is the flux unit name.
+    units : list of pairs
+        For each pair in the list, the first element is the concentration unit
+        name and the second element is the flux unit name.
     """
     def _convert_unit(unit_value):
         base_unit_conc = 'mol mol$^{-1}$'
@@ -45,3 +45,16 @@ def parse_units(unit_values: List[float]) -> List[str]:
             return 'undefined unit', 'undefined unit'
 
     return list(map(_convert_unit, unit_values))
+
+
+def time_conversion_factor(unit: str) -> float:
+    """Return a multiplier that converts a given unit of time to day(s)."""
+    if unit in ["seconds", "second", "sec", "s"]:
+        conv_fac = 1. / (60. * 60. * 24.)
+    elif unit in ["minutes", "minute", "min", "m"]:
+        conv_fac = 1. / (60. * 24.)
+    elif unit in ["hours", "hour", "hr", "h"]:
+        conv_fac = 1. / 24.
+    else:
+        conv_fac = 1.0
+    return conv_fac

@@ -10,7 +10,6 @@ environment.
 
 Datetime tools
 ==============
-
 Tools to deal with datetime parsing and conversion.
 
 Parsers
@@ -25,19 +24,31 @@ Functions
 .. autosummary::
    :toctree: generated/
 
-   extract_date_substr -- Extract date substring from a list of file paths.
-   parse_day_number    -- Parse day number.
-   parse_unix_time     -- Parse Unix time in seconds.
+   extract_date_str -- Extract date substring from a list of file paths.
+   parse_day_number -- Parse day number.
+   parse_unix_time  -- Parse Unix time in seconds.
+   timedelta_days   -- Calculate timedelta w.r.t. a reference timestamp.
 
 Unit tools
 ==========
-
-Tools for unit conversion.
+Tools for unit conversion and representation.
 
 .. autosummary::
    :toctree: generated/
 
-   parse_units -- Parse concentration and flux units from numerical values.
+   parse_concentration_units -- Parse concentration and flux units.
+   time_conversion_factor    -- Return a factor to convert time units to days.
+
+Collection tools
+================
+Helper tools to deal with collection types.
+
+.. autosummary::
+   :toctree: generated/
+
+   filter_str   -- Filter a list of strings by a substring.
+   flatten_dict -- Flatten a nested dictionary.
+   update_dict  -- Recursively updated a nested dictionary.
 
 Miscellaneous tools
 ===================
@@ -48,7 +59,7 @@ Miscellaneous tools
 """
 from .datetime import *
 from .units import *
+from .colle import *
 from .misc import *
-from .helpers import *
 
 __all__ = [s for s in dir() if not s.startswith('_')]

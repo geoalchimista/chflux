@@ -6,20 +6,8 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 
-from chflux.tools.helpers import flatten_dict
-
-
-def time_unit_conversion_factor(unitname: str) -> float:
-    """Return a multiplier that converts a given unit of time to day(s)."""
-    if unitname in ["seconds", "second", "sec", "s"]:
-        conv_fac = 1. / (60. * 60. * 24.)
-    elif unitname in ["minutes", "minute", "min", "m"]:
-        conv_fac = 1. / (60. * 24.)
-    elif unitname in ["hours", "hour", "hr", "h"]:
-        conv_fac = 1. / 24.
-    else:
-        conv_fac = 1.0
-    return conv_fac
+from chflux.tools import flatten_dict
+from chflux.tools import time_conversion_factor
 
 
 def get_schedule(ts: pd.Timestamp, experiments: Dict) -> Dict:
@@ -46,7 +34,7 @@ def get_schedule(ts: pd.Timestamp, experiments: Dict) -> Dict:
     df = pd.DataFrame(chamber_specs_flatten)
 
     # convert all time variables to be in day
-    conv_fac = time_unit_conversion_factor(ex["unit_of_time"])
+    conv_fac = time_conversion_factor(ex["unit_of_time"])
     time_cols = [c for c in df.columns
                  if ("schedule" in c or "timelag" in c) and
                     (c != "timelag.optimize")]

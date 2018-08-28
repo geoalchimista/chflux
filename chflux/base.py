@@ -15,17 +15,18 @@ class ChFluxProcess(object):
     PyChamberFlux Process class that interacts with the client and executes
     calculations.
     """
-    _description = 'PyChamberFlux: A command-line tool for dynamic chamber' + \
-        ' flux calculations.'
+    _description = "PyChamberFlux: A command-line tool for dynamic chamber " \
+        "flux calculation."  # command-line description
 
-    # check package requirements
-    _check_pkgreqs = staticmethod(check_pkgreqs)
+    _check_pkgreqs = staticmethod(check_pkgreqs)  # check package requirements
 
     def __init__(self, args=None):
         """Initialize a PyChamberFlux Process."""
         self._init_argparser()
         self._add_arguments()
         self._args = self._argparser.parse_args(args)
+
+    # == arg parser ==
 
     def _init_argparser(self):
         """Initialize a parser for command line arguments."""
@@ -38,7 +39,7 @@ class ChFluxProcess(object):
             '-c', '--config', dest='config', action='store',
             help='set the configuration file for the run')
 
-    # == timing the session ==
+    # == timer ==
 
     def _set_time_start(self):
         self._time_start = datetime.datetime.utcnow()
@@ -54,17 +55,17 @@ class ChFluxProcess(object):
 
     time_start = property(_get_time_start,  # type: ignore
                           _set_time_start,
-                          doc="Start time of the latest session.")
+                          doc="Start time of the latest session (UTC).")
     time_end = property(_get_time_end,  # type: ignore
                         _set_time_end,
-                        doc="End time of the latest session.")
+                        doc="End time of the latest session (UTC).")
 
     @property
     def time_lapsed(self):
-        """Time spent in executing the latest session."""
+        """Time spent in running the latest session (s)."""
         return (self._time_end - self._time_start).total_seconds()
 
-    # == configuration of the run ==
+    # == config == # TODO: rewrite
 
     def _set_config(self, echo=True):
         """Set the configuration of the run."""
@@ -126,7 +127,7 @@ class ChFluxProcess(object):
     chamber_schedule = property(_get_chamber_schedule,
                                 doc="Chamber schedule")
 
-    # == methods for I/O ==
+    # == methods for I/O ==  # TODO: rewrite
 
     def _set_dataframe(self, name):
         pass
