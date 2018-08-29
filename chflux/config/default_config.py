@@ -4,7 +4,7 @@ default_config = {
     # == General options for the run ==
 
     # Chamber specifications.
-    "run.chamber": "./chamber.yml",
+    "run.chamber": "./chamber.json",
 
     # If True, perform realtime processing of the incoming data. Data files to
     # be processed will be limited to a recent period, with the number of days

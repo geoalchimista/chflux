@@ -25,7 +25,7 @@ species_schema = {
         "multiplier": positive_number,
         "baseline_correction": {
             "type": "string",
-            "enum": ["mean", "median"]
+            "enum": ["mean", "median", "none"]
         }
     }
 }
