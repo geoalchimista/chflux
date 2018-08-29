@@ -22,7 +22,7 @@ Writers
    :toctree: generated/
 
    write_tabulated -- Write tabulated data files.
-   write_config    -- Write configuration or chamber specification to files.
+   write_config    -- Write configuration or chamber specifications to files.
 """
 from .readers import read_yaml, read_json, read_tabulated
 from .writers import write_tabulated, write_config

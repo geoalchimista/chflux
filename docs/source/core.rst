@@ -11,5 +11,11 @@ Core modules
 .. automodule:: chflux.core.stats
    :members:
 
+.. automodule:: chflux.core.schedule
+   :members:
+
+.. automodule:: chflux.core.processing
+   :members:
+
 .. automodule:: chflux.core.timelag
    :members:

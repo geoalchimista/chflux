@@ -1,13 +1,48 @@
-"""Data processing module."""
+"""
+===============================================
+Data processing (:mod:`chflux.core.processing`)
+===============================================
 
-from typing import Dict, List, Optional
+.. currentmodule:: chflux.core.processing
+
+.. autosummary::
+   :toctree: generated/
+
+   convert_timestamp
+   find_timestamp
+   find_biomet_vars
+   reduce_dataframe
+"""
+import warnings
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 
-from chflux.tools import filter_str
-from chflux.core import const, schedule, flux
+from chflux.core import const, flux, schedule
+from chflux.tools import (filter_str, parse_concentration_units,
+                          parse_day_number, parse_unix_time)
+
+__all__ = ['convert_timestamp',
+           'find_timestamp', 'find_biomet_vars', 'reduce_dataframe']
 
 
+def convert_timestamp(df: pd.DataFrame, ref_year: int) -> None:
+    """
+    Convert non-conventional timestamps to a standard format. The converted
+    timestamp is added in place to the dataframe.
+    """
+    if 'timestamp' in df.columns and pd.api.types.is_datetime64_any_dtype(
+            df['timestamp']):
+        warnings.warn('Timestamp already exists. Nothing to be done!')
+    elif 'timestamp_seconds' in df.columns:
+        df['timestamp'] = parse_unix_time(df['timestamp_seconds'], ref_year)
+    elif 'timestamp_days' in df.columns:
+        df['timestamp'] = parse_day_number(df['timestamp_days'], ref_year)
+    else:
+        warnings.warn('Found no valid timestamp to convert!')
+
+
+# TO BE DEPRECATED
 def find_timestamp(df: pd.DataFrame, utc: bool = True) -> str:
     """Find the proper timestamp column in a pandas DataFrame."""
     # # replace with this in Python 3.7!
@@ -73,6 +108,75 @@ def reduce_dataframe(df: pd.DataFrame, by: str,
     df_reduced = df_filtered.groupby(by, as_index=False).mean()
     df_reduced = df_reduced.reset_index(drop=True)
     return df_reduced
+
+
+def biomet_processor(df_biomet: pd.DataFrame,
+                     chamber_schedule: pd.DataFrame) -> pd.DataFrame:
+    df_biomet_labeled = schedule.label_chamber_period(
+        df_biomet, chamber_schedule,
+        start='schedule.start', end='schedule.end', label='biomet.index')
+    df_biomet_reduced = reduce_dataframe(
+        df_biomet_labeled, by='biomet.index', lower_bound=-0.5)
+    if 'chamber_id' in df_biomet_labeled.columns:
+        df_biomet_reduced = df_biomet_reduced.drop(
+            columns=['timedelta', 'chamber_id'])
+    else:
+        df_biomet_reduced = df_biomet_reduced.drop(columns=['timedelta'])
+    df_biomet_reduced = df_biomet_reduced.set_index('biomet.index', drop=True)
+    df_biomet_reduced.index.name = None
+    return df_biomet_reduced
+
+
+def extract_species_info(config: Dict) -> Dict:
+    species_list = config['species.list']
+    species_info = {}
+    for s in species_list:
+        sdict = config[f'species.{s}']
+        output_units = parse_concentration_units(sdict['output_unit'])
+        species_info[s] = {
+            'output_unit.concentration': output_units[0],
+            'output_unit.flux': output_units[1],
+            'multiplier': sdict['multiplier'],
+            'baseline_correction': sdict['baseline_correction'],
+        }
+    return species_info
+
+
+def rescale_concentration(df_concentration: pd.DataFrame,
+                          species_info: Dict) -> pd.DataFrame:
+    df_rescaled = df_concentration.copy()
+    for k in species_info.keys():
+        df_rescaled[k] *= species_info[k]['multiplier']
+    return df_rescaled
+
+
+def concentration_processor(df_concentration: pd.DataFrame,
+                            chamber_schedule: pd.DataFrame,
+                            config: Dict) -> pd.DataFrame:
+    def _concentration_reducer(label, start, end):
+        df_labeled = schedule.label_chamber_period(
+            df_concentration, chamber_schedule,
+            start=start, end=end, label=f'{label}.index',
+            match_chamber_id=False)
+        df_reduced = reduce_dataframe(
+            df_labeled, by=f'{label}.index', lower_bound=-0.5)
+        df_reduced = df_reduced.set_index(f'{label}.index', drop=True)
+        df_reduced = df_reduced.drop(
+            columns=[col for col in df_reduced.columns
+                     if col not in config['species.list']])
+        df_reduced.rename(
+            columns={s: f'{s}_{label}' for s in df_reduced.columns},
+            inplace=True)
+        return df_reduced
+
+    # ambient concentrations before the chamber measurement period
+    df_reduced_chb = _concentration_reducer(
+        'chb', 'schedule.bypass_before.start', 'schedule.bypass_before.end')
+    # ambient concentrations after the chamber measurement period
+    df_reduced_cha = _concentration_reducer(
+        'cha', 'schedule.bypass_after.start', 'schedule.bypass_after.end')
+
+    return pd.concat([df_reduced_chb, df_reduced_cha], axis=1)
 
 
 def flux_processor(config: Dict,
@@ -157,4 +261,38 @@ def flux_processor(config: Dict,
             res_linfit = flux.linfit(conc, t, turnover, area, flow)
             res_rlinfit = flux.rlinfit(conc, t, turnover, area, flow)
             res_nonlinfit = flux.nonlinfit(conc, t, turnover, area, flow)
-            # TO BE CONTINUED
+    # TO BE CONTINUED
+
+
+def process_all_data(config: Dict,
+                     chamber_schedule: pd.DataFrame,
+                     df_biomet: pd.DataFrame,
+                     df_concentration: Optional[pd.DataFrame] = None,
+                     df_flow: Optional[pd.DataFrame] = None,
+                     df_leaf: Optional[pd.DataFrame] = None,
+                     df_timelag: Optional[pd.DataFrame] = None,
+                     plotting: Optional[bool] = False) -> Tuple[
+                         pd.DataFrame, pd.DataFrame]:
+    if df_concentration is None:
+        df_concentration = df_biomet  # alias
+    if df_flow is None:
+        df_flow = df_biomet  # alias
+
+    # initialize dataframes to store processed fluxes and curvefit diagnostics
+    df_flux = chamber_schedule[['name', 'id', 'volume', 'area',
+                                'is_leaf_chamber']].copy()
+    df_diag = chamber_schedule[['name', 'id']].copy()
+
+    df_biomet_reduced = biomet_processor(df_biomet, chamber_schedule)
+
+    species_info = extract_species_info(config)
+    df_concentration = rescale_concentration(df_concentration, species_info)
+    df_concentration_reduced = concentration_processor(
+        df_concentration, chamber_schedule, config)
+
+    # combined processed dataframes to df_flux
+    df_flux = pd.concat([df_flux, df_biomet_reduced,
+                         df_concentration_reduced], axis=1)
+
+    # TO BE CONTINUED
+    return df_flux, df_diag

@@ -1,4 +1,19 @@
-"""Utilities to obtain experimental schedules from chamber specifications."""
+"""
+=========================================================
+Chamber experiment schedule (:mod:`chflux.core.schedule`)
+=========================================================
+
+Utilities to obtain experimental schedules from chamber specifications.
+
+.. currentmodule:: chflux.core.schedule
+
+.. autosummary::
+   :toctree: generated/
+
+   get_schedule
+   make_daily_schedule
+   label_chamber_period
+"""
 import sys
 import warnings
 from typing import Dict
@@ -6,8 +21,9 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 
-from chflux.tools import flatten_dict
-from chflux.tools import time_conversion_factor
+from chflux.tools import flatten_dict, time_conversion_factor
+
+__all__ = ['get_schedule', 'make_daily_schedule', 'label_chamber_period']
 
 
 def get_schedule(ts: pd.Timestamp, experiments: Dict) -> Dict:

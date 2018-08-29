@@ -8,9 +8,10 @@ Basic physics and chemistry (:mod:`chflux.core.physchem`)
 .. autosummary::
    :toctree: generated/
 
-   e_sat            -- Saturation vapor pressure of water.
-   dew_temp         -- Dew temperature of air.
-   convert_flowrate -- Convert flow rate from STP to ambient conditions.
+   e_sat                  -- Saturation vapor pressure of water.
+   dew_temp               -- Dew temperature of air.
+   convert_flowrate       -- Convert flow rate from STP to ambient conditions.
+   convert_flowrate_molar -- Convert flow rate to molar flow rate.
 """
 import warnings
 
@@ -19,7 +20,7 @@ from scipy import optimize
 
 from chflux.core import const
 
-__all__ = ['e_sat', 'dew_temp', 'convert_flowrate']
+__all__ = ['e_sat', 'dew_temp', 'convert_flowrate', 'convert_flowrate_molar']
 
 
 def e_sat(temp, kelvin: bool = False):
@@ -28,7 +29,7 @@ def e_sat(temp, kelvin: bool = False):
 
     Parameters
     ----------
-    temp : float or numpy.ndarray
+    temp : float or array_like
         Temperature, in Celsius degree by default.
     kelvin : bool, optional
         ``temp`` is treated as in Kelvin if ``True``. Default is ``False``.
@@ -126,18 +127,18 @@ def convert_flowrate(flow_slm, temp, pressure=const.atm, kelvin: bool = False):
 
     Parameters
     ----------
-    flow_slm : float or numpy.ndarray
+    flow_slm : float or array_like
         Flow rate in standard liter per minute under STP condition.
-    temp : float or numpy.ndarray
+    temp : float or array_like
         Temperature, in Celsius degree by default.
-    pressure : float or numpy.ndarray, optional
+    pressure : float or array_like, optional
         Pressure [Pa]. Default is the standard atmospheric pressure.
     kelvin : bool, optional
         ``temp`` is treated as in Kelvin if ``True``. Default is ``False``.
 
     Returns
     -------
-    float or numpy.ndarray
+    float or array_like
         Flow rate in liter per minute under ambient conditions.
 
     Examples
@@ -147,3 +148,11 @@ def convert_flowrate(flow_slm, temp, pressure=const.atm, kelvin: bool = False):
     """
     return flow_slm * (temp / const.T_0 + (not kelvin)) * const.atm / \
         pressure
+
+
+def convert_flowrate_molar(flow_slm):
+    r"""
+    Convert flow rate in standard liter per minute (STP) to molar flow rate
+    [mol s\ :sup:`-1`\ ].
+    """
+    return flow_slm * 1e-3 / 60.0 * const.air_concentration

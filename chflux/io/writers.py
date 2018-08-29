@@ -58,7 +58,7 @@ def write_tabulated(df: pd.DataFrame, config: Dict,
 
 def write_config(config: Dict, path: str, is_chamber: bool = False) -> None:
     """
-    Write configuration or chamber specification to files.
+    Write configuration or chamber specifications to files.
 
     Parameters
     ---------
