@@ -7,9 +7,10 @@ from typing import Dict, List, Optional, Tuple, Union
 import pandas as pd
 import yaml
 
-from chflux.tools import timestamp_parsers
+from chflux.tools import timestamp_parsers, extract_date_str
 
-__all__ = ['read_yaml', 'read_json', 'read_tabulated']
+__all__ = ['read_yaml', 'read_json', 'read_tabulated',
+           'make_filedict', 'read_data_by_date']
 
 
 def read_yaml(path: str) -> Optional[Dict]:
@@ -126,3 +127,48 @@ def read_tabulated(name: str, config: Dict,
 
     print(f'{df.shape[0]} lines read from {name} data.')
     return df
+
+
+def make_filedict(config: Dict) -> Tuple[Dict[str, Dict[str, List[str]]],
+                                         List[str]]:
+    """
+    Generate a nested dictionary with the mapping
+    {_data name_ => {_date_ => [_file-1_, _file-2_, ...]}}.
+    """
+    filedict = {}
+    dates: List[str] = []
+    for name in ['biomet', 'concentration', 'flow', 'leaf', 'timelag']:
+        if isinstance(config[f'{name}.files'], str):
+            files = sorted(glob.glob(config[f'{name}.files']))
+            # extract date strings and timestamps from file names
+            _, ts_series = extract_date_str(
+                files, config[f'{name}.date_format'])
+            date_to_files: Dict[str, List[str]] = {}
+            for f, ts in zip(files, ts_series):
+                if not pd.isnull(ts):
+                    ts_str = ts.strftime('%Y%m%d')
+                    if ts_str not in dates:
+                        dates.append(ts_str)
+                    if ts_str in date_to_files:
+                        date_to_files[ts_str].append(f)
+                    else:
+                        date_to_files[ts_str] = [f]
+            filedict[name] = date_to_files
+        else:
+            filedict[name] = {}
+
+    dates.sort()
+    return filedict, dates
+
+
+def read_data_by_date(config: Dict, filedict: Dict[str, Dict[str, List[str]]],
+                      date: str):
+    df_dict = {}
+    for name in ['biomet', 'concentration', 'flow', 'leaf', 'timelag']:
+        paths = filedict[name].get(date)
+        if (isinstance(paths, list) and len(paths) > 0):
+            df_dict[name] = read_tabulated(name, config, paths)
+        else:
+            df_dict[name] = None
+
+    return df_dict

@@ -240,8 +240,7 @@ def flux_processor(df_concentration: pd.DataFrame,
                 flow = physchem.convert_flowrate(flow_STP, temp, pressure)
             else:
                 flow = df_biomet_reduced.loc[i, f'flow_ch_{flow_id}']
-                flow_STP = flow / (temp / const.T_0 + (not kelvin)) * \
-                    pressure / const.atm
+                flow_STP = flow / (temp / const.T_0 + 1) * pressure / const.atm
             flow_molar = physchem.convert_flowrate_molar(flow_STP)
             area = chamber_schedule.loc[i, 'area']
             volume = chamber_schedule.loc[i, 'volume']

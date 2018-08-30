@@ -63,9 +63,11 @@ def extract_date_str(paths: List[str],
     # match regex
     re_match_list = [re.search(re_date_pattern, os.path.basename(f))
                      for f in paths]
-    # note: re.search(...) -> Optional[Match[str]]; must remove None
+    # note: re.search(...) -> Optional[Match[str]]; must handle None
+    # if no match, yield an empty string
     # get substring list
-    date_strs = [m.group() for m in re_match_list if m is not None]
+    date_strs = list(map(lambda m: m.group() if m is not None else '',
+                         re_match_list))
     ts_series = pd.to_datetime(date_strs, format=date_format,
                                errors='coerce')
     return date_strs, ts_series

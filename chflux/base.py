@@ -6,11 +6,16 @@ import os
 import warnings
 from typing import Dict, Optional
 
+import pandas as pd
+
 from chflux.config.default_config import default_config
-from chflux.config.utils import validate_config, validate_chamber
+from chflux.config.utils import validate_chamber, validate_config
 from chflux.exceptions import *
-from chflux.io import read_json, read_tabulated, read_yaml, write_config
+from chflux.io import (make_filedict, read_data_by_date, read_json,
+                       read_tabulated, read_yaml, write_config,
+                       write_tabulated)
 from chflux.tools import check_pkgreqs, timestamp_parsers, update_dict
+from chflux.core import processing, schedule
 
 
 class ChFluxProcess(object):
@@ -181,9 +186,16 @@ class ChFluxProcess(object):
             os.makedirs(f'{output_dir}/plots/daily')
 
     # # == I/O ==  # TODO: rewrite
+    def _set_filedict(self):
+        """
+        Add a dict of each type of data file sorted by dates (``_filedict``)
+        and a list of available dates as strings (``_dates``).
+        """
+        self._filedict, self._dates = make_filedict(self._config)
+        # print(self._filedict)  # DEBUG
 
-    # def _set_dataframe(self, name):
-    #     pass
+    # def _set_dataframes(self, date):
+    #     self._df_dict = read_data_by_date(self._config, self._filedict, date)
 
     # def _get_dataframe(self, name):
     #     pass
@@ -207,7 +219,42 @@ class ChFluxProcess(object):
     # == the runner ==
 
     def _calculate(self):
-        pass
+        for date in self._dates:
+            ts = pd.to_datetime(date, format='%Y%m%d')
+            print(f"Processing data on {ts.strftime('%Y-%m-%d')} ...")
+            df_dict = read_data_by_date(self._config, self._filedict, date)
+            for name in ['biomet', 'concentration', 'flow', 'leaf', 'timelag']:
+                df = df_dict[name]
+                if df is None:
+                    continue
+                # convert non-conventional timestamps
+                ref_year = self._config[f'{name}.timestamp.epoch_year']
+                if ref_year is None:
+                    ref_year = self._config[
+                        f'{name}.timestamp.day_of_year_ref']
+                if ref_year is not None:
+                    processing.convert_timestamp(df, ref_year)
+                # add timedelta
+                df['timedelta'] = (df['timestamp'] - ts) / pd.Timedelta(1, 'D')
+            # unpack dataframes
+            df_biomet = df_dict['biomet']
+            df_concentration = df_dict['concentration']
+            df_flow = df_dict['flow']
+            df_leaf = df_dict['leaf']
+            df_timelag = df_dict['timelag']
+            # make chamber schedule
+            chamber_schedule = schedule.make_daily_schedule(ts, self._chamber)
+            # extract species info
+            species_info = processing.extract_species_info(self._config)
+            # process all data
+            df_flux, df_diag = processing.process_all_data(
+                self._config, chamber_schedule,
+                df_biomet, df_concentration,
+                df_flow, df_leaf, df_timelag)
+            write_tabulated(df_flux, self._config, decimals=7)
+            if self._config['run.save.curvefit']:
+                write_tabulated(df_diag, self._config, is_diag=True,
+                                decimals=7)
 
     def run(self):
         """Run the process."""
@@ -216,23 +263,24 @@ class ChFluxProcess(object):
         print('PyChamberFlux started.\nStarting data processing at %s ...' %
               datetime.datetime.strftime(self.time_start, '%Y-%m-%d %X UTC'))
 
-        # == check pkg environment ==
+        # -- check pkg environment --
         try:
             self._check_pkgreqs()
         except ModuleNotFoundError as err:
             print(f'{err}\nMissing required packages. Aborted.')
             exit(1)
 
-        # == config ==
+        # -- config --
         self._set_config()  # read config file and set config
         self._check_config()  # sanity check
 
-        # == chamber spec ==
+        # -- chamber spec --
         self._set_chamber()
         self._check_config()
 
-        # == logistics ==
+        # -- logistics --
         self._make_output_dirs()
+        self._set_filedict()
 
         # calculation and output
         self._calculate()

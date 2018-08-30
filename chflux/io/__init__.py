@@ -24,7 +24,8 @@ Writers
    write_tabulated -- Write tabulated data files.
    write_config    -- Write configuration or chamber specifications to files.
 """
-from .readers import read_yaml, read_json, read_tabulated
+from .readers import (read_yaml, read_json, read_tabulated,
+                      make_filedict, read_data_by_date)
 from .writers import write_tabulated, write_config
 
 __all__ = [s for s in dir() if not s.startswith('_')]
