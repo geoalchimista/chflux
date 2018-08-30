@@ -1,4 +1,13 @@
-"""The Process class for PyChamberFlux."""
+"""
+==================================
+Process class (:mod:`chflux.base`)
+==================================
+
+.. currentmodule:: chflux.base
+
+ChFluxProcess is the main class that deals with interactions with the client in
+the command-line environment.
+"""
 import argparse
 import copy
 import datetime
@@ -10,19 +19,21 @@ import pandas as pd
 
 from chflux.config.default_config import default_config
 from chflux.config.utils import validate_chamber, validate_config
-from chflux.exceptions import *
+from chflux.core import processing, schedule
+from chflux.exceptions import ConfigParsingException
 from chflux.io import (make_filedict, read_data_by_date, read_json,
                        read_tabulated, read_yaml, write_config,
                        write_tabulated)
 from chflux.tools import check_pkgreqs, timestamp_parsers, update_dict
-from chflux.core import processing, schedule
 
 
-class ChFluxProcess(object):
+class ChFluxProcess():
     """
     PyChamberFlux Process class that interacts with the client and executes
     calculations.
     """
+    # pylint: disable=too-many-instance-attributes
+
     _description = 'PyChamberFlux: A command-line tool for dynamic chamber ' \
         'flux calculation.'  # command-line description
 
@@ -185,7 +196,7 @@ class ChFluxProcess(object):
                 not os.path.exists(f'{output_dir}/plots/daily')):
             os.makedirs(f'{output_dir}/plots/daily')
 
-    # # == I/O ==  # TODO: rewrite
+    # # == I/O ==
     def _set_filedict(self):
         """
         Add a dict of each type of data file sorted by dates (``_filedict``)
@@ -193,28 +204,6 @@ class ChFluxProcess(object):
         """
         self._filedict, self._dates = make_filedict(self._config)
         # print(self._filedict)  # DEBUG
-
-    # def _set_dataframes(self, date):
-    #     self._df_dict = read_data_by_date(self._config, self._filedict, date)
-
-    # def _get_dataframe(self, name):
-    #     pass
-
-    # def _del_dataframe(self, name):
-    #     pass
-
-    # def _attach_dataframes(self, date):
-    #     pass
-
-    # def _detach_dataframes(self, date):
-    #     pass
-
-    # def _save_data(self):
-    #     """Save processed data to CSV files."""
-    #     # if no data attached to this 'run'; raise warning and pass
-    #     pass
-
-    # save_data = _save_data
 
     # == the runner ==
 
@@ -282,7 +271,7 @@ class ChFluxProcess(object):
         self._make_output_dirs()
         self._set_filedict()
 
-        # calculation and output
+        # -- calculation and output --
         self._calculate()
         if self._config['run.save.config']:
             self._save_config()

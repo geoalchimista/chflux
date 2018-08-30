@@ -1,11 +1,11 @@
 """
-====================================
-Constants (:mod:`chflux.exceptions`)
-====================================
+=====================================
+Exceptions (:mod:`chflux.exceptions`)
+=====================================
 
 .. currentmodule:: chflux.exceptions
 
-This module contains exceptions raised by chflux.
+This module contains exceptions raised by PyChamberFlux.
 """
 
 

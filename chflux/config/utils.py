@@ -1,9 +1,12 @@
+from typing import Dict
+
 import jsonschema
 
 from chflux.config.chamber_schema import chamber_schema
 from chflux.config.config_schema import config_schema
 from chflux.exceptions import ConfigValidationException
-from typing import Dict
+
+__all__ = ['validate_config', 'validate_chamber']
 
 
 def validate_config(config: Dict) -> None:
@@ -16,7 +19,7 @@ def validate_config(config: Dict) -> None:
         raise ConfigValidationException(
             f'Config file did not pass validation!\nValidationError: {err}')
     # check gas species related keys
-    if len(config['species.list']) < 1:
+    if not config['species.list']:
         raise ConfigValidationException(
             "No gas species found in the key 'species.list'!")
     for s in config['species.list']:
@@ -30,7 +33,7 @@ def validate_config(config: Dict) -> None:
 
 
 def validate_chamber(chamber: Dict) -> None:
-    """Validate the chamber specification against the schema."""
+    """Validate the chamber specifications against the schema."""
     try:
         jsonschema.validate(chamber, chamber_schema)
     except jsonschema.ValidationError as err:

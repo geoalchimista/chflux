@@ -23,6 +23,7 @@ API Documentation
    config
    core
    io
+   exceptions
    plot
    tools
 
