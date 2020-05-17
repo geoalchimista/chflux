@@ -1,0 +1,180 @@
+{
+    "experiment_1": {
+        "start": "2013-04-01T00:00:00",
+        "end": "2013-04-16T12:00:00",
+        "unit_of_time": "minute",
+        "cycle_length": 90.0,
+        "n_chambers": 6,
+        "n_cycles_per_day": 16,
+        "chambers": [
+            {
+                "id": 1,
+                "name": "LC1",
+                "is_leaf_chamber": true,
+                "area": 0.07047,
+                "volume": 0.01605982,
+                "sensors_id": {
+                    "temperature": 1,
+                    "PAR": 1,
+                    "flowmeter": 1
+                },
+                "schedule": {
+                    "start": 2.0,
+                    "bypass_before.start": 1.0,
+                    "bypass_before.end": 3.0,
+                    "chamber.start": 3.0,
+                    "chamber.end": 11.0,
+                    "bypass_after.start": 11.0,
+                    "bypass_after.end": 13.0,
+                    "end": 13.0
+                },
+                "timelag": {
+                    "optimize": false,
+                    "nominal": 0.0,
+                    "upper_limit": 0.0,
+                    "lower_limit": 0.0
+                }
+            },
+            {
+                "id": 2,
+                "name": "LC2",
+                "is_leaf_chamber": true,
+                "area": 0.05427,
+                "volume": 0.01492885,
+                "sensors_id": {
+                    "temperature": 2,
+                    "PAR": 2,
+                    "flowmeter": 2
+                },
+                "schedule": {
+                    "start": 17.0,
+                    "bypass_before.start": 1.0,
+                    "bypass_before.end": 3.0,
+                    "chamber.start": 3.0,
+                    "chamber.end": 11.0,
+                    "bypass_after.start": 11.0,
+                    "bypass_after.end": 13.0,
+                    "end": 13.0
+                },
+                "timelag": {
+                    "optimize": false,
+                    "nominal": 0.0,
+                    "upper_limit": 0.0,
+                    "lower_limit": 0.0
+                }
+            },
+            {
+                "id": 3,
+                "name": "LC3",
+                "is_leaf_chamber": true,
+                "area": 0.27143361,
+                "volume": 0.01617292,
+                "sensors_id": {
+                    "temperature": 3,
+                    "PAR": 3,
+                    "flowmeter": 3
+                },
+                "schedule": {
+                    "start": 32.0,
+                    "bypass_before.start": 1.0,
+                    "bypass_before.end": 3.0,
+                    "chamber.start": 3.0,
+                    "chamber.end": 11.0,
+                    "bypass_after.start": 11.0,
+                    "bypass_after.end": 13.0,
+                    "end": 13.0
+                },
+                "timelag": {
+                    "optimize": false,
+                    "nominal": 0.0,
+                    "upper_limit": 0.0,
+                    "lower_limit": 0.0
+                }
+            },
+            {
+                "id": 4,
+                "name": "SC1",
+                "is_leaf_chamber": false,
+                "area": 0.03178,
+                "volume": 0.00579222,
+                "sensors_id": {
+                    "temperature": 4,
+                    "PAR": -1,
+                    "flowmeter": 4
+                },
+                "schedule": {
+                    "start": 47.0,
+                    "bypass_before.start": 1.0,
+                    "bypass_before.end": 3.0,
+                    "chamber.start": 3.0,
+                    "chamber.end": 11.0,
+                    "bypass_after.start": 11.0,
+                    "bypass_after.end": 13.0,
+                    "end": 13.0
+                },
+                "timelag": {
+                    "optimize": false,
+                    "nominal": 0.0,
+                    "upper_limit": 0.0,
+                    "lower_limit": 0.0
+                }
+            },
+            {
+                "id": 5,
+                "name": "SC2",
+                "is_leaf_chamber": false,
+                "area": 0.03178,
+                "volume": 0.0056651,
+                "sensors_id": {
+                    "temperature": 5,
+                    "PAR": -1,
+                    "flowmeter": 5
+                },
+                "schedule": {
+                    "start": 62.0,
+                    "bypass_before.start": 1.0,
+                    "bypass_before.end": 3.0,
+                    "chamber.start": 3.0,
+                    "chamber.end": 11.0,
+                    "bypass_after.start": 11.0,
+                    "bypass_after.end": 13.0,
+                    "end": 13.0
+                },
+                "timelag": {
+                    "optimize": false,
+                    "nominal": 0.0,
+                    "upper_limit": 0.0,
+                    "lower_limit": 0.0
+                }
+            },
+            {
+                "id": 6,
+                "name": "SC3",
+                "is_leaf_chamber": false,
+                "area": 0.03178,
+                "volume": 0.00707931,
+                "sensors_id": {
+                    "temperature": 6,
+                    "PAR": -1,
+                    "flowmeter": 6
+                },
+                "schedule": {
+                    "start": 77.0,
+                    "bypass_before.start": 1.0,
+                    "bypass_before.end": 3.0,
+                    "chamber.start": 3.0,
+                    "chamber.end": 11.0,
+                    "bypass_after.start": 11.0,
+                    "bypass_after.end": 13.0,
+                    "end": 13.0
+                },
+                "timelag": {
+                    "optimize": false,
+                    "nominal": 0.0,
+                    "upper_limit": 0.0,
+                    "lower_limit": 0.0
+                }
+            }
+        ]
+    }
+}

@@ -1,5 +1,5 @@
 import math
-from typing import List, Tuple
+from typing import Tuple
 
 __all__ = ['parse_concentration_units', 'time_conversion_factor']
 
