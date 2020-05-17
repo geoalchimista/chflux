@@ -8,10 +8,17 @@ format of this changelog is based on `Keep a Changelog
 the `Semantic Versioning <http://semver.org/spec/v2.0.0.html>`_.
 
 
-Unreleased - 2018-06-05
-=======================
-Refactoring the project in progress . . .
+0.3.0
+=====
+This is not a stable version!
 
+Changed
+-------
+Reformatted project structure with PyScaffold. Bumped version to 0.3.0.
+
+
+0.2.0.nightly-20180605
+=======================
 Added
 -----
 * Top-level documentation
